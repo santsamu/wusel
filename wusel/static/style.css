@@ -54,3 +54,12 @@
 .badge{min-width:0}.badge .pill{max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.5;padding:6px 10px;margin-top:4px}.badge-earned-label,.badge .pill time{display:block}
 
 .account>div{min-width:0;overflow-wrap:anywhere}.reset-child-button{margin-left:auto;font-size:12px;flex-shrink:0}.reset-child-dialog .actions{flex-wrap:wrap}@media(max-width:680px){.account{flex-wrap:wrap}.reset-child-button{margin-left:0}}
+
+#sync-status{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:25;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface);color:var(--ink);border:1px solid var(--deep);border-radius:12px;padding:10px 14px;width:min(90vw,620px);font-size:14px;box-shadow:0 3px 16px #0002}#sync-status[hidden]{display:none}#sync-status button{flex-shrink:0;font-size:13px;padding:8px;min-height:44px}body:has(#sync-status:not([hidden])) #notice{bottom:120px}
+.completion-feedback{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--soft);border-radius:12px;padding:10px 14px;margin:0 0 18px;font-size:14px}.completion-feedback span{min-width:0;overflow-wrap:anywhere}.completion-feedback button{flex-shrink:0;font-size:14px}
+.rest-note{font-size:14px;line-height:1.6;padding:12px 16px;background:var(--soft);border-radius:12px;margin:0 0 18px}.pause-editor{margin-bottom:20px}.pause-editor>summary{cursor:pointer;font-weight:600}.pause-editor>p{margin:14px 0}.pause-editor form{margin:14px 0}.rest-range{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line);font-size:14px}.rest-label{color:var(--green);font-weight:600;font-size:13px}
+.badge p,.badge .pill{font-size:14px}.badge-date{margin-top:14px;font-size:14px}.badge-date summary{cursor:pointer;color:var(--green);min-height:44px;padding:10px 0}.badge-date time{display:block;margin-top:6px;font-size:14px;line-height:1.6;color:var(--muted);overflow-wrap:anywhere}.badge-state{font-size:14px;color:var(--muted)}
+
+.form-error{padding:12px;border:1px solid currentColor;border-radius:10px;color:var(--ink);background:var(--soft);font-size:14px;margin:14px 0}
+
+.child-checklist .task-time{max-width:90px}.task-timing{display:block;font-size:12px;font-weight:400;line-height:1.4;margin-top:5px;color:var(--muted)}

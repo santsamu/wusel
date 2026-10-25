@@ -6,15 +6,47 @@ const parent = () => state.user?.role === 'parent';
 const current = () => state.children?.find(c => c.id === selected) || state.children?.[0];
 let noticeTimer;
 function notify(message,duration=6500) { document.querySelector('#notice').classList.remove('level-up'); clearTimeout(noticeTimer); document.querySelector('#notice').textContent = message; noticeTimer=setTimeout(()=>document.querySelector('#notice').textContent='',duration); }
-async function api(path, body) {
-  let response;try{response = await fetch('api/'+path, body === undefined ? {cache:'no-store'} : {
-    method:'POST', headers:{'Content-Type':'application/json','X-Garden-Request':'1','X-CSRF-Token':state?.csrf || ''}, body:JSON.stringify(body)
-  });}catch{throw new Error(t('Could not save. Please try again.'));}
-  const data = await response.json();
-  if (!response.ok) throw new Error(errorText(data.error || 'Could not save. Please try again.'));
-  return data;
+let syncKind='idle',syncKey='',syncTimer,undoTimer,lastCompletion=null;
+function paintSyncStatus(){
+ let box=document.querySelector('#sync-status');
+ if(!box){box=document.createElement('div');box.id='sync-status';box.setAttribute('role','status');box.setAttribute('aria-live','polite');document.body.append(box);}
+ box.hidden=syncKind==='idle';box.dataset.status=syncKind;
+ box.innerHTML=syncKind==='idle'?'':`<span>${tx(syncKey)}</span>${syncKind==='review'?`<button type="button" data-dismiss-sync>${tx('OK')}</button>`:''}${['offline','uncertain'].includes(syncKind)?`<button type="button" data-reconnect>${tx('Check connection')}</button>`:''}`;
 }
-async function refresh(quiet=false) { const fresh=await api('state'); if(quiet && JSON.stringify(fresh)===JSON.stringify(state)){updateChildGreeting();loadWeather();return;} state=fresh; if(state.user && !state.user.language){await api('preferences',{language});state.user.language=language;} if(state.user?.language) language=state.user.language; if (!state.user) {view='today'; selected=null;weatherData=null;weatherFetched=0;} render(); if(state.user)loadWeather(); }
+function syncStatus(kind,key=''){
+ clearTimeout(syncTimer);syncKind=kind;syncKey=key;paintSyncStatus();
+ if(kind==='saved')syncTimer=setTimeout(()=>syncStatus('idle'),4000);
+}
+async function api(path,body,track=true){
+ const tracked=track&&path!=='weather',writing=body!==undefined;
+ if(tracked&&writing)syncStatus('saving','Saving…');
+ const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
+ let response,data;
+ try{
+  response=await fetch('api/'+path,{...(writing?{method:'POST',headers:{'Content-Type':'application/json','X-Garden-Request':'1','X-CSRF-Token':state?.csrf||''},body:JSON.stringify(body)}:{cache:'no-store'}),signal:controller.signal});
+  data=await response.json();
+ }catch{
+  if(tracked)syncStatus(writing?'uncertain':'offline',writing?'Save status unknown. Check your connection.':'Connection lost. Your list may be out of date.');
+  throw new Error(t(writing?'Could not confirm the save. Check the connection before trying again.':'Connection lost. Your list may be out of date.'));
+ }finally{clearTimeout(timeout);}
+ if(!response.ok){if(tracked&&writing)syncStatus('error','Not saved.');throw new Error(errorText(data.error||'Could not save. Please try again.'));}
+ if(tracked&&writing)syncStatus('saved','Saved.');
+ else if(path==='state'&&syncKind==='uncertain')syncStatus('review','Connected again. Please check your last change.');
+ else if(path==='state'&&syncKind==='offline')syncStatus('saved','Connected again.');
+ return data;
+}
+function clearUndo(){clearTimeout(undoTimer);lastCompletion=null;document.querySelector('.completion-feedback')?.remove();}
+function rememberCompletion(r){
+ clearUndo();lastCompletion={routine:r.id,title:r.title,child:state.user.id,day:state.today};
+ function expire(){const feedback=document.querySelector('.completion-feedback');if(feedback?.contains(document.activeElement)){undoTimer=setTimeout(expire,5000);return;}clearUndo();}
+ undoTimer=setTimeout(expire,15000);
+}
+function undoFeedback(){
+ if(!lastCompletion||lastCompletion.child!==state.user?.id||lastCompletion.day!==state.today)return '';
+ return `<div class="completion-feedback" role="status"><span>${tx('Completed: {task}',{task:lastCompletion.title})}</span><button data-action="undo-last">${tx('Undo')}</button></div>`;
+}
+function restNote(c){return c.rest_day?`<p class="rest-note">${tx('Today is a rest day. Your series is safe; steps are optional.')}</p>`:'';}
+async function refresh(quiet=false) { const fresh=await api('state'); if(quiet && JSON.stringify(fresh)===JSON.stringify(state)){updateChildGreeting();updateTaskTiming();loadWeather();return;} state=fresh; if(state.user && !state.user.language){try{await api('preferences',{language},false);}catch{}state.user.language=language;} if(state.user?.language) language=state.user.language; if (!state.user) {clearUndo();view='today'; selected=null;weatherData=null;weatherFetched=0;} render(); if(state.user)loadWeather(); }
 const field = (label,name,type='text',extra='') => `<label>${esc(t(label))}<input name="${name}" type="${type}" ${extra} required></label>`;
 function auth() {
   const setup = state.needs_setup;
@@ -34,7 +66,7 @@ function progress(c) {
 function today(c) {
   const tasks=c.routines.filter(r=>r.scheduled), done=tasks.filter(r=>r.done).length, next=tasks.find(r=>!r.done&&!r.locked);
   return `<div class="heading"><div><p class="eyebrow">${esc(dateLabel(state.today))}</p><h1>${tx(parent()?"{name}’s day":"Hello, {name} ☀️",{name:c.name})}</h1><p>${tx("One thing at a time. You’ve got this.")}</p></div><div class="daily-count"><strong>${done}<span> / ${tasks.length}</span></strong><span>${tx("steps completed")}</span></div></div>
-  ${parentWeather()}
+  ${restNote(c)}${parentWeather()}
   <section class="today-layout"><div><div class="section-heading"><h2>${tx("Today’s little steps")}</h2><span class="muted small">${tx("10 points per step")}</span></div>
   ${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''} ${next?.id===r.id?'next':''}"><div class="task-time">${esc(timeLabel(r.time))}${next?.id===r.id?`<span class="next-label">${tx("UP NEXT")}</span>`:''}</div><div class="task-content"><h3>${esc(r.title)}</h3>${r.description?`<p>${esc(r.description)}</p>`:''}${r.locked?`<p class="small">${tx("A parent is helping review this step.")}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t("Undo"):t("Complete")} ${esc(r.title)}" ${r.locked?'disabled':''}>${r.done?'✓':`<span aria-hidden="true">○</span>`}</button></article>`).join(''):`<div class="panel empty"><span aria-hidden="true">☁️</span><h3>${tx("A little breathing room")}</h3><p>${parent()?t("Add a routine in Weekly plan to get started."):t("No steps planned for today. Enjoy your day!")}</p></div>`}
   ${tasks.length&&done===tasks.length?`<div class="celebrate" role="status">${tx("🌻 All your steps are done. Look at you grow!")}</div>`:''}</div>
@@ -53,25 +85,29 @@ function scheduleEditor(c) {
  <label>${tx("Or, on one specific date (optional)")}<input type="date" name="specific_date" value="${esc(r.specific_date)}"></label><p class="small muted">${tx("A specific date takes priority over the weekday selection. Make a separate routine for a different weekend time.")}</p>
  ${changeTiming(editing?'tomorrow':'today')}<div class="actions"><button class="primary" type="submit">${editing?t("Save changes"):t("Add step")}</button>${editing?`<button type="button" data-action="cancel-edit">${tx("Cancel")}</button>`:''}</div></form></details>`;
 }
+function restRanges(days){
+ const ranges=[];for(const day of days||[]){const last=ranges.at(-1),next=last?new Date(last.end+'T12:00:00Z'):null;if(next)next.setUTCDate(next.getUTCDate()+1);if(last&&next.toISOString().slice(0,10)===day&&(new Date(day+'T12:00:00Z')-new Date(last.start+'T12:00:00Z'))/86400000<366)last.end=day;else ranges.push({start:day,end:day});}return ranges;
+}
+function pauseEditor(c){return `<details class="panel pause-editor"><summary>${tx('Manage rest days')}</summary><p class="small muted">${tx('Rest days do not add to or break a series. Steps remain optional. Past rest days cannot be changed.')}</p><form data-form="rest-days"><input type="hidden" name="child" value="${c.id}"><div class="form-grid">${field(t('From'),'start','date',`min="${state.today}" value="${state.today}"`)}${field(t('Until'),'end','date',`min="${state.today}" value="${state.today}"`)}</div><button class="primary" type="submit">${tx('Plan rest days')}</button></form>${restRanges(c.rest_days).map(r=>`<div class="rest-range"><span>${esc(dateLabel(r.start))}${r.end!==r.start?' – '+esc(dateLabel(r.end)):''}</span><button data-action="remove-rest" data-start="${r.start}" data-end="${r.end}">${tx('Remove')}</button></div>`).join('')}</details>`;}
 function planner(c) {
   const planned=c.planned_routines||c.routines;
   const monday=new Date(state.today+'T12:00:00Z');
   monday.setUTCDate(monday.getUTCDate()-(monday.getUTCDay()+6)%7);
   const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10);});
   return `<div class="heading"><div><p class="eyebrow">${tx("MAKE ROOM FOR GOOD HABITS")}</p><h1>${tx("Weekly plan")}</h1><p>${tx("{name}’s rhythm, with room for different days.",{name:c.name})}</p></div></div>
-  ${parent()?scheduleEditor(c):''}<section class="week-grid">${dates.map(d=>{let weekday=(new Date(d+'T12:00:00Z').getUTCDay()+6)%7;let rs=c.routines.map(r=>{const future=planned.find(p=>p.id===r.id);return future?.effective_on&&d>=future.effective_on?future:r;}).filter(r=>!r.archived&&(!r.starts_on||d>=r.starts_on)&&(r.specific_date?r.specific_date===d:r.days.includes(weekday))); return `<div class="day-column ${d===state.today?'is-today':''}"><h3>${dayNames()[weekday]} <span>${d.slice(8)}</span></h3>${rs.length?rs.map(r=>`<div class="week-task"><time>${esc(timeLabel(r.time))}</time><strong>${esc(r.title)}</strong></div>`).join(''):`<p class="small muted">${tx("A clear day")}</p>`}</div>`;}).join('')}</section>
+  ${parent()?scheduleEditor(c)+pauseEditor(c):''}<section class="week-grid">${dates.map(d=>{let weekday=(new Date(d+'T12:00:00Z').getUTCDay()+6)%7;let rs=c.routines.map(r=>{const future=planned.find(p=>p.id===r.id);return future?.effective_on&&d>=future.effective_on?future:r;}).filter(r=>!r.archived&&(!r.starts_on||d>=r.starts_on)&&(r.specific_date?r.specific_date===d:r.days.includes(weekday))); return `<div class="day-column ${d===state.today?'is-today':''}"><h3>${dayNames()[weekday]} <span>${d.slice(8)}</span></h3>${c.rest_days?.includes(d)?`<p class="rest-label">${tx('Rest day')}</p>`:''}${rs.length?rs.map(r=>`<div class="week-task"><time>${esc(timeLabel(r.time))}</time><strong>${esc(r.title)}</strong></div>`).join(''):`<p class="small muted">${tx("A clear day")}</p>`}</div>`;}).join('')}</section>
   ${parent()?`<div class="section-heading"><h2>${tx("All planned steps")}</h2></div><div class="panel routine-list">${planned.length?planned.map(r=>`<article><div><h3>${esc(timeLabel(r.time))} · ${esc(r.title)}</h3><p class="small muted">${esc(scheduleLabel(r))}</p>${r.effective_on?`<p class="small pending-change">${tx(r.archived?'Archived from {date}':'Changes from {date}',{date:dateLabel(r.effective_on)})}</p>`:''}</div><div class="actions"><button data-action="edit" data-id="${r.id}">${tx("Edit")}</button><button class="text-button danger" data-action="archive" data-id="${r.id}">${tx("Archive")}</button></div></article>`).join(''):`<p>${tx("No routines yet. Add the first step above.")}</p>`}</div>`:''}`;
 }
 function badgeCard(b,{goal=false}={}){
  const value=Math.min(b.threshold,b.value||0);
  const requirement=b.kind==='streak'?'{count} full days in a row':b.kind==='days'?(b.threshold===1?'{count} fully completed day':'{count} fully completed days'):(b.threshold===1?'{count} completed step':'{count} completed steps');
- return `<article class="panel badge ${b.earned&&!b.revoked?'earned':'unearned'} ${goal?'next-badge':''}"><span class="badge-icon" aria-hidden="true">${b.icon}</span><h3>${esc(t(b.name))}</h3><p>${tx(requirement,{count:b.threshold})}</p>${goal?`<progress max="${b.threshold}" value="${value}" aria-label="${tx('Badge progress')}"></progress><p class="badge-count">${tx('{value} of {total}',{value,total:b.threshold})}</p>`:`<span class="pill">${b.earned?(b.revoked?t('Removed by a parent'):`<span class="badge-earned-label">${tx('Earned')}</span><time datetime="${esc(b.earned)}">${esc(dateLabel(b.earned))}</time>`):t('Still growing')}</span>`}${parent()&&b.earned?`<button class="text-button ${b.revoked?'':'danger'}" data-action="badge" data-id="${b.id}" data-revoked="${!b.revoked}">${b.revoked?t('Restore badge'):t('Remove badge')}</button>`:''}</article>`;
+ return `<article class="panel badge ${b.earned&&!b.revoked?'earned':'unearned'} ${goal?'next-badge':''}"><span class="badge-icon" aria-hidden="true">${b.icon}</span><h3>${esc(t(b.name))}</h3><p>${tx(requirement,{count:b.threshold})}</p>${goal?`<progress max="${b.threshold}" value="${value}" aria-label="${tx('Badge progress')}"></progress><p class="badge-count">${tx('{value} of {total}',{value,total:b.threshold})}</p>`:`<div class="badge-state">${b.earned?(b.revoked?`<span class="pill">${tx('Removed by a parent')}</span>`:`<details class="badge-date"><summary>${tx('Earned')}</summary><time datetime="${esc(b.earned)}">${esc(dateLabel(b.earned))}</time></details>`):`<span class="pill">${tx('Still growing')}</span>`}</div>`}${parent()&&b.earned?`<button class="text-button ${b.revoked?'':'danger'}" data-action="badge" data-id="${b.id}" data-revoked="${!b.revoked}">${b.revoked?t('Restore badge'):t('Remove badge')}</button>`:''}</article>`;
 }
 function rewards(c) {
  const badges=c.progress.badges,earned=badges.filter(b=>b.earned&&!b.revoked);
- const next=badges.filter(b=>!b.earned).sort((a,b)=>(b.value||0)/b.threshold-(a.value||0)/a.threshold)[0];
+ const next=badges.find(b=>b.id===c.progress.next_badge&&!b.earned)||badges.filter(b=>!b.earned).sort((a,b)=>(b.value||0)/b.threshold-(a.value||0)/a.threshold)[0];
  const groups=[['steps','Steps'],['days','Full days'],['streak','Series']];
- return `<div class="heading"><div><p class="eyebrow">${tx('CELEBRATE THE LITTLE WINS')}</p><h1>${tx(parent()?'{name}’s badges':'My badges',{name:c.name})}</h1><p>${tx('Something to be proud of, at your own pace.')}</p></div></div>${next?`<section class="badge-goal"><h2>${tx('Your next badge')}</h2>${badgeCard(next,{goal:true})}</section>`:''}<section class="earned-badges"><h2>${tx('Earned badges')}</h2>${earned.length?`<div class="badge-grid">${earned.map(b=>badgeCard(b)).join('')}</div>`:`<p class="muted">${tx('Your first badge is waiting. One little step at a time.')}</p>`}</section><details class="badge-collection"><summary>${tx('See all badges')}</summary><p class="small muted">${tx('Full days count from this update onward. Complete every planned step; days without steps do not count. Earned badges stay yours, even after a break.')}</p>${groups.map(([kind,label])=>`<section><h2>${esc(t(label))}</h2><div class="badge-grid">${badges.filter(b=>(b.kind||'steps')===kind).map(b=>badgeCard(b)).join('')}</div></section>`).join('')}</details>`;
+ return `<div class="heading"><div><p class="eyebrow">${tx('CELEBRATE THE LITTLE WINS')}</p><h1>${tx(parent()?'{name}’s badges':'My badges',{name:c.name})}</h1><p>${tx('Something to be proud of, at your own pace.')}</p></div></div>${next?`<section class="badge-goal"><h2>${tx('Your next badge')}</h2>${badgeCard(next,{goal:true})}</section>`:''}<section class="earned-badges"><h2>${tx('Earned badges')}</h2>${earned.length?`<div class="badge-grid">${earned.map(b=>badgeCard(b)).join('')}</div>`:`<p class="muted">${tx('Your first badge is waiting. One little step at a time.')}</p>`}</section><details class="badge-collection"><summary>${tx('See all badges')}</summary><p class="small muted">${tx('A full day means every planned step is done. Planned rest days pause your series. Earned badges stay yours.')}</p>${groups.map(([kind,label])=>`<section><h2>${esc(t(label))}</h2><div class="badge-grid">${badges.filter(b=>(b.kind||'steps')===kind).map(b=>badgeCard(b)).join('')}</div></section>`).join('')}</details>`;
 }
 
 function review(c) {
@@ -109,23 +145,26 @@ function updateChildGreeting(now=new Date()){
  const heading=document.querySelector('[data-child-greeting]');
  if(heading&&current())heading.textContent=t(greetingKey(state.timezone,now),{name:current().name});
 }
-function childHeading(c,title,greeting=false){const {tasks,done}=dayCount(c);return `<div class="child-heading"><p class="small muted">${esc(dateLabel(state.today))}</p><h1 ${greeting?'data-child-greeting':''}>${title}</h1>${tasks.length?`<p class="day-tally">${tx('{done} of {total} done',{done,total:tasks.length})}</p>`:''}${childLevel(c)}</div>`;}
+function updateTaskTiming(now=new Date()){
+ document.querySelectorAll('[data-task-timing]').forEach(el=>{el.textContent=t(current()?.rest_day?'Optional today':taskTimingKey(el.dataset.time,state.timezone,now));});
+}
+function childHeading(c,title,greeting=false){const {tasks,done}=dayCount(c);return `<div class="child-heading"><p class="small muted">${esc(dateLabel(state.today))}</p><h1 ${greeting?'data-child-greeting':''}>${title}</h1>${tasks.length&&!c.rest_day?`<p class="day-tally">${tx('{done} of {total} done',{done,total:tasks.length})}</p>`:''}${childLevel(c)}</div>`;}
 function childTools(){return `<div class="child-tools"><button data-action="view" data-view="daylist">${tx('See my day')}</button><button class="text-button" data-action="view" data-view="badges">${tx('My badges')}</button></div>`;}
 function childToday(c){
  const {tasks,done}=dayCount(c),next=tasks.find(r=>!r.done&&!r.locked);
  let card;
  if(next){
   const instruction=next.description?(next.description.length<=120?`<p class="focus-instruction">${esc(next.description)}</p>`:`<details class="focus-help"><summary>${tx('Help')}</summary><p class="focus-instruction">${esc(next.description)}</p></details>`):'';
-  card=`<article class="focus-card"><p class="focus-label">${tx('Next step')} <time>${esc(timeLabel(next.time))}</time></p><h2 id="next-step-title" tabindex="-1">${esc(next.title)}</h2>${instruction}<button class="primary focus-done" data-action="complete" data-id="${next.id}" aria-label="${tx('Done: {task}',{task:next.title})}">${tx('Done')} <span aria-hidden="true">✓</span></button><p id="step-feedback" class="step-feedback" role="status" aria-live="polite"></p></article>`;
+  card=`<article class="focus-card"><p class="focus-label"><span data-task-timing data-time="${esc(next.time)}">${tx(c.rest_day?'Optional today':taskTimingKey(next.time,state.timezone))}</span> <time>${esc(timeLabel(next.time))}</time></p><h2 id="next-step-title" tabindex="-1">${esc(next.title)}</h2>${instruction}<button class="primary focus-done" data-action="complete" data-id="${next.id}" aria-label="${tx('Done: {task}',{task:next.title})}">${tx('Done')} <span aria-hidden="true">✓</span></button><p id="step-feedback" class="step-feedback" role="status" aria-live="polite"></p></article>`;
  }else{
-  const key=!tasks.length?'Nothing planned today':done===tasks.length?'All done for today':'A parent is reviewing a step.';
+  const key=c.rest_day?'Rest day':!tasks.length?'Nothing planned today':done===tasks.length?'All done for today':'A parent is reviewing a step.';
   card=`<section class="focus-card focus-finished"><span aria-hidden="true">${tasks.length&&done===tasks.length?'✓':'☁️'}</span><h2 id="next-step-title" tabindex="-1">${tx(key)}</h2></section>`;
  }
- return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}${card}${weatherSummary()}${childTools()}`;
+ return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}${restNote(c)}${card}${undoFeedback()}${weatherSummary()}${childTools()}`;
 }
 function childChecklist(c){
  const {tasks}=dayCount(c);
- return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}<section class="child-checklist">${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''}"><time class="task-time">${esc(timeLabel(r.time))}</time><div class="task-content"><h2>${esc(r.title)}</h2>${r.locked?`<p>${tx('A parent is reviewing a step.')}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t('Undo'):t('Complete')} ${esc(r.title)}" ${r.locked?'disabled':''}>${r.done?'✓':'○'}</button></article>`).join(''):`<p>${tx('Nothing planned today')}</p>`}</section><div class="child-tools"><button data-action="view" data-view="focus">${tx('One task at a time')}</button><button class="text-button" data-action="view" data-view="plan">${tx('Weekly plan')}</button></div>`;
+ return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}${restNote(c)}${undoFeedback()}<section class="child-checklist">${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''}"><div class="task-time"><time>${esc(timeLabel(r.time))}</time>${!r.done?`<span class="task-timing" data-task-timing data-time="${esc(r.time)}">${tx(c.rest_day?'Optional today':taskTimingKey(r.time,state.timezone))}</span>`:''}</div><div class="task-content"><h2>${esc(r.title)}</h2>${r.locked?`<p>${tx('A parent is reviewing a step.')}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t('Undo'):t('Complete')} ${esc(r.title)}" ${r.locked?'disabled':''}>${r.done?'✓':'○'}</button></article>`).join(''):`<p>${tx('Nothing planned today')}</p>`}</section><div class="child-tools"><button data-action="view" data-view="focus">${tx('One task at a time')}</button><button class="text-button" data-action="view" data-view="plan">${tx('Weekly plan')}</button></div>`;
 }
 const themes=[['forest','Forest','#246b55'],['ocean','Ocean','#22658b'],['berry','Berry','#954369'],['lavender','Lavender','#6d4b91'],['sunshine','Sunshine','#825518'],['petrol','Lagoon','#146471']];
 function applyTheme(value){const theme=themes.find(([id])=>id===value)||themes[0];document.documentElement.dataset.theme=theme[0];document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme[2]);}
@@ -159,6 +198,7 @@ function weatherSummary(){
 }
 
 function render() {
+ paintSyncStatus();
  document.documentElement.lang=language;
  applyTheme(state.user?.theme||'forest');
  app.classList.toggle('child-app',state.user?.role==='child');
@@ -175,6 +215,11 @@ app.addEventListener('change', async e=>{if(e.target.id==='language-picker'){awa
 app.addEventListener('click',async e=>{
  const b=e.target.closest('[data-action]'); if(!b||busy)return;
  const action=b.dataset.action,id=Number(b.dataset.id),c=current();
+ if(action==='undo-last'){
+  if(!lastCompletion||lastCompletion.day!==state.today)return;
+  const saved=lastCompletion;busy=true;b.disabled=true;
+  try{await api('complete',{routine:saved.routine,done:false,day:saved.day});const r=current()?.routines.find(r=>r.id===saved.routine);if(r)r.done=false;clearUndo();await refresh();if(syncKind==='saved')syncStatus('idle');notify(t('Step undone.'),1600);}catch(error){notify(error.message);b.disabled=false;}finally{busy=false;}return;
+ }
  if(action==='theme'){await setTheme(b.dataset.theme);return;}
  if(action==='view'){view=b.dataset.view;editing=null;render();document.querySelector('main h1,main h2')?.focus({preventScroll:true});window.scrollTo(0,0);return;}
  if(action==='edit'){editing=(c.planned_routines||c.routines).find(r=>r.id===id);render();document.querySelector('.editor').scrollIntoView({behavior:'smooth'});return;}
@@ -183,7 +228,7 @@ app.addEventListener('click',async e=>{
  if(action==='reset-child'){
   const child=state.children.find(profile=>profile.id===id);if(!child)return;
   const dialog=document.createElement('dialog');dialog.className='archive-dialog reset-child-dialog';
-  dialog.innerHTML=`<h2>${tx('Reset {name}’s account',{name:child.name})}</h2><p>${tx('This permanently deletes completions, points, levels, badges, streaks and personal settings. Created tasks, including archived tasks and scheduled changes, and login details are kept. The child will be signed out.')}</p><form data-form="reset-child"><input type="hidden" name="child" value="${child.id}"><p class="small">${tx('Type {username} to confirm.',{username:child.username})}</p>${field(t('Child username'),'confirmation','text','maxlength="40" autocomplete="off" autocapitalize="none" spellcheck="false"')}${field(t('Your current parent password'),'current_password','password','autocomplete="current-password"')}<div class="actions"><button class="primary" type="submit">${tx('Reset permanently')}</button><button type="button" data-action="close-dialog">${tx('Cancel')}</button></div></form>`;
+  dialog.innerHTML=`<h2>${tx('Reset {name}’s account',{name:child.name})}</h2><p>${tx('This permanently deletes completions, points, levels, badges, streaks, planned rest days and personal settings. Created tasks, including archived tasks and scheduled changes, and login details are kept. The child will be signed out.')}</p><form data-form="reset-child"><input type="hidden" name="child" value="${child.id}"><p class="small">${tx('Type {username} to confirm.',{username:child.username})}</p>${field(t('Child username'),'confirmation','text','maxlength="40" autocomplete="off" autocapitalize="none" spellcheck="false"')}${field(t('Your current parent password'),'current_password','password','autocomplete="current-password"')}<div class="actions"><button class="primary" type="submit">${tx('Reset permanently')}</button><button type="button" data-action="close-dialog">${tx('Cancel')}</button></div></form>`;
   app.append(dialog);dialog.addEventListener('close',()=>dialog.remove());dialog.showModal();return;
  }
  if(action==='archive'){
@@ -199,17 +244,22 @@ app.addEventListener('click',async e=>{
  const progressBefore=c?{...c.progress}:null;
  try {
   if(action==='logout')await api('logout',{});
+  if(action==='remove-rest')await api('rest-days',{child:c.id,start:b.dataset.start,end:b.dataset.end,remove:true});
   if(action==='complete'){
-   const r=c.routines.find(r=>r.id===id);const result=await api('complete',{routine:id,done:!r.done});earnedPoints=result.earned_points||0;
+   const r=c.routines.find(r=>r.id===id);const result=await api('complete',{routine:id,done:!r.done,day:state.today});earnedPoints=result.earned_points||0;
    childCompleted=!parent()&&!r.done;
+   if(childCompleted)rememberCompletion(r);
+   r.done=!r.done;
    const feedback=document.querySelector('#step-feedback');
    if(childCompleted&&earnedPoints>0){showPoints(earnedPoints);if(feedback)feedback.textContent=t('Well done!');await new Promise(resolve=>setTimeout(resolve,750));}
-   else if(!childCompleted)notify(r.done?t('Step undone.'):t('Well done!'),1600);
+   else if(!childCompleted)notify(!r.done?t('Step undone.'):t('Well done!'),1600);
   }
   if(action==='badge')await api('badge',{child:c.id,badge:b.dataset.id,revoked:b.dataset.revoked==='true'});
   if(action==='correct')await api('correct',{completion:id,restore:b.dataset.restore==='true'});
   await refresh();
+  if(action==='remove-rest'){const editor=document.querySelector('.pause-editor');if(editor){editor.open=true;editor.querySelector('summary').focus({preventScroll:true});}}
   if(childCompleted){
+   if(syncKind==='saved')syncStatus('idle');
    const badge=current().progress.badges.find(b=>b.earned&&!b.revoked&&!earnedBefore.has(b.id));
    if(earnedPoints>0){
     animateLevel(progressBefore,current().progress);
@@ -217,11 +267,15 @@ app.addEventListener('click',async e=>{
     else if(badge)notify(t('New badge: {badge}',{badge:t(badge.name)}),3000);
    }
    (document.querySelector('#next-step-title')||document.querySelector(`[data-action="complete"][data-id="${id}"]`))?.focus({preventScroll:true});
-  }else if(action==='complete')document.querySelector(`[data-action="complete"][data-id="${id}"]`)?.focus();
- }catch(err){notify(err.message);b.disabled=false;}finally{busy=false;}
+  }else if(['badge','correct','remove-rest'].includes(action))notify(t('Saved for {name}.',{name:c.name}));
+  else if(action==='complete')document.querySelector(`[data-action="complete"][data-id="${id}"]`)?.focus();
+ }catch(err){if(childCompleted)render();notify(err.message);b.disabled=false;}finally{busy=false;}
 });
 app.addEventListener('submit',async e=>{
  e.preventDefault();if(busy)return;const f=e.target,d=Object.fromEntries(new FormData(f)),kind=f.dataset.form,b=f.querySelector('button[type=submit],button.primary,button:not([type])');
+ f.querySelector('[data-form-error]')?.remove();
+ const affectedId=Number(d.child)||current()?.id;
+ const affected=state.children?.find(c=>c.id===affectedId)?.name||'';
  busy=true;if(b)b.disabled=true;
  try {
   if(kind==='setup'||kind==='login')await api(kind,d);
@@ -229,10 +283,18 @@ app.addEventListener('submit',async e=>{
   if(kind==='child-view')await api('child-settings',{child:Number(d.child),day_view:d.day_view});
   if(kind==='password')await api('password',{...d,user:Number(d.user)});
   if(kind==='reset-child'){await api('reset-child',{child:Number(d.child),confirmation:d.confirmation,current_password:d.current_password});f.closest('dialog').close();}
+  if(kind==='rest-days')await api('rest-days',{child:Number(d.child),start:d.start,end:d.end});
   if(kind==='archive'){await api('archive',{routine:Number(d.routine),apply_from:d.apply_from});f.closest('dialog').close();}
-  if(kind==='routine') {await api('routines',{...d,id:d.id?Number(d.id):undefined,child:current().id,days:[...f.querySelectorAll('[name=days]:checked')].map(x=>Number(x.value))});editing=null;}
-  if(kind!=='login')notify(kind==='login'?t("Welcome back."):kind==='password'?t("Password reset. Existing sessions for that account were signed out."):kind==='reset-child'?t('Child account reset. Created tasks were kept.'):t("Saved. Your garden is up to date."));await refresh();
- }catch(err){notify(err.message);if(b)b.disabled=false;}finally{busy=false;}
+  if(kind==='routine') {await api('routines',{...d,id:d.id?Number(d.id):undefined,child:affectedId,days:[...f.querySelectorAll('[name=days]:checked')].map(x=>Number(x.value))});editing=null;}
+  let message=t('Saved.');
+  if(kind==='routine'||kind==='archive')message=t(d.apply_from==='tomorrow'?'Changes for {name} saved. Applies from tomorrow.':'Changes for {name} saved. Applies today.',{name:affected});
+  else if(kind==='child-view'||kind==='rest-days')message=t('Saved for {name}.',{name:affected});
+  else if(kind==='reset-child')message=t('Account for {name} reset. Created tasks were kept.',{name:affected});
+  else if(kind==='account')message=t('Account created for {name}.',{name:d.name});
+  else if(kind==='password'){const account=[...(state.parents||[]),...(state.children||[])].find(a=>a.id===Number(d.user));message=t('Password reset for {name}.',{name:account?.name||''});}
+  if(kind!=='login')notify(message);await refresh();
+  if(kind==='rest-days'){const editor=document.querySelector('.pause-editor');if(editor){editor.open=true;editor.querySelector('[name=start]').value=d.start;editor.querySelector('[name=end]').value=d.end;editor.querySelector('button[type=submit]').focus({preventScroll:true});}}
+ }catch(err){const error=document.createElement('p');error.dataset.formError='';error.className='form-error';error.setAttribute('role','alert');error.textContent=err.message;f.insertBefore(error,f.querySelector('.actions')||f.firstChild);if(!f.closest('dialog'))notify(err.message);if(b)b.disabled=false;}finally{busy=false;}
 });
 // Weather is fetched separately, so a slow provider never delays the daily checklist.
 let weatherData=null, weatherBusy=false, weatherFetched=0;
@@ -293,3 +355,11 @@ app.addEventListener('input',event=>{if(event.target.setCustomValidity)event.tar
 
 document.addEventListener('click',event=>{const menu=document.querySelector('.parent-account');if(menu&&!menu.contains(event.target))menu.open=false;});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){const menu=document.querySelector('.parent-account[open]');if(menu){menu.open=false;menu.querySelector('summary').focus();}}});
+
+document.addEventListener('click',async event=>{
+ if(event.target.closest('[data-dismiss-sync]'))syncStatus('idle');
+ const button=event.target.closest('[data-reconnect]');
+ if(button&&!busy){busy=true;button.disabled=true;try{await refresh(true);const target=document.querySelector('[data-dismiss-sync],.focus-done,.nav-button.active');target?.focus({preventScroll:true});}catch{document.querySelector('[data-reconnect]')?.focus({preventScroll:true});}finally{busy=false;button.disabled=false;}}
+});
+window.addEventListener('offline',()=>syncStatus('offline','Connection lost. Your list may be out of date.'));
+window.addEventListener('online',()=>{if(!busy)refresh(true).catch(()=>{});});

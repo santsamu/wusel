@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.0
+
+- Distinguish due and future child steps using the configured timezone, without locking early completion.
+- Offer direct undo after saved child completions without point farming.
+- Show saving, saved, failed and offline states with request timeouts and safe state-only reconnection; reject completions from a stale displayed date.
+- Persist one next badge goal until earned, and reveal full award dates on demand in readable text.
+- Name the affected child and timing in parent confirmations; show form errors inline.
+- Add parent-managed rest-day ranges that neither increase nor break streaks, while leaving steps optional.
+- Retain existing account progress on upgrade; child reset also clears pauses and the selected goal.
+
 ## 0.8.0
 
 - Add parent-only child account reset with username and parent-password confirmation.

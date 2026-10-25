@@ -1,12 +1,14 @@
 # Wusel
 
-**von Wild & Weich · Version 0.8.0**
+**von Wild & Weich · Version 0.9.0**
 
-Eltern können unter Familie den Fortschritt eines Kinderkontos endgültig zurücksetzen. Gelöscht werden Erledigungen, Punkte, Abzeichen, Tages- und Serienfortschritt sowie persönliche Einstellungen. Das Kind startet wieder auf Level 1 und wird auf allen Geräten abgemeldet. Name, Benutzername, Passwort und alle erstellten Aufgaben (auch archivierte Aufgaben und vorgemerkte Änderungen) bleiben erhalten. Bestätigung: Benutzername des Kindes und aktuelles Elternpasswort. Der Vorgang wird im Elternprotokoll dokumentiert.
+Die Kinderansicht unterscheidet „Jetzt dran“ und „Später heute“, ohne Schritte zu sperren. Nach dem Erledigen ist 15 Sekunden lang direktes Rückgängigmachen möglich; bei Tastaturfokus bleibt die Aktion länger verfügbar. Speicher- und Verbindungsstatus sind sichtbar. Bei unklarer Speicherung wird nur der Stand abgefragt, nicht automatisch erneut gespeichert. Das nächste Abzeichenziel bleibt bis zum Erreichen stabil; vollständige Verleihungsdaten sind aufklappbar und lesbar. Eltern-Rückmeldungen nennen Kind und Gültigkeitszeitpunkt. Unter Wochenplan → Pausentage verwalten lassen sich heute und zukünftige Zeiträume planen oder entfernen. Pausentage erhöhen und unterbrechen eine Serie nicht; Aufgaben sind freiwillig, ihre Erledigung gibt weiterhin Punkte. Vergangene Pausentage bleiben unverändert.
+
+Eltern können unter Familie den Fortschritt eines Kinderkontos endgültig zurücksetzen. Gelöscht werden Erledigungen, Punkte, Abzeichen, Tages- und Serienfortschritt, geplante Pausentage sowie persönliche Einstellungen. Das Kind startet wieder auf Level 1 und wird auf allen Geräten abgemeldet. Name, Benutzername, Passwort und alle erstellten Aufgaben (auch archivierte Aufgaben und vorgemerkte Änderungen) bleiben erhalten. Bestätigung: Benutzername des Kindes und aktuelles Elternpasswort. Der Vorgang wird im Elternprotokoll dokumentiert.
 
 Beim Bearbeiten und Archivieren von Routinen wählen Eltern „Ab heute“ oder „Ab morgen“ (Standard). Neue Routinen gelten standardmäßig ab heute. Ab heute wird auch das aktuelle Tagesziel bewusst angepasst; ab morgen bleiben heutige Aufgaben und Tagesziel unverändert. Vorgemerkte Änderungen werden im Wochenplan angezeigt und ab dem gewählten Datum wirksam. Verdiente Abzeichen bleiben erhalten. Die Abzeichenansicht zeigt zuerst ein nächstes Ziel mit Fortschritt und verdiente Abzeichen; „Alle Abzeichen ansehen“ öffnet die Sammlung nach Schritten, ganzen Tagen und Serien.
 
-17 Abzeichen belohnen Schritte (1, 5, 10, 20, 50, 100, 150, 250, 500, 1000), ganze Tage (1, 10, 30) und Serien (3, 7, 14, 30 aufeinanderfolgende Kalendertage). Ganze Tage zählen ab Version 0.6.0 und benötigen mindestens einen geplanten Schritt sowie alle Schritte erledigt. Tage ohne Schritte oder mit offenen Schritten unterbrechen die Serie; der laufende Tag hat bis Mitternacht Zeit. Frühere Tagespläne bleiben bei späteren Änderungen erhalten. Korrekturen aktualisieren die Serienwertung; verdiente Abzeichen bleiben erhalten und können von Eltern entzogen werden.
+17 Abzeichen belohnen Schritte (1, 5, 10, 20, 50, 100, 150, 250, 500, 1000), ganze Tage (1, 10, 30) und Serien (3, 7, 14, 30 aufeinanderfolgende Kalendertage). Ganze Tage zählen ab Version 0.6.0 und benötigen mindestens einen geplanten Schritt sowie alle Schritte erledigt. Tage ohne Schritte oder mit offenen Schritten unterbrechen die Serie, sofern kein Pausentag geplant wurde; der laufende Tag hat bis Mitternacht Zeit. Frühere Tagespläne bleiben bei späteren Änderungen erhalten. Korrekturen aktualisieren die Serienwertung; verdiente Abzeichen bleiben erhalten und können von Eltern entzogen werden.
 
 Eltern- und Kinderpasswörter benötigen mindestens 4 Zeichen. Datum und Uhrzeit folgen dem Gebietsschema des Browsers, mit ausgeschriebenen Monats- und Wochentagsnamen. Temperaturen werden als ganze Zahlen angezeigt.
 
@@ -66,7 +68,7 @@ Ab Version 0.5.2 nutzt Wusel direkt das Netzwerk des Pi und lauscht über IPv4 u
 
 Prüfe nach dem Update `http://homeassistant.local:8099/health` und die IPv4-Adresse des Pi, zum Beispiel `http://YOUR_PI_IP:8099/health`. Beide sollen `{"ok":true}` liefern. Im Protokoll erscheinen die Listener-Adressen (`0.0.0.0:8099` sowie `[::]:8099` bei aktiviertem IPv6) und anschließend `Wusel ready: HTTP port 8099`.
 
-Übernimm alle neuen App-Dateien, einschließlich `server.py`, `Dockerfile` und `config.yaml`. Aktualisiere beziehungsweise baue die installierte App neu und prüfe Version **0.8.0**. Ein bloßer Neustart des alten Containers ändert den Netzwerkmodus noch nicht. Installationskennung und gespeicherte Daten bleiben erhalten.
+Übernimm alle neuen App-Dateien, einschließlich `server.py`, `Dockerfile` und `config.yaml`. Aktualisiere beziehungsweise baue die installierte App neu und prüfe Version **0.9.0**. Ein bloßer Neustart des alten Containers ändert den Netzwerkmodus noch nicht. Installationskennung und gespeicherte Daten bleiben erhalten.
 
 Wusel teilt damit die Netzwerkschnittstellen des Pi. Dafür sind weder das Abschalten des Schutzmodus noch eine Portfreigabe am Router nötig. Die vorhandene Anmeldung und die Hinweise zu HTTP/HTTPS gelten weiterhin.
 
@@ -139,6 +141,6 @@ node tests/test_i18n.cjs
 python tools/package.py
 ```
 
-Das Paketwerkzeug schreibt `wusel-0.8.0.zip` in den Unterordner `dist` des Projekts. Im ZIP liegt die App-Konfiguration unter `wusel/wusel/config.yaml`. Lokale Daten, virtuelle Umgebungen und Bytecode werden nicht eingepackt.
+Das Paketwerkzeug schreibt `wusel-0.9.0.zip` in den Unterordner `dist` des Projekts. Im ZIP liegt die App-Konfiguration unter `wusel/wusel/config.yaml`. Lokale Daten, virtuelle Umgebungen und Bytecode werden nicht eingepackt.
 
 Prüfungen und Grenzen stehen in [VALIDATION.md](../VALIDATION.md). Der Produktionsserver wurde lokal über IPv4 und IPv6 geprüft. Der neue Container-Netzwerkmodus, der Zugriff über den Hostnamen, Live-Wetter und Backup/Wiederherstellung müssen nach dem Update auf dem Pi überprüft werden.

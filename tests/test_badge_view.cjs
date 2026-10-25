@@ -12,6 +12,9 @@ const streak={id:'streak3',name:'Finding a rhythm',kind:'streak',threshold:3,val
 const first={...step,id:'first',threshold:1,earned:'2026-10-25'};
 const child={name:'<Alex>',progress:{badges:[first,step,streak]}};
 let html=rewards(child);
+child.progress.next_badge='five';html=rewards(child);
+if(!html.includes('2 of 5'))throw Error('Stored goal takes priority over changing progress');
+delete child.progress.next_badge;html=rewards(child);
 if(!html.includes('2 of 3'))throw Error('Next goal should use the closest proportional progress');
 if(!html.includes('<details class="badge-collection">'))throw Error('Collection must start collapsed');
 if(html.includes('data-action="badge"'))throw Error('Child cannot manage badges');

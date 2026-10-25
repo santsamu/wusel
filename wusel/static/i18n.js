@@ -325,7 +325,41 @@ const CATALOG = {
     "Reset permanently": "Reset permanently",
     "Child account reset. Created tasks were kept.": "Child account reset. Created tasks were kept.",
     "Enter the child’s username to confirm the reset.": "Enter the child’s username to confirm the reset.",
-    "Reset child account: {username}": "Reset child account: {username}"
+    "Reset child account: {username}": "Reset child account: {username}",
+    "Check connection": "Check connection",
+    "Saving…": "Saving…",
+    "Save status unknown. Check your connection.": "Save status unknown. Check your connection.",
+    "Connection lost. Your list may be out of date.": "Connection lost. Your list may be out of date.",
+    "Not saved.": "Not saved.",
+    "Connected again. Please check your last change.": "Connected again. Please check your last change.",
+    "Connected again.": "Connected again.",
+    "Completed: {task}": "Completed: {task}",
+    "Today is a rest day. Your series is safe; steps are optional.": "Today is a rest day. Your series is safe; steps are optional.",
+    "Manage rest days": "Manage rest days",
+    "Rest days do not add to or break a series. Steps remain optional. Past rest days cannot be changed.": "Rest days do not add to or break a series. Steps remain optional. Past rest days cannot be changed.",
+    "From": "From",
+    "Until": "Until",
+    "Plan rest days": "Plan rest days",
+    "Remove": "Remove",
+    "Rest day": "Rest day",
+    "Optional today": "Optional today",
+    "Saved for {name}.": "Saved for {name}.",
+    "Changes for {name} saved. Applies from tomorrow.": "Changes for {name} saved. Applies from tomorrow.",
+    "Changes for {name} saved. Applies today.": "Changes for {name} saved. Applies today.",
+    "Account for {name} reset. Created tasks were kept.": "Account for {name} reset. Created tasks were kept.",
+    "Account created for {name}.": "Account created for {name}.",
+    "Password reset for {name}.": "Password reset for {name}.",
+    "Choose a valid rest-day range.": "Choose a valid rest-day range.",
+    "Choose today or future dates, up to 366 days at a time.": "Choose today or future dates, up to 366 days at a time.",
+    "The day has changed. Refresh your day before checking this step.": "The day has changed. Refresh your day before checking this step.",
+    "Now it’s time": "Now it’s time",
+    "Changed rest days for child {child}": "Changed rest days for child {child}",
+    "OK": "OK",
+    "Saved.": "Saved.",
+    "Could not confirm the save. Check the connection before trying again.": "Could not confirm the save. Check the connection before trying again.",
+    "A full day means every planned step is done. Planned rest days pause your series. Earned badges stay yours.": "A full day means every planned step is done. Planned rest days pause your series. Earned badges stay yours.",
+    "This permanently deletes completions, points, levels, badges, streaks, planned rest days and personal settings. Created tasks, including archived tasks and scheduled changes, and login details are kept. The child will be signed out.": "This permanently deletes completions, points, levels, badges, streaks, planned rest days and personal settings. Created tasks, including archived tasks and scheduled changes, and login details are kept. The child will be signed out.",
+    "The end date must be on or after the start date.": "The end date must be on or after the start date."
   },
   "de": {
     "SMALL STEPS. BRIGHTER DAYS.": "KLEINE SCHRITTE. GUTE TAGE.",
@@ -467,7 +501,7 @@ const CATALOG = {
     "Routine champion": "Routinenprofi",
     "Weather for your day": "Wetter für deinen Tag",
     "Now": "Jetzt",
-    "Later today": "Später am Tag",
+    "Later today": "Später heute",
     "Today’s forecast": "Vorhersage für heute",
     "Rain chance": "Regenrisiko",
     "High": "Höchstwert",
@@ -638,7 +672,7 @@ const CATALOG = {
     "Full days": "Ganze Tage",
     "Series": "Serien",
     "Overview": "Übersicht",
-    "Earned": "Erreicht am",
+    "Earned": "Erreicht",
     "Good morning, {name}": "Guten Morgen, {name}",
     "Hello, {name}": "Hallo, {name}",
     "Good evening, {name}": "Guten Abend, {name}",
@@ -653,7 +687,41 @@ const CATALOG = {
     "Reset permanently": "Endgültig zurücksetzen",
     "Child account reset. Created tasks were kept.": "Kinderkonto zurückgesetzt. Erstellte Aufgaben wurden behalten.",
     "Enter the child’s username to confirm the reset.": "Gib den Benutzernamen des Kindes ein, um das Zurücksetzen zu bestätigen.",
-    "Reset child account: {username}": "Kinderkonto zurückgesetzt: {username}"
+    "Reset child account: {username}": "Kinderkonto zurückgesetzt: {username}",
+    "Check connection": "Verbindung prüfen",
+    "Saving…": "Wird gespeichert …",
+    "Save status unknown. Check your connection.": "Speicherstatus unklar. Prüfe die Verbindung.",
+    "Connection lost. Your list may be out of date.": "Keine Verbindung. Deine Liste ist möglicherweise nicht aktuell.",
+    "Not saved.": "Nicht gespeichert.",
+    "Connected again. Please check your last change.": "Wieder verbunden. Prüfe bitte deine letzte Änderung.",
+    "Connected again.": "Wieder verbunden.",
+    "Completed: {task}": "Erledigt: {task}",
+    "Today is a rest day. Your series is safe; steps are optional.": "Heute ist Pausentag. Deine Serie bleibt erhalten; die Schritte sind freiwillig.",
+    "Manage rest days": "Pausentage verwalten",
+    "Rest days do not add to or break a series. Steps remain optional. Past rest days cannot be changed.": "Pausentage erhöhen und unterbrechen eine Serie nicht. Schritte bleiben freiwillig. Vergangene Pausentage lassen sich nicht ändern.",
+    "From": "Von",
+    "Until": "Bis",
+    "Plan rest days": "Pausentage planen",
+    "Remove": "Entfernen",
+    "Rest day": "Pausentag",
+    "Optional today": "Heute freiwillig",
+    "Saved for {name}.": "Für {name} gespeichert.",
+    "Changes for {name} saved. Applies from tomorrow.": "Änderungen für {name} gespeichert. Gilt ab morgen.",
+    "Changes for {name} saved. Applies today.": "Änderungen für {name} gespeichert. Gilt ab heute.",
+    "Account for {name} reset. Created tasks were kept.": "Konto von {name} zurückgesetzt. Erstellte Aufgaben wurden behalten.",
+    "Account created for {name}.": "Konto für {name} erstellt.",
+    "Password reset for {name}.": "Passwort für {name} zurückgesetzt.",
+    "Choose a valid rest-day range.": "Wähle einen gültigen Zeitraum für die Pausentage.",
+    "Choose today or future dates, up to 366 days at a time.": "Wähle heute oder zukünftige Daten, höchstens 366 Tage auf einmal.",
+    "The day has changed. Refresh your day before checking this step.": "Der Tag hat gewechselt. Aktualisiere deine Liste, bevor du den Schritt bestätigst.",
+    "Now it’s time": "Jetzt dran",
+    "Changed rest days for child {child}": "Pausentage für Kind {child} geändert",
+    "OK": "OK",
+    "Saved.": "Gespeichert.",
+    "Could not confirm the save. Check the connection before trying again.": "Speichern konnte nicht bestätigt werden. Prüfe die Verbindung, bevor du es erneut versuchst.",
+    "A full day means every planned step is done. Planned rest days pause your series. Earned badges stay yours.": "Ein ganzer Tag bedeutet: Alle geplanten Schritte sind erledigt. Geplante Pausentage pausieren deine Serie. Verdiente Abzeichen bleiben dir erhalten.",
+    "This permanently deletes completions, points, levels, badges, streaks, planned rest days and personal settings. Created tasks, including archived tasks and scheduled changes, and login details are kept. The child will be signed out.": "Erledigungen, Punkte, Level, Abzeichen, Serien, geplante Pausentage und persönliche Einstellungen werden endgültig gelöscht. Erstellte Aufgaben einschließlich archivierter Aufgaben und vorgemerkter Änderungen sowie die Zugangsdaten bleiben erhalten. Das Kind wird abgemeldet.",
+    "The end date must be on or after the start date.": "Das Enddatum muss am oder nach dem Startdatum liegen."
   }
 };
 'use strict';
@@ -689,6 +757,7 @@ function errorText(message){
 }
 function auditText(detail){
  const patterns=[
+ [/^Changed rest days for child (\d+)$/,m=>t('Changed rest days for child {child}',{child:m[1]})],
  [/^Reset child account: (.+)$/,m=>t('Reset child account: {username}',{username:m[1]})],
  [/^Changed day view for child (\d+): (focus|checklist)$/,m=>t('Changed day view for child {child}: {mode}',{child:m[1],mode:t(m[2]==='focus'?'One task at a time':'Full checklist')})],
  [/^Created the first parent account$/,()=>t('Created the first parent account')],
@@ -708,4 +777,11 @@ function greetingKey(timeZone,now=new Date()){
  if(hour>=5&&hour<12)return 'Good morning, {name}';
  if(hour>=18&&hour<22)return 'Good evening, {name}';
  return 'Hello, {name}';
+}
+
+function taskTimingKey(value,timeZone,now=new Date()){
+ const parts=new Intl.DateTimeFormat('en-GB',{timeZone,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(now);
+ const minutes=Number(parts.find(p=>p.type==='hour').value)*60+Number(parts.find(p=>p.type==='minute').value);
+ const [hour,minute]=value.split(':').map(Number);
+ return hour*60+minute<=minutes?'Now it’s time':'Later today';
 }

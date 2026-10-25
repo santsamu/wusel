@@ -58,3 +58,20 @@ if(t('Lagoon')!=='Lagune')throw Error('Lagoon translation');
 language='en';if(t('Lagoon')!=='Lagoon')throw Error('English Lagoon name');
 `,sandbox);
 console.log('Child-reset audit and Lagoon naming checks passed.');
+
+vm.runInContext(`
+const at=new Date('2026-10-26T11:00:00Z');
+if(taskTimingKey('12:01','Europe/Zurich',at)!=='Later today')throw Error('Future step timing');
+if(taskTimingKey('12:00','Europe/Zurich',at)!=='Now it’s time')throw Error('Due step timing');
+if(taskTimingKey('07:00','Europe/Zurich',at)!=='Now it’s time')throw Error('Earlier step timing');
+if(taskTimingKey('08:00','America/New_York',at)!=='Later today')throw Error('Step timezone');
+`,sandbox);
+console.log('Task due/future boundaries and configured timezone passed.');
+
+vm.runInContext(source.slice(source.indexOf('function restRanges('),source.indexOf('function pauseEditor(')),sandbox);
+vm.runInContext(`
+const dates=Array.from({length:400},(_,i)=>new Date(Date.UTC(2026,0,1+i)).toISOString().slice(0,10));
+const ranges=restRanges(dates);
+if(ranges.length!==2||ranges[0].end!==dates[365]||ranges[1].start!==dates[366])throw Error('Long rest ranges must remain removable within API limits');
+`,sandbox);
+console.log('Long rest-range grouping stays within API limits.');

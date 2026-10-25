@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS badges(child INTEGER REFERENCES users(id),badge TEXT,
  revoked INTEGER DEFAULT 0,PRIMARY KEY(child,badge));
 CREATE TABLE IF NOT EXISTS daily_plans(child INTEGER REFERENCES users(id),day TEXT,routines TEXT NOT NULL,PRIMARY KEY(child,day));
 CREATE TABLE IF NOT EXISTS pending_routines(routine INTEGER PRIMARY KEY REFERENCES routines(id),effective_on TEXT NOT NULL,payload TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS rest_days(child INTEGER REFERENCES users(id),day TEXT,PRIMARY KEY(child,day));
 CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,user INTEGER REFERENCES users(id),csrf TEXT,expires REAL);
 CREATE TABLE IF NOT EXISTS attempts(key TEXT,at REAL);
 CREATE INDEX IF NOT EXISTS attempts_key ON attempts(key,at);
@@ -74,6 +75,8 @@ class Application:
         with self.connect() as db:
             db.execute('PRAGMA journal_mode=WAL')
             db.executescript(SCHEMA)
+            if 'badge_goal' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
+                db.execute("ALTER TABLE users ADD COLUMN badge_goal TEXT NOT NULL DEFAULT ''")
             if 'starts_on' not in {row[1] for row in db.execute('PRAGMA table_info(routines)')}:
                 db.execute("ALTER TABLE routines ADD COLUMN starts_on TEXT NOT NULL DEFAULT ''")
             if 'language' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
@@ -174,19 +177,24 @@ class Application:
         today = self.today()
         self.record_plan(db,child)
         done = {(r['day'],r['routine']) for r in db.execute('SELECT day,routine FROM completions WHERE child=? AND voided=0 AND day<=?',(child,today.isoformat()))}
+        pauses = {date.fromisoformat(r['day']) for r in db.execute('SELECT day FROM rest_days WHERE child=? AND day<=?',(child,today.isoformat()))}
         full = []
         for plan in db.execute('SELECT day,routines FROM daily_plans WHERE child=? AND day<=? ORDER BY day',(child,today.isoformat())):
             ids = json.loads(plan['routines'])
-            if ids and all((plan['day'],rid) in done for rid in ids):
+            if date.fromisoformat(plan['day']) not in pauses and ids and all((plan['day'],rid) in done for rid in ids):
                 full.append(date.fromisoformat(plan['day']))
         best = run = 0
         previous = None
         for day in full:
-            run = run+1 if previous and day == previous+timedelta(days=1) else 1
+            gap = (day-previous).days-1 if previous else 0
+            neutral = sum(previous < pause < day for pause in pauses) if previous else 0
+            run = run+1 if previous and gap == neutral else 1
             best = max(best,run)
             previous = day
         # Today's unfinished plan does not end yesterday's series before the day is over.
-        current = run if previous in (today,today-timedelta(days=1)) else 0
+        gap = max(0,(today-previous).days-1) if previous else 0
+        neutral = sum(previous < pause < today for pause in pauses) if previous else 0
+        current = run if previous and gap == neutral else 0
         return {'full_days':len(full),'best_streak':best,'current_streak':current}
     def award(self, db, child):
         count = db.execute('SELECT COUNT(*) FROM completions WHERE child=? AND voided=0', (child,)).fetchone()[0]
@@ -200,10 +208,16 @@ class Application:
         stats = self.award(db,child)
         count, xp = db.execute('SELECT COUNT(*),COALESCE(SUM(points),0) FROM completions WHERE child=? AND voided=0', (child,)).fetchone()
         records = {r['badge']: dict(r) for r in db.execute('SELECT * FROM badges WHERE child=?', (child,))}
-        return {'count':count,'xp':xp,'level':xp//100+1,'level_progress':xp%100,**stats,
-                'badges':[{'id':k,'name':n,'threshold':t,'icon':i,'kind':kind,'earned':records.get(k,{}).get('earned'),
-                           'revoked':bool(records.get(k,{}).get('revoked',0)),
-                           'value':{'steps':count,'days':stats['full_days'],'streak':stats['current_streak']}[kind]} for (k,n,t,i),kind in ALL_BADGES]}
+        badges = [{'id':k,'name':n,'threshold':threshold,'icon':icon,'kind':kind,
+                   'earned':records.get(k,{}).get('earned'),'revoked':bool(records.get(k,{}).get('revoked',0)),
+                   'value':{'steps':count,'days':stats['full_days'],'streak':stats['current_streak']}[kind]}
+                  for (k,n,threshold,icon),kind in ALL_BADGES]
+        eligible = [badge for badge in badges if not badge['earned']]
+        goal = db.execute('SELECT badge_goal FROM users WHERE id=?',(child,)).fetchone()['badge_goal']
+        if goal not in {badge['id'] for badge in eligible}:
+            goal = max(eligible,key=lambda badge:badge['value']/badge['threshold'])['id'] if eligible else ''
+            db.execute('UPDATE users SET badge_goal=? WHERE id=?',(goal,child))
+        return {'count':count,'xp':xp,'level':xp//100+1,'level_progress':xp%100,**stats,'next_badge':goal,'badges':badges}
     def state(self, db, user):
         today = self.today()
         result = {'needs_setup':not db.execute('SELECT 1 FROM users LIMIT 1').fetchone(),
@@ -224,6 +238,8 @@ class Application:
                 item.update(done=bool(done and not done['voided']),locked=bool(done and done['locked']))
                 routines.append(item)
             child.update(routines=routines,progress=self.progress(db,c['id']))
+            child['rest_days'] = [r['day'] for r in db.execute('SELECT day FROM rest_days WHERE child=? AND day>=? ORDER BY day',(c['id'],today.isoformat()))]
+            child['rest_day'] = today.isoformat() in child['rest_days']
             projected = []
             for item in routines:
                 change = db.execute('SELECT * FROM pending_routines WHERE routine=?',(item['id'],)).fetchone()
@@ -309,6 +325,8 @@ class Application:
             if not r or (user['role']!='parent' and r['child']!=user['id']):
                 raise Problem('Routine not found.',404)
             today = self.today()
+            if body.get('day',today.isoformat()) != today.isoformat():
+                raise Problem('The day has changed. Refresh your day before checking this step.',409)
             if not self.scheduled(r,today):
                 raise Problem('This routine is not scheduled for today.')
             done = body.get('done')
@@ -337,9 +355,29 @@ class Application:
             db.execute('DELETE FROM completions WHERE child=?',(child,))
             db.execute('DELETE FROM badges WHERE child=?',(child,))
             db.execute('DELETE FROM daily_plans WHERE child=?',(child,))
+            db.execute('DELETE FROM rest_days WHERE child=?',(child,))
             db.execute('DELETE FROM sessions WHERE user=?',(child,))
-            db.execute("UPDATE users SET language='',theme='forest',day_view='focus' WHERE id=?",(child,))
+            db.execute("UPDATE users SET language='',theme='forest',day_view='focus',badge_goal='' WHERE id=?",(child,))
             self.audit(db,user['id'],'reset',f'Reset child account: {account["username"]}')
+            return {'ok':True},None
+        if path=='/api/rest-days':
+            child = self.integer(body,'child')
+            self.child(db,child)
+            try:
+                start = date.fromisoformat(body.get('start',''))
+                end = date.fromisoformat(body.get('end',''))
+            except (ValueError,TypeError):
+                raise Problem('Choose a valid rest-day range.')
+            if end < start:
+                raise Problem('The end date must be on or after the start date.')
+            if start < self.today() or (end-start).days > 365 or type(body.get('remove',False)) is not bool:
+                raise Problem('Choose today or future dates, up to 366 days at a time.')
+            db.execute('BEGIN IMMEDIATE')
+            if body.get('remove',False):
+                db.execute('DELETE FROM rest_days WHERE child=? AND day BETWEEN ? AND ?',(child,start.isoformat(),end.isoformat()))
+            else:
+                db.executemany('INSERT OR IGNORE INTO rest_days(child,day) VALUES(?,?)',[(child,(start+timedelta(days=i)).isoformat()) for i in range((end-start).days+1)])
+            self.audit(db,user['id'],'rest-days',f'Changed rest days for child {child}')
             return {'ok':True},None
         if path=='/api/child-settings':
             child = self.integer(body,'child')

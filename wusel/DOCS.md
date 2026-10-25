@@ -1,12 +1,14 @@
 # Wusel
 
-**von Wild & Weich · Version 0.8.0**
+**von Wild & Weich · Version 0.9.0**
 
-Parents can permanently reset a child account’s progress under Family. This removes completions, points, badges, day/streak history and personal settings, returning the child to level 1 and signing them out everywhere. Name, username, password and all created tasks (including archived tasks and pending changes) are kept. Confirmation requires the child username and the current parent password. The reset is recorded in the parent activity log.
+Child screens distinguish due and later-today steps without locking them. A saved completion can be undone directly for 15 seconds, extended while the action has keyboard focus. Save/connection status is visible; uncertain saves are checked without automatic resubmission. The next badge goal stays stable until earned, with readable award dates available on demand. Parent confirmations name the child and effective timing. Weekly plan → Manage rest days lets parents plan or remove today/future date ranges. Rest days neither increase nor break a series; steps remain optional and completing them still earns points. Past rest days cannot be changed.
+
+Parents can permanently reset a child account’s progress under Family. This removes completions, points, badges, day/streak history, planned rest days and personal settings, returning the child to level 1 and signing them out everywhere. Name, username, password and all created tasks (including archived tasks and pending changes) are kept. Confirmation requires the child username and the current parent password. The reset is recorded in the parent activity log.
 
 When editing or archiving routines, parents choose Apply today or From tomorrow (the default). New routines default to today. Apply today deliberately updates today’s tasks and full-day target; From tomorrow leaves both unchanged today. Pending changes appear in the weekly plan and become effective from the selected date. Earned badges are retained. The badge screen starts with one next goal and progress, plus earned badges; See all badges expands the collection into Steps, Full days and Streaks.
 
-17 badges celebrate steps (1, 5, 10, 20, 50, 100, 150, 250, 500, 1000), full days (1, 10, 30), and streaks (3, 7, 14, 30 consecutive calendar days). Full days start counting with version 0.6.0 and require at least one planned step and every step completed. Empty or incomplete days break a streak; today has until midnight. Past daily plans survive later schedule edits. Corrections recalculate streaks; earned badges remain and parents can revoke them.
+17 badges celebrate steps (1, 5, 10, 20, 50, 100, 150, 250, 500, 1000), full days (1, 10, 30), and streaks (3, 7, 14, 30 consecutive calendar days). Full days start counting with version 0.6.0 and require at least one planned step and every step completed. Empty or incomplete days break a streak unless a rest day was planned; today has until midnight. Past daily plans survive later schedule edits. Corrections recalculate streaks; earned badges remain and parents can revoke them.
 
 Parent and child passwords require at least 4 characters. Dates and times follow the browser’s regional format, with full month and weekday names. Temperatures are shown as whole numbers.
 
@@ -66,7 +68,7 @@ From version 0.5.2, Wusel uses the Pi's host network and listens on IPv4 and IPv
 
 After updating, test `http://homeassistant.local:8099/health` and the Pi's IPv4 address, for example `http://YOUR_PI_IP:8099/health`. Both should return `{"ok":true}`. Wusel logs the bound addresses (`0.0.0.0:8099` and `[::]:8099` when IPv6 is enabled), followed by `Wusel ready: HTTP port 8099`.
 
-Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.8.0** before starting it; restarting an older container alone does not switch its network mode. The installation ID and persistent data remain unchanged.
+Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.9.0** before starting it; restarting an older container alone does not switch its network mode. The installation ID and persistent data remain unchanged.
 
 Host networking shares the Pi's network interfaces with the app. It does not require protection mode to be disabled or router port forwarding to be enabled. The existing family authentication and HTTP/HTTPS guidance still apply.
 
@@ -139,6 +141,6 @@ node tests/test_i18n.cjs
 python tools/package.py
 ```
 
-The package command writes `wusel-0.8.0.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
+The package command writes `wusel-0.9.0.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
 
 See [VALIDATION.md](../VALIDATION.md) for checks and test boundaries. The production server has been tested over IPv4 and IPv6 locally. The updated container network mode, hostname access, live weather, and backup/restore still need verification after updating the Pi.

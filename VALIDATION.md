@@ -1,5 +1,14 @@
 # Validation — version 0.5.2, 25 October 2026
 
+## 0.9.0 validation
+
+- All 79 Python tests passed. New tests cover neutral rest-day gaps, full-day totals on optional-task days, current-series grace, stable goal selection across changes/restart/earning/revocation, rest-day add/remove permissions and validation, account isolation, reset cleanup, stale-date completion rejection and migration without losing points or badges.
+- Node checks passed 230 direct UI lookups, task timing boundaries/timezones, grouped rest-range API limits, stable-goal rendering and existing badge/language/greeting checks.
+- Chrome with the actual WSGI backend and local demo accounts passed due/later transitions, saving status, direct undo/recheck without extra points, aborted requests before saving and lost responses after saving, state-only reconciliation without duplicate completion POSTs, background offline status/retry, a 12-second hung-request timeout releasing controls, stable badge targets, parent rest-range planning/removal, optional rest-day tasks preserving streaks, parent messages naming the child and timing, and inline invalid-range errors.
+- Child focus/checklist greeting and quiet-refresh focus retention passed in English/German at 390 × 844. Readable earned-date disclosures were checked at phone and 960-pixel widths with no overflow; child feedback, rest-day and badge-detail screenshots were visually inspected. No JavaScript errors.
+- Built wusel-0.9.0.zip. No live Pi accounts, progress or configuration were changed during validation.
+
+
 ## 0.8.0 validation
 
 - All 70 Python tests passed. Four new reset tests cover atomic rejection of wrong confirmation/password, parent-only access, CSRF, invalid targets, deleting progress/plans/settings/sessions, exact preservation of task rows and pending changes, retained credentials, isolation of other accounts, audit records, repeat reset, restart, no old badges reappearing and fresh point earning.
