@@ -1,5 +1,14 @@
 # Validation — version 0.5.2, 25 October 2026
 
+## 0.6.0 validation
+
+- All 58 Python tests passed. New cases cover partial/empty/missing days, consecutive calendar days across the year boundary, every full-day/streak threshold through 30, today's unfinished-day grace, undo/recheck, historical correction/restore, retained revocation, routine archival/edits, restart, account isolation and safe legacy step-badge backfill.
+- Parent revoke/restore of special badges passed; child requests were rejected.
+- Node catalog and format checks passed (195 direct UI lookups).
+- Chrome at 390 × 844 passed both child and parent badge views: 17 cards, translated streak requirement, earned state, controls restricted to parents, no overflow or JavaScript errors. The child view was visually inspected using demo award data.
+- Daily plans are recorded from this release onward; historical full-day awards are not inferred from incomplete legacy evidence. No live Pi data was modified.
+
+
 ## 0.5.3 validation
 
 - Parent weather: Chrome checks at 390 and 1280 pixels passed. The forecast starts collapsed under 110 pixels high, the first task fits within an 844-pixel viewport, details expand/collapse, an open forecast stays open after weather refresh, and only one weather-panel ID exists. No horizontal overflow or JavaScript errors. The mobile result was visually inspected with demo weather.

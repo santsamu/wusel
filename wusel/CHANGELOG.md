@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0
+
+- Expand to 17 English/German badges, including full-day totals and 3/7/14/30-day streaks.
+- Snapshot daily plans from this update onward, preserving history across routine edits and archival.
+- Recalculate full-day/streak statistics after undo and parent corrections without re-granting revoked badges.
+- Retain existing progress, badges and parental badge controls.
+
 ## 0.5.4
 
 - Show the current calendar week from Monday through Sunday in both account views.

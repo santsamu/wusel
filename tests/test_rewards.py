@@ -20,6 +20,15 @@ class RewardEventTests(unittest.TestCase):
             code,data=self.child.call('complete',{'routine':1,'done':done})
             self.assertEqual(code,200);self.assertEqual(data['earned_points'],expected)
         self.assertEqual(self.child.call('state')[1]['children'][0]['progress']['xp'],10)
+    def test_parent_can_revoke_and_restore_special_badges(self):
+        with self.app.connect() as db:
+            db.execute("INSERT INTO badges(child,badge,earned) VALUES(2,'streak3','2026-10-26')")
+        self.assertEqual(self.child.call('badge',{'child':2,'badge':'streak3','revoked':True})[0],403)
+        for revoked in [True,False]:
+            self.assertEqual(self.parent.call('badge',{'child':2,'badge':'streak3','revoked':revoked})[0],200)
+            p=self.child.call('state')[1]['children'][0]['progress']
+            self.assertEqual(next(b for b in p['badges'] if b['id']=='streak3')['revoked'],revoked)
+
     def test_only_one_concurrent_request_receives_reward(self):
         def complete(_):
             client=Client(self.app);client.cookie=self.child.cookie;client.csrf=self.child.csrf

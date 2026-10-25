@@ -269,7 +269,23 @@ const CATALOG = {
     "Sunshine": "Sunshine",
     "Choose a valid color theme.": "Choose a valid color theme.",
     "Choose a preference to change.": "Choose a preference to change.",
-    "Passwords need at least 4 characters.": "Passwords need at least 4 characters."
+    "Passwords need at least 4 characters.": "Passwords need at least 4 characters.",
+    "Little adventurer": "Little adventurer",
+    "Soaring high": "Soaring high",
+    "Bright comet": "Bright comet",
+    "Super explorer": "Super explorer",
+    "A thousand little wins": "A thousand little wins",
+    "A whole day": "A whole day",
+    "Ten bright days": "Ten bright days",
+    "Thirty bright days": "Thirty bright days",
+    "Finding a rhythm": "Finding a rhythm",
+    "A week of little wins": "A week of little wins",
+    "Two weeks of rhythm": "Two weeks of rhythm",
+    "A month of little wins": "A month of little wins",
+    "{count} full days in a row": "{count} full days in a row",
+    "{count} fully completed day": "{count} fully completed day",
+    "{count} fully completed days": "{count} fully completed days",
+    "Full days count from this update onward. Complete every planned step; days without steps do not count. Earned badges stay yours, even after a break.": "Full days count from this update onward. Complete every planned step; days without steps do not count. Earned badges stay yours, even after a break."
   },
   "de": {
     "SMALL STEPS. BRIGHTER DAYS.": "KLEINE SCHRITTE. GUTE TAGE.",
@@ -541,7 +557,23 @@ const CATALOG = {
     "Sunshine": "Sonnenschein",
     "Choose a valid color theme.": "Wähle eine gültige Farbwelt.",
     "Choose a preference to change.": "Wähle eine Einstellung aus.",
-    "Passwords need at least 4 characters.": "Passwörter brauchen mindestens 4 Zeichen."
+    "Passwords need at least 4 characters.": "Passwörter brauchen mindestens 4 Zeichen.",
+    "Little adventurer": "Kleine Entdeckungsreise",
+    "Soaring high": "Hoch hinaus",
+    "Bright comet": "Leuchtender Komet",
+    "Super explorer": "Große Entdeckungsreise",
+    "A thousand little wins": "Tausend kleine Erfolge",
+    "A whole day": "Ein ganzer Tag",
+    "Ten bright days": "Zehn strahlende Tage",
+    "Thirty bright days": "Dreißig strahlende Tage",
+    "Finding a rhythm": "Im Rhythmus",
+    "A week of little wins": "Eine Woche voller Erfolge",
+    "Two weeks of rhythm": "Zwei Wochen im Rhythmus",
+    "A month of little wins": "Ein Monat voller Erfolge",
+    "{count} full days in a row": "{count} vollständig erledigte Tage in Folge",
+    "{count} fully completed day": "{count} vollständig erledigter Tag",
+    "{count} fully completed days": "{count} vollständig erledigte Tage",
+    "Full days count from this update onward. Complete every planned step; days without steps do not count. Earned badges stay yours, even after a break.": "Ganze Tage zählen ab diesem Update. Erledige alle geplanten Schritte; Tage ohne Schritte zählen nicht. Verdiente Abzeichen bleiben dir auch nach einer Pause erhalten."
   }
 };
 'use strict';
@@ -583,7 +615,7 @@ function auditText(detail){
  [/^Reset password: (.+)$/,m=>t('Reset password: {username}',{username:m[1]})],
  [/^Archived routine (\d+)$/,m=>t('Archived routine {id}',{id:m[1]})],
  [/^(Reversed|Restored) completion (\d+): (.+) \(([^)]+)\)$/,m=>t(m[1]==='Reversed'?'Reversed completion {id}: {title} ({date})':'Restored completion {id}: {title} ({date})',{id:m[2],title:m[3],date:m[4]})],
- [/^(Revoked|Restored) badge (\w+) for child (\d+)$/,m=>t(m[1]==='Revoked'?'Revoked badge {badge} for child {child}':'Restored badge {badge} for child {child}',{badge:t(({first:'First step',five:'Growing strong',twenty:'Routine explorer',fifty:'Shining star',hundred:'Routine champion'})[m[2]]||m[2]),child:m[3]})]
+ [/^(Revoked|Restored) badge (\w+) for child (\d+)$/,m=>t(m[1]==='Revoked'?'Revoked badge {badge} for child {child}':'Restored badge {badge} for child {child}',{badge:t(({"first": "First step", "five": "Growing strong", "ten": "Little adventurer", "twenty": "Routine explorer", "fifty": "Shining star", "hundred": "Routine champion", "onefifty": "Soaring high", "twofifty": "Bright comet", "fivehundred": "Super explorer", "thousand": "A thousand little wins", "day1": "A whole day", "day10": "Ten bright days", "day30": "Thirty bright days", "streak3": "Finding a rhythm", "streak7": "A week of little wins", "streak14": "Two weeks of rhythm", "streak30": "A month of little wins"})[m[2]]||m[2]),child:m[3]})]
  ];for(const [pattern,format]of patterns){const m=detail.match(pattern);if(m)return format(m);}return detail;
 }
 

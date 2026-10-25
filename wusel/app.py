@@ -6,7 +6,7 @@ import os
 import re
 import secrets
 import sqlite3
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone, timedelta
 from http.cookies import SimpleCookie
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -14,7 +14,15 @@ from weather import Weather
 
 BADGES = [('first', 'First step', 1, '🌱'), ('five', 'Growing strong', 5, '🌿'),
           ('twenty', 'Routine explorer', 20, '🌻'), ('fifty', 'Shining star', 50, '⭐'),
-          ('hundred', 'Routine champion', 100, '🏆')]
+          ('hundred', 'Routine champion', 100, '🏆'),
+          ('ten', 'Little adventurer', 10, '🧭'), ('onefifty', 'Soaring high', 150, '🪁'),
+          ('twofifty', 'Bright comet', 250, '☄️'), ('fivehundred', 'Super explorer', 500, '🚀'),
+          ('thousand', 'A thousand little wins', 1000, '🌌')]
+DAY_BADGES = [('day1', 'A whole day', 1, '☀️'), ('day10', 'Ten bright days', 10, '🌈'),
+              ('day30', 'Thirty bright days', 30, '💎')]
+STREAK_BADGES = [('streak3', 'Finding a rhythm', 3, '🎵'), ('streak7', 'A week of little wins', 7, '🔥'),
+                 ('streak14', 'Two weeks of rhythm', 14, '🎶'), ('streak30', 'A month of little wins', 30, '👑')]
+ALL_BADGES = [(b,kind) for kind,items in [('steps',BADGES),('days',DAY_BADGES),('streak',STREAK_BADGES)] for b in sorted(items,key=lambda b:b[2])]
 SCHEMA = '''
 CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY,username TEXT UNIQUE NOT NULL,
  name TEXT NOT NULL,password TEXT NOT NULL,role TEXT NOT NULL CHECK(role IN ('parent','child')));
@@ -25,6 +33,7 @@ CREATE TABLE IF NOT EXISTS completions(id INTEGER PRIMARY KEY,routine INTEGER RE
  voided INTEGER DEFAULT 0,locked INTEGER DEFAULT 0,UNIQUE(routine,day));
 CREATE TABLE IF NOT EXISTS badges(child INTEGER REFERENCES users(id),badge TEXT,earned TEXT,
  revoked INTEGER DEFAULT 0,PRIMARY KEY(child,badge));
+CREATE TABLE IF NOT EXISTS daily_plans(child INTEGER REFERENCES users(id),day TEXT,routines TEXT NOT NULL,PRIMARY KEY(child,day));
 CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,user INTEGER REFERENCES users(id),csrf TEXT,expires REAL);
 CREATE TABLE IF NOT EXISTS attempts(key TEXT,at REAL);
 CREATE INDEX IF NOT EXISTS attempts_key ON attempts(key,at);
@@ -134,17 +143,41 @@ class Application:
             raise Problem('Child profile not found.', 404)
     def scheduled(self, r, day):
         return r['specific_date'] == day.isoformat() if r['specific_date'] else day.weekday() in json.loads(r['days'])
+    def day_stats(self, db, child):
+        # Keep past plans immutable so later routine edits cannot rewrite a child's history.
+        today = self.today()
+        planned = [r['id'] for r in db.execute('SELECT * FROM routines WHERE child=? AND archived=0',(child,)) if self.scheduled(r,today)]
+        db.execute('INSERT OR REPLACE INTO daily_plans(child,day,routines) VALUES(?,?,?)',(child,today.isoformat(),json.dumps(planned)))
+        done = {(r['day'],r['routine']) for r in db.execute('SELECT day,routine FROM completions WHERE child=? AND voided=0 AND day<=?',(child,today.isoformat()))}
+        full = []
+        for plan in db.execute('SELECT day,routines FROM daily_plans WHERE child=? AND day<=? ORDER BY day',(child,today.isoformat())):
+            ids = json.loads(plan['routines'])
+            if ids and all((plan['day'],rid) in done for rid in ids):
+                full.append(date.fromisoformat(plan['day']))
+        best = run = 0
+        previous = None
+        for day in full:
+            run = run+1 if previous and day == previous+timedelta(days=1) else 1
+            best = max(best,run)
+            previous = day
+        # Today's unfinished plan does not end yesterday's series before the day is over.
+        current = run if previous in (today,today-timedelta(days=1)) else 0
+        return {'full_days':len(full),'best_streak':best,'current_streak':current}
     def award(self, db, child):
         count = db.execute('SELECT COUNT(*) FROM completions WHERE child=? AND voided=0', (child,)).fetchone()[0]
-        for key, _, threshold, _ in BADGES:
-            if count >= threshold:
+        stats = self.day_stats(db,child)
+        for (key, _, threshold, _),kind in ALL_BADGES:
+            value = {'steps':count,'days':stats['full_days'],'streak':stats['best_streak']}[kind]
+            if value >= threshold:
                 db.execute('INSERT OR IGNORE INTO badges(child,badge,earned) VALUES(?,?,?)', (child,key,self.today().isoformat()))
+        return stats
     def progress(self, db, child):
+        stats = self.award(db,child)
         count, xp = db.execute('SELECT COUNT(*),COALESCE(SUM(points),0) FROM completions WHERE child=? AND voided=0', (child,)).fetchone()
         records = {r['badge']: dict(r) for r in db.execute('SELECT * FROM badges WHERE child=?', (child,))}
-        return {'count':count,'xp':xp,'level':xp//100+1,'level_progress':xp%100,
-                'badges':[{'id':k,'name':n,'threshold':t,'icon':i,'earned':records.get(k,{}).get('earned'),
-                           'revoked':bool(records.get(k,{}).get('revoked',0))} for k,n,t,i in BADGES]}
+        return {'count':count,'xp':xp,'level':xp//100+1,'level_progress':xp%100,**stats,
+                'badges':[{'id':k,'name':n,'threshold':t,'icon':i,'kind':kind,'earned':records.get(k,{}).get('earned'),
+                           'revoked':bool(records.get(k,{}).get('revoked',0))} for (k,n,t,i),kind in ALL_BADGES]}
     def state(self, db, user):
         today = self.today()
         result = {'needs_setup':not db.execute('SELECT 1 FROM users LIMIT 1').fetchone(),
@@ -331,7 +364,7 @@ class Application:
             child = self.integer(body,'child')
             self.child(db,child)
             badge = body.get('badge')
-            if badge not in [b[0] for b in BADGES] or type(body.get('revoked')) is not bool:
+            if badge not in [b[0] for b,_ in ALL_BADGES] or type(body.get('revoked')) is not bool:
                 raise Problem('Choose a valid badge action.')
             if not db.execute('UPDATE badges SET revoked=? WHERE child=? AND badge=?',(int(body['revoked']),child,badge)).rowcount:
                 raise Problem('This badge has not been earned yet.')
