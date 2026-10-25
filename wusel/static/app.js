@@ -51,7 +51,9 @@ function scheduleEditor(c) {
  <div class="actions"><button class="primary" type="submit">${editing?t("Save changes"):t("Add step")}</button>${editing?`<button type="button" data-action="cancel-edit">${tx("Cancel")}</button>`:''}</div></form></details>`;
 }
 function planner(c) {
-  let dates=[]; for(let i=0;i<7;i++){let d=new Date(state.today+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+i);dates.push(d.toISOString().slice(0,10));}
+  const monday=new Date(state.today+'T12:00:00Z');
+  monday.setUTCDate(monday.getUTCDate()-(monday.getUTCDay()+6)%7);
+  const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10);});
   return `<div class="heading"><div><p class="eyebrow">${tx("MAKE ROOM FOR GOOD HABITS")}</p><h1>${tx("Weekly plan")}</h1><p>${tx("{name}’s rhythm, with room for different days.",{name:c.name})}</p></div></div>
   ${parent()?scheduleEditor(c):''}<section class="week-grid">${dates.map(d=>{let weekday=(new Date(d+'T12:00:00Z').getUTCDay()+6)%7;let rs=c.routines.filter(r=>r.specific_date?r.specific_date===d:r.days.includes(weekday));return `<div class="day-column ${d===state.today?'is-today':''}"><h3>${dayNames()[weekday]} <span>${d.slice(8)}</span></h3>${rs.length?rs.map(r=>`<div class="week-task"><time>${esc(timeLabel(r.time))}</time><strong>${esc(r.title)}</strong></div>`).join(''):`<p class="small muted">${tx("A clear day")}</p>`}</div>`;}).join('')}</section>
   ${parent()?`<div class="section-heading"><h2>${tx("All planned steps")}</h2></div><div class="panel routine-list">${c.routines.length?c.routines.map(r=>`<article><div><h3>${esc(timeLabel(r.time))} · ${esc(r.title)}</h3><p class="small muted">${esc(scheduleLabel(r))}</p></div><div class="actions"><button data-action="edit" data-id="${r.id}">${tx("Edit")}</button><button class="text-button danger" data-action="archive" data-id="${r.id}">${tx("Archive")}</button></div></article>`).join(''):`<p>${tx("No routines yet. Add the first step above.")}</p>`}</div>`:''}`;

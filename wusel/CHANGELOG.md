@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.4
+
+- Show the current calendar week from Monday through Sunday in both account views.
+
 ## 0.5.3
 
 - Collapse parent weather into a compact expandable summary and show tasks before the level overview.
