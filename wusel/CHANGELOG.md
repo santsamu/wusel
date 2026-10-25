@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.3
+
+- Add Petrol as a sixth personal color theme for children and parents.
+- Keep six theme choices in an even two-column grid and retain per-account persistence.
+
 ## 0.7.2
 
 - Greet children by time of day in both focus and checklist views, in English and German.

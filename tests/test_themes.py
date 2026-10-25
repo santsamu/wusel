@@ -14,14 +14,14 @@ class ThemeTests(unittest.TestCase):
     def tearDown(self):self.temp.cleanup()
     def test_default_and_all_allowed_themes(self):
         self.assertEqual(self.child.call('state')[1]['user']['theme'],'forest')
-        for theme in ('forest','ocean','berry','lavender','sunshine'):
+        for theme in ('forest','ocean','berry','lavender','sunshine','petrol'):
             self.assertEqual(self.child.call('preferences',{'theme':theme})[0],200)
             self.assertEqual(self.child.call('state')[1]['user']['theme'],theme)
     def test_theme_persists_across_login_and_restart(self):
-        self.child.call('preferences',{'theme':'ocean'})
+        self.child.call('preferences',{'theme':'petrol'})
         app=Application(self.temp.name);client=Client(app)
         self.assertEqual(client.call('login',{'username':'alex','password':'child-pass'})[0],200)
-        self.assertEqual(client.call('state')[1]['user']['theme'],'ocean')
+        self.assertEqual(client.call('state')[1]['user']['theme'],'petrol')
     def test_accounts_cannot_change_each_others_theme(self):
         self.child.call('preferences',{'theme':'berry','user':1})
         self.assertEqual(self.parent.call('state')[1]['user']['theme'],'forest')

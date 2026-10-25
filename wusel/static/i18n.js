@@ -313,7 +313,8 @@ const CATALOG = {
     "Earned": "Earned",
     "Good morning, {name}": "Good morning, {name}",
     "Hello, {name}": "Hello, {name}",
-    "Good evening, {name}": "Good evening, {name}"
+    "Good evening, {name}": "Good evening, {name}",
+    "Petrol": "Petrol"
   },
   "de": {
     "SMALL STEPS. BRIGHTER DAYS.": "KLEINE SCHRITTE. GUTE TAGE.",
@@ -629,7 +630,8 @@ const CATALOG = {
     "Earned": "Erreicht am",
     "Good morning, {name}": "Guten Morgen, {name}",
     "Hello, {name}": "Hallo, {name}",
-    "Good evening, {name}": "Guten Abend, {name}"
+    "Good evening, {name}": "Guten Abend, {name}",
+    "Petrol": "Petrol"
   }
 };
 'use strict';

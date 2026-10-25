@@ -1,5 +1,13 @@
 # Validation — version 0.5.2, 25 October 2026
 
+## 0.7.3 validation
+
+- All seven theme tests and three catalog tests passed. Theme tests now include Petrol in the allowlist and exercise its persistence across restart/login. Existing isolation, partial updates, invalid inputs, migration and authorization checks passed.
+- Chrome at 390 × 844 with the actual WSGI backend passed parent/child selection of Petrol, six options, reload persistence, theme-color meta update, CSS accent and account isolation. No overflow or JavaScript errors. The parent screen was visually inspected using local demo data.
+- Main checked Petrol contrast ratios: white/button 6.79:1, body/paper 10.42:1, muted/soft 4.53:1, accent/soft 5.68:1. These are targeted palette checks.
+- Node translation, regional format, greeting and badge-view checks passed.
+
+
 ## 0.7.2 validation
 
 - Node tests passed greeting time boundaries, configured timezone differences, summer offset and English/German interpolation, plus existing translation/format and badge-view regressions.

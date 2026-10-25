@@ -290,7 +290,7 @@ class Application:
                     raise Problem('Choose English or German.')
                 changes['language'] = body['language']
             if 'theme' in body:
-                if body['theme'] not in ('forest','ocean','berry','lavender','sunshine'):
+                if body['theme'] not in ('forest','ocean','berry','lavender','sunshine','petrol'):
                     raise Problem('Choose a valid color theme.')
                 changes['theme'] = body['theme']
             if not changes:
