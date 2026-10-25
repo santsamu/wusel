@@ -18,3 +18,21 @@ for(const m of source.matchAll(/\b(?:t|tx)\((["'])([^\n]*?)\1/g)){
  assert(vm.runInContext('Object.hasOwn(CATALOG.en,lookupKey)',sandbox),'Missing key: '+key);count++;
 }
 console.log('Catalog and interpolation checks passed; '+count+' direct UI lookups checked.');
+
+// Device region remains independent of the UI language, and wall-clock times do not shift.
+vm.runInContext(`
+navigator.languages=['en-US'];language='de';
+if(locale()!=='en-US')throw Error('Browser region');
+if(timeLabel('19:05')!=='7:05 PM')throw Error('US time');
+if(!dateLabel('2026-10-25').includes('October 25, 2026'))throw Error('Full US date');
+if(dayNames()[0]!=='Monday')throw Error('Full weekday');
+navigator.languages=['de-CH'];language='en';
+if(timeLabel('19:05')!=='19:05')throw Error('Swiss time');
+if(!dateLabel('2026-10-25').includes('25. Oktober 2026'))throw Error('Full Swiss date');
+if(dayNames()[0]!=='Montag')throw Error('Full German weekday');
+if(!dateTimeLabel('2026-10-25T18:05:00Z','Europe/Zurich').includes('19:05'))throw Error('App timezone');
+for(const [value,unit,expected] of [[9.6,'°C','10°C'],[-1.5,'°C','-2°C'],[-0.2,'°C','0°C'],[72.3,'°F','72°F'],[null,'°C','—']]){
+ if(temperatureLabel(value,unit)!==expected)throw Error('Whole temperature: '+value);
+}
+`,sandbox);
+console.log('Regional date, time and temperature checks passed.');

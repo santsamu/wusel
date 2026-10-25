@@ -1,5 +1,15 @@
 # Validation — version 0.5.2, 25 October 2026
 
+## 0.5.3 validation
+
+- Parent weather: Chrome checks at 390 and 1280 pixels passed. The forecast starts collapsed under 110 pixels high, the first task fits within an 844-pixel viewport, details expand/collapse, an open forecast stays open after weather refresh, and only one weather-panel ID exists. No horizontal overflow or JavaScript errors. The mobile result was visually inspected with demo weather.
+
+- All 50 Python tests passed, including four-character passwords for both account roles, initial setup, password resets and rejection of three-character passwords.
+- Node translation checks passed for 190 direct UI lookups, plus regional formatting checks for en-US and de-CH independently of interface language, timezone-aware timestamps, full month/weekday names and rounded temperatures.
+- Chrome at 390 × 844 passed child-screen date/time and integer weather checks for de-CH and en-US. Both weekly plans had no horizontal overflow or JavaScript errors; the German weekly plan was visually inspected. Weather was a local demo fixture.
+- Built wusel-0.5.3.zip. Changes have not been installed on the Pi.
+
+
 ## Passed
 
 - IPv6 release: all 48 tests passed with the exact Waitress 3.0.2 production dependency installed. Five new checks cover the host-network manifest and real production HTTP requests over IPv4 and IPv6 for health, the application page, styles, and state API. Neither address family was skipped.

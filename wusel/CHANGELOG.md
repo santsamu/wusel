@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.3
+
+- Collapse parent weather into a compact expandable summary and show tasks before the level overview.
+
+- Allow passwords of 4–128 characters for parents and children, including setup and resets.
+- Follow browser regional date and time formats independently of interface language.
+- Spell out month and weekday names and round displayed temperatures to whole numbers.
+
 ## 0.5.2
 
 - Bind production HTTP to IPv4 and IPv6 with separate Waitress sockets.

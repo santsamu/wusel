@@ -113,6 +113,32 @@ class GardenTests(unittest.TestCase):
         self.assertEqual(self.child.call('login',{'username':'alex','password':'child-pass'})[0],401)
         self.assertEqual(self.child.call('login',{'username':'alex','password':'new-child-pass'})[0],200)
         self.assertEqual(self.parent.call('password',{'user':1,'password':'new-parent-pass'})[0],403)
+    def test_four_character_passwords_for_both_roles(self):
+        for role in ['parent', 'child']:
+            with self.subTest(role=role):
+                body={'role':role,'name':'Test','username':'short-'+role,'password':'123'}
+                self.assertEqual(self.parent.call('users',body)[0],400)
+                body['password']='1234'
+                self.assertEqual(self.parent.call('users',body)[0],200)
+                client=Client(self.app)
+                self.assertEqual(client.call('login',{'username':body['username'],'password':'1234'})[0],200)
+        for user in [1,2]:
+            body={'user':user,'password':'123','current_password':'parent-password'}
+            self.assertEqual(self.parent.call('password',body)[0],400)
+        self.assertEqual(self.parent.call('password',{'user':2,'password':'abcd'})[0],200)
+        self.assertEqual(Client(self.app).call('login',{'username':'alex','password':'abcd'})[0],200)
+        self.assertEqual(self.parent.call('password',{'user':1,'password':'abcd','current_password':'parent-password'})[0],200)
+        self.assertEqual(Client(self.app).call('login',{'username':'parent','password':'abcd'})[0],200)
+
+    def test_first_parent_accepts_four_character_password(self):
+        with tempfile.TemporaryDirectory(dir=Path.cwd()/'work'/'test-data') as folder:
+            app=Application(folder)
+            client=Client(app)
+            body={'code':app.setup_code,'name':'Parent','username':'parent','password':'123'}
+            self.assertEqual(client.call('setup',body)[0],400)
+            body['password']='1234'
+            self.assertEqual(client.call('setup',body)[0],200)
+
     def test_rate_limit(self):
         client=Client(self.app)
         for _ in range(10):self.assertEqual(client.call('login',{'username':'missing','password':'bad'},{'REMOTE_ADDR':'10.0.0.2'})[0],401)

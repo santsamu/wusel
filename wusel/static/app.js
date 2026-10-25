@@ -2,8 +2,6 @@
 let state, view = 'today', selected, editing = null, busy = false;
 const app = document.querySelector('#app');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const dayNames = () => ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(k=>t(k));
-const dateLabel = value => new Date(value+'T12:00:00').toLocaleDateString(locale(),{weekday:'long',month:'short',day:'numeric'});
 const parent = () => state.user?.role === 'parent';
 const current = () => state.children?.find(c => c.id === selected) || state.children?.[0];
 let noticeTimer;
@@ -25,9 +23,9 @@ function auth() {
     <section class="panel login"><p class="eyebrow">${setup?t("LET’S GET GROWING"):t("WELCOME BACK")}</p><h2>${setup?t("Create your parent account"):t("Sign in to your garden")}</h2><p>${setup?t("Find the setup code in the Home Assistant app logs."):t("Parents and children each use their own account.")}</p>
     <form data-form="${setup?'setup':'login'}">${setup?field(t("Setup code"),'code','text','autocomplete="off"')+field(t("Your name"),'name','text','maxlength="50" autocomplete="name"'):''}
     ${field(t("Username"),'username','text','minlength="3" maxlength="40" autocomplete="username" autocapitalize="none" spellcheck="false"')}
-    ${field(t("Password"),'password','password',`minlength="${setup?10:6}" maxlength="128" autocomplete="${setup?'new-password':'current-password'}"`)}
+    ${field(t("Password"),'password','password',`minlength="4" maxlength="128" autocomplete="${setup?'new-password':'current-password'}"`)}
     <button class="primary full" type="submit">${setup?t("Create my garden"):t("Sign in")} <span aria-hidden="true">→</span></button></form>
-    <p class="small muted">${setup?t("Parent passwords need at least 10 characters."):t("Forgot a child’s password? A parent can reset it in Family.")}</p></section></div></main>`;
+    <p class="small muted">${setup?t("Passwords need at least 4 characters."):t("Forgot a child’s password? A parent can reset it in Family.")}</p></section></div></main>`;
 }
 function progress(c) {
   const p=c.progress;
@@ -36,11 +34,11 @@ function progress(c) {
 function today(c) {
   const tasks=c.routines.filter(r=>r.scheduled), done=tasks.filter(r=>r.done).length, next=tasks.find(r=>!r.done&&!r.locked);
   return `<div class="heading"><div><p class="eyebrow">${esc(dateLabel(state.today))}</p><h1>${tx(parent()?"{name}’s day":"Hello, {name} ☀️",{name:c.name})}</h1><p>${tx("One thing at a time. You’ve got this.")}</p></div><div class="daily-count"><strong>${done}<span> / ${tasks.length}</span></strong><span>${tx("steps completed")}</span></div></div>
-  ${weatherPanel()}${progress(c)}
+  ${parentWeather()}
   <section class="today-layout"><div><div class="section-heading"><h2>${tx("Today’s little steps")}</h2><span class="muted small">${tx("10 points per step")}</span></div>
-  ${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''} ${next?.id===r.id?'next':''}"><div class="task-time">${esc(r.time)}${next?.id===r.id?`<span class="next-label">${tx("UP NEXT")}</span>`:''}</div><div class="task-content"><h3>${esc(r.title)}</h3>${r.description?`<p>${esc(r.description)}</p>`:''}${r.locked?`<p class="small">${tx("A parent is helping review this step.")}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t("Undo"):t("Complete")} ${esc(r.title)}" ${r.locked?'disabled':''}>${r.done?'✓':`<span aria-hidden="true">○</span>`}</button></article>`).join(''):`<div class="panel empty"><span aria-hidden="true">☁️</span><h3>${tx("A little breathing room")}</h3><p>${parent()?t("Add a routine in Weekly plan to get started."):t("No steps planned for today. Enjoy your day!")}</p></div>`}
+  ${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''} ${next?.id===r.id?'next':''}"><div class="task-time">${esc(timeLabel(r.time))}${next?.id===r.id?`<span class="next-label">${tx("UP NEXT")}</span>`:''}</div><div class="task-content"><h3>${esc(r.title)}</h3>${r.description?`<p>${esc(r.description)}</p>`:''}${r.locked?`<p class="small">${tx("A parent is helping review this step.")}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t("Undo"):t("Complete")} ${esc(r.title)}" ${r.locked?'disabled':''}>${r.done?'✓':`<span aria-hidden="true">○</span>`}</button></article>`).join(''):`<div class="panel empty"><span aria-hidden="true">☁️</span><h3>${tx("A little breathing room")}</h3><p>${parent()?t("Add a routine in Weekly plan to get started."):t("No steps planned for today. Enjoy your day!")}</p></div>`}
   ${tasks.length&&done===tasks.length?`<div class="celebrate" role="status">${tx("🌻 All your steps are done. Look at you grow!")}</div>`:''}</div>
-  <aside class="panel encouragement"><span class="sun" aria-hidden="true">☀️</span><p class="eyebrow">${tx("A LITTLE REMINDER")}</p><h2>${tx("Progress grows")}<br>${tx("one step at a time.")}</h2><p>${tx("You don’t have to do everything at once. Just start with your next little step.")}</p><div class="divider"></div><p class="small muted">${tx("Every new day is a fresh start.")}</p></aside></section>`;
+  <aside class="panel encouragement"><span class="sun" aria-hidden="true">☀️</span><p class="eyebrow">${tx("A LITTLE REMINDER")}</p><h2>${tx("Progress grows")}<br>${tx("one step at a time.")}</h2><p>${tx("You don’t have to do everything at once. Just start with your next little step.")}</p><div class="divider"></div><p class="small muted">${tx("Every new day is a fresh start.")}</p></aside></section>${progress(c)}`;
 }
 function scheduleLabel(r) {return r.specific_date?dateLabel(r.specific_date):r.days.map(d=>dayNames()[d]).join(' · ');}
 function scheduleEditor(c) {
@@ -55,8 +53,8 @@ function scheduleEditor(c) {
 function planner(c) {
   let dates=[]; for(let i=0;i<7;i++){let d=new Date(state.today+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+i);dates.push(d.toISOString().slice(0,10));}
   return `<div class="heading"><div><p class="eyebrow">${tx("MAKE ROOM FOR GOOD HABITS")}</p><h1>${tx("Weekly plan")}</h1><p>${tx("{name}’s rhythm, with room for different days.",{name:c.name})}</p></div></div>
-  ${parent()?scheduleEditor(c):''}<section class="week-grid">${dates.map(d=>{let weekday=(new Date(d+'T12:00:00Z').getUTCDay()+6)%7;let rs=c.routines.filter(r=>r.specific_date?r.specific_date===d:r.days.includes(weekday));return `<div class="day-column ${d===state.today?'is-today':''}"><h3>${dayNames()[weekday]} <span>${d.slice(8)}</span></h3>${rs.length?rs.map(r=>`<div class="week-task"><time>${esc(r.time)}</time><strong>${esc(r.title)}</strong></div>`).join(''):`<p class="small muted">${tx("A clear day")}</p>`}</div>`;}).join('')}</section>
-  ${parent()?`<div class="section-heading"><h2>${tx("All planned steps")}</h2></div><div class="panel routine-list">${c.routines.length?c.routines.map(r=>`<article><div><h3>${esc(r.time)} · ${esc(r.title)}</h3><p class="small muted">${esc(scheduleLabel(r))}</p></div><div class="actions"><button data-action="edit" data-id="${r.id}">${tx("Edit")}</button><button class="text-button danger" data-action="archive" data-id="${r.id}">${tx("Archive")}</button></div></article>`).join(''):`<p>${tx("No routines yet. Add the first step above.")}</p>`}</div>`:''}`;
+  ${parent()?scheduleEditor(c):''}<section class="week-grid">${dates.map(d=>{let weekday=(new Date(d+'T12:00:00Z').getUTCDay()+6)%7;let rs=c.routines.filter(r=>r.specific_date?r.specific_date===d:r.days.includes(weekday));return `<div class="day-column ${d===state.today?'is-today':''}"><h3>${dayNames()[weekday]} <span>${d.slice(8)}</span></h3>${rs.length?rs.map(r=>`<div class="week-task"><time>${esc(timeLabel(r.time))}</time><strong>${esc(r.title)}</strong></div>`).join(''):`<p class="small muted">${tx("A clear day")}</p>`}</div>`;}).join('')}</section>
+  ${parent()?`<div class="section-heading"><h2>${tx("All planned steps")}</h2></div><div class="panel routine-list">${c.routines.length?c.routines.map(r=>`<article><div><h3>${esc(timeLabel(r.time))} · ${esc(r.title)}</h3><p class="small muted">${esc(scheduleLabel(r))}</p></div><div class="actions"><button data-action="edit" data-id="${r.id}">${tx("Edit")}</button><button class="text-button danger" data-action="archive" data-id="${r.id}">${tx("Archive")}</button></div></article>`).join(''):`<p>${tx("No routines yet. Add the first step above.")}</p>`}</div>`:''}`;
 }
 function rewards(c) {
  return `<div class="heading"><div><p class="eyebrow">${tx("CELEBRATE THE LITTLE WINS")}</p><h1>${tx(parent()?"{name}’s badges":"My badges",{name:c.name})}</h1><p>${tx("Something to be proud of, at your own pace.")}</p></div></div>${progress(c)}<div class="badge-grid">${c.progress.badges.map(b=>`<article class="panel badge ${b.earned&&!b.revoked?'earned':'unearned'}"><span class="badge-icon" aria-hidden="true">${b.icon}</span><h3>${esc(t(b.name))}</h3><p>${tx(b.threshold===1?"{count} completed step":"{count} completed steps",{count:b.threshold})}</p><span class="pill">${b.earned?(b.revoked?t("Removed by a parent"):tx("Earned {date}",{date:dateLabel(b.earned)})):t("Still growing")}</span>${parent()&&b.earned?`<button class="text-button ${b.revoked?'':'danger'}" data-action="badge" data-id="${b.id}" data-revoked="${!b.revoked}">${b.revoked?t("Restore badge"):t("Remove badge")}</button>`:''}</article>`).join('')}</div>`;
@@ -66,9 +64,9 @@ function review(c) {
 }
 function family() {
  const accounts=[...state.parents.map(p=>({...p,role:'parent'})),...state.children.map(c=>({...c,role:'child'}))];
- return `<div class="heading"><div><p class="eyebrow">${tx("YOUR LITTLE TEAM")}</p><h1>${tx("Family")}</h1><p>${tx("All parents in this garden can manage every child.")}</p></div></div><div class="family-grid"><section class="panel"><h2>${tx("Add an account")}</h2><form data-form="account"><label>${tx("Account type")}<select name="role"><option value="child">${tx("Child")}</option><option value="parent">${tx("Parent")}</option></select></label>${field(t("Name"),'name','text','maxlength="50"')}${field(t("Username"),'username','text','minlength="3" maxlength="40" autocapitalize="none" autocomplete="off"')}${field(t("Password"),'password','password','minlength="6" maxlength="128" autocomplete="new-password"')}<p class="small muted">${tx("At least 6 characters for children, 10 for parents.")}</p><button class="primary">${tx("Create account")}</button></form></section>
- <section class="panel"><h2>${tx("Your family")}</h2>${accounts.map(a=>`<div class="account"><span class="avatar" aria-hidden="true">${a.role==='parent'?'🌳':'🌱'}</span><div><strong>${esc(a.name)}</strong><p class="small muted">${esc(a.username)} · ${tx(a.role==='parent'?'Parent':'Child')}</p></div></div>`).join('')}<details><summary>${tx("Reset a password")}</summary><form data-form="password"><label>${tx("Account")}<select name="user">${accounts.map(a=>`<option value="${a.id}">${esc(a.name)} (${tx(a.role==='parent'?'Parent':'Child')})</option>`).join('')}</select></label>${field(t("New password"),'password','password','minlength="6" maxlength="128" autocomplete="new-password"')}<label>${tx("Your current parent password (for parent resets)")}<input type="password" name="current_password" autocomplete="current-password"></label><button>${tx("Reset password")}</button></form></details></section></div>
- ${childViewSettings()}${weatherSetup()}<details class="panel audit"><summary>${tx("Recent parent activity")}</summary>${state.audit.map(a=>`<p class="small"><strong>${esc(a.actor_name)}</strong> · ${esc(auditText(a.detail))}<br><span class="muted">${esc(new Date(a.at).toLocaleString(locale(),{timeZone:state.timezone}))}</span></p>`).join('')}</details>`;
+ return `<div class="heading"><div><p class="eyebrow">${tx("YOUR LITTLE TEAM")}</p><h1>${tx("Family")}</h1><p>${tx("All parents in this garden can manage every child.")}</p></div></div><div class="family-grid"><section class="panel"><h2>${tx("Add an account")}</h2><form data-form="account"><label>${tx("Account type")}<select name="role"><option value="child">${tx("Child")}</option><option value="parent">${tx("Parent")}</option></select></label>${field(t("Name"),'name','text','maxlength="50"')}${field(t("Username"),'username','text','minlength="3" maxlength="40" autocapitalize="none" autocomplete="off"')}${field(t("Password"),'password','password','minlength="4" maxlength="128" autocomplete="new-password"')}<p class="small muted">${tx("Passwords need at least 4 characters.")}</p><button class="primary">${tx("Create account")}</button></form></section>
+ <section class="panel"><h2>${tx("Your family")}</h2>${accounts.map(a=>`<div class="account"><span class="avatar" aria-hidden="true">${a.role==='parent'?'🌳':'🌱'}</span><div><strong>${esc(a.name)}</strong><p class="small muted">${esc(a.username)} · ${tx(a.role==='parent'?'Parent':'Child')}</p></div></div>`).join('')}<details><summary>${tx("Reset a password")}</summary><form data-form="password"><label>${tx("Account")}<select name="user">${accounts.map(a=>`<option value="${a.id}">${esc(a.name)} (${tx(a.role==='parent'?'Parent':'Child')})</option>`).join('')}</select></label>${field(t("New password"),'password','password','minlength="4" maxlength="128" autocomplete="new-password"')}<label>${tx("Your current parent password (for parent resets)")}<input type="password" name="current_password" autocomplete="current-password"></label><button>${tx("Reset password")}</button></form></details></section></div>
+ ${childViewSettings()}${weatherSetup()}<details class="panel audit"><summary>${tx("Recent parent activity")}</summary>${state.audit.map(a=>`<p class="small"><strong>${esc(a.actor_name)}</strong> · ${esc(auditText(a.detail))}<br><span class="muted">${esc(dateTimeLabel(a.at,state.timezone))}</span></p>`).join('')}</details>`;
 }
 function dayCount(c){const tasks=c.routines.filter(r=>r.scheduled);return {tasks,done:tasks.filter(r=>r.done).length};}
 function childLevel(c){const p=c.progress;return `<div class="child-level"><span>${tx('Level {level}',{level:p.level})}</span><progress id="child-level-progress" max="100" value="${p.level_progress}" aria-label="${tx('Progress to next level')}" aria-valuetext="${tx('Level {level}: {points} of 100 points',{level:p.level,points:p.level_progress})}"></progress><span id="point-feedback" role="status" aria-live="polite"></span></div>`;}
@@ -99,7 +97,7 @@ function childToday(c){
  let card;
  if(next){
   const instruction=next.description?(next.description.length<=120?`<p class="focus-instruction">${esc(next.description)}</p>`:`<details class="focus-help"><summary>${tx('Help')}</summary><p class="focus-instruction">${esc(next.description)}</p></details>`):'';
-  card=`<article class="focus-card"><p class="focus-label">${tx('Next step')} <time>${esc(next.time)}</time></p><h2 id="next-step-title" tabindex="-1">${esc(next.title)}</h2>${instruction}<button class="primary focus-done" data-action="complete" data-id="${next.id}" aria-label="${tx('Done: {task}',{task:next.title})}">${tx('Done')} <span aria-hidden="true">✓</span></button><p id="step-feedback" class="step-feedback" role="status" aria-live="polite"></p></article>`;
+  card=`<article class="focus-card"><p class="focus-label">${tx('Next step')} <time>${esc(timeLabel(next.time))}</time></p><h2 id="next-step-title" tabindex="-1">${esc(next.title)}</h2>${instruction}<button class="primary focus-done" data-action="complete" data-id="${next.id}" aria-label="${tx('Done: {task}',{task:next.title})}">${tx('Done')} <span aria-hidden="true">✓</span></button><p id="step-feedback" class="step-feedback" role="status" aria-live="polite"></p></article>`;
  }else{
   const key=!tasks.length?'Nothing planned today':done===tasks.length?'All done for today':'A parent is reviewing a step.';
   card=`<section class="focus-card focus-finished"><span aria-hidden="true">${tasks.length&&done===tasks.length?'✓':'☁️'}</span><h2 id="next-step-title" tabindex="-1">${tx(key)}</h2></section>`;
@@ -108,7 +106,7 @@ function childToday(c){
 }
 function childChecklist(c){
  const {tasks}=dayCount(c);
- return `${childHeading(c,tx('My day'))}<section class="child-checklist">${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''}"><time class="task-time">${esc(r.time)}</time><div class="task-content"><h2>${esc(r.title)}</h2>${r.locked?`<p>${tx('A parent is reviewing a step.')}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t('Undo'):t('Complete')} ${esc(r.title)}" ${r.locked?'disabled':''}>${r.done?'✓':'○'}</button></article>`).join(''):`<p>${tx('Nothing planned today')}</p>`}</section><div class="child-tools"><button data-action="view" data-view="focus">${tx('One task at a time')}</button><button class="text-button" data-action="view" data-view="plan">${tx('Weekly plan')}</button></div>`;
+ return `${childHeading(c,tx('My day'))}<section class="child-checklist">${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''}"><time class="task-time">${esc(timeLabel(r.time))}</time><div class="task-content"><h2>${esc(r.title)}</h2>${r.locked?`<p>${tx('A parent is reviewing a step.')}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t('Undo'):t('Complete')} ${esc(r.title)}" ${r.locked?'disabled':''}>${r.done?'✓':'○'}</button></article>`).join(''):`<p>${tx('Nothing planned today')}</p>`}</section><div class="child-tools"><button data-action="view" data-view="focus">${tx('One task at a time')}</button><button class="text-button" data-action="view" data-view="plan">${tx('Weekly plan')}</button></div>`;
 }
 const themes=[['forest','Forest','#246b55'],['ocean','Ocean','#22658b'],['berry','Berry','#954369'],['lavender','Lavender','#6d4b91'],['sunshine','Sunshine','#825518']];
 function applyTheme(value){const theme=themes.find(([id])=>id===value)||themes[0];document.documentElement.dataset.theme=theme[0];document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme[2]);}
@@ -210,8 +208,8 @@ const weatherIcons={'clear-night':'🌙',cloudy:'☁️',exceptional:'⚠️',fo
 const weatherNames={'clear-night':'Clear night',cloudy:'Cloudy',exceptional:'Unusual conditions',fog:'Foggy',hail:'Hail',lightning:'Thunderstorms','lightning-rainy':'Thunderstorms and rain',partlycloudy:'Partly cloudy',pouring:'Heavy rain',rainy:'Rain',snowy:'Snow','snowy-rainy':'Snow and rain',sunny:'Sunny',windy:'Windy','windy-variant':'Windy and cloudy',unknown:'Conditions unknown'};
 const weatherName=c=>t(weatherNames[c]||'Conditions unknown');
 const weatherIcon=c=>weatherIcons[c]||weatherIcons.unknown;
-const temp=v=>typeof v==='number'?new Intl.NumberFormat(locale(),{maximumFractionDigits:1}).format(v)+(weatherData.unit||''):'—';
-const weatherTime=value=>new Date(value).toLocaleTimeString(locale(),{timeZone:state.timezone,hour:'2-digit',minute:'2-digit',hour12:false});
+const temp=v=>temperatureLabel(v,weatherData.unit||'');
+const weatherTime=value=>new Date(value).toLocaleTimeString(locale(),{timeZone:state.timezone,hour:'numeric',minute:'2-digit'});
 function weatherAdvice(w){
  const entries=[w.current,...w.hourly,...(w.daily?[w.daily]:[])],conditions=entries.map(e=>e.condition);
  if(conditions.some(c=>['exceptional','lightning','lightning-rainy','hail'].includes(c)))return [t('Ask a parent before going outside.')];
@@ -225,7 +223,12 @@ function weatherAdvice(w){
  if(conditions.includes('sunny'))hints.push(t('A sun hat could be useful today.'));
  return (hints.length?hints:[t('Check with a parent what to wear today.')]).slice(0,2);
 }
-function weatherPanel(){
+function parentWeather(open=false){
+ const w=weatherData;
+ const summary=!w?t('Checking the weather…'):w.status!=='ok'?t('Weather is unavailable right now.'):temp(w.current.temperature)+' · '+weatherName(w.current.condition);
+ return `<details id="weather-panel" class="parent-weather" ${open?'open':''}><summary><span aria-hidden="true">${w?.status==='ok'?weatherIcon(w.current.condition):'☁️'}</span><span><strong>${tx('Weather for your day')}</strong><span class="small muted">${esc(summary)}${w?.stale?' · '+tx('Last known weather — check with a parent before heading out.'):''}</span></span></summary>${weatherPanel(true)}</details>`;
+}
+function weatherPanel(embedded=false){
  const w=weatherData;
  let content;
  if(!w)content=`<p class="muted">${tx('Checking the weather…')}</p>`;
@@ -236,7 +239,7 @@ function weatherPanel(){
   ${w.stale?`<p class="weather-warning">${tx('Last known weather — check with a parent before heading out.')}</p>`:`<div class="weather-advice"><strong>${tx('GET READY FOR YOUR DAY')}</strong>${weatherAdvice(w).map(h=>`<span>${esc(h)}</span>`).join('')}</div>`}
   ${slots.length?`<h3 class="forecast-title">${tx('Later today')}</h3><ol class="forecast-slots">${slots.map((h,i)=>`<li class="${[0,Math.floor(slots.length/2),slots.length-1].includes(i)?'mobile-summary':''}"><time datetime="${esc(h.datetime)}">${esc(weatherTime(h.datetime))}</time><span class="forecast-icon" aria-hidden="true">${weatherIcon(h.condition)}</span><strong>${esc(temp(h.temperature))}</strong><span>${esc(weatherName(h.condition))}</span><span class="rain-chance">${tx('Rain chance')}: ${h.rain_probability===null?'—':esc(h.rain_probability)+'%'}</span></li>`).join('')}</ol>`:w.daily?`<h3 class="forecast-title">${tx('Today’s forecast')}</h3><p>${esc(weatherName(w.daily.condition))} · ${tx('Low')}: ${esc(temp(w.daily.low))} · ${tx('High')}: ${esc(temp(w.daily.high))}${w.daily.rain_probability!==null?' · '+tx('Rain chance')+': '+esc(w.daily.rain_probability)+'%':''}</p><p class="small muted">${tx('Daily forecast only; hourly details are not available.')}</p>`:`<p class="small muted">${tx('The forecast is unavailable; only current conditions are shown.')}</p>`}`;
  }
- return `<section id="weather-panel" class="panel weather" aria-label="${tx('Weather for your day')}"><h2>${tx('Weather for your day')}</h2>${content}</section>`;
+ return `<section ${embedded?'':'id="weather-panel"'} class="panel weather" aria-label="${tx('Weather for your day')}"><h2>${tx('Weather for your day')}</h2>${content}</section>`;
 }
 function weatherSetup(){return `<section class="panel weather-setup"><h2>${tx('Weather setup')}</h2><p>${tx('Weather comes from your selected Home Assistant weather entity.')}</p><p class="small muted">${tx('Select a weather entity in the Home Assistant app configuration.')} <code>weather_entity</code></p></section>`;}
 async function loadWeather(){
@@ -244,7 +247,7 @@ async function loadWeather(){
  const uid=state.user.id;weatherBusy=true;
  try{const data=await api('weather');if(state?.user?.id!==uid)return;weatherData=data;weatherFetched=Date.now();}
  catch{if(state?.user?.id===uid)weatherData={status:'unavailable'};}
- finally{weatherBusy=false;if(state?.user?.id===uid){const panel=document.querySelector('#weather-panel');if(panel)panel.outerHTML=!parent()&&view!=='weather'?weatherSummary():weatherPanel();}}
+ finally{weatherBusy=false;if(state?.user?.id===uid){const panel=document.querySelector('#weather-panel');if(panel)panel.outerHTML=parent()?parentWeather(panel.open):view!=='weather'?weatherSummary():weatherPanel();}}
 }
 
 refresh().catch(err=>{app.innerHTML=`<main class="panel"><h1>${tx("Could not open your garden")}</h1><p>${tx("Reload the page to try again.")}</p></main>`;notify(err.message);});

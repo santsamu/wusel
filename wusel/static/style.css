@@ -16,3 +16,15 @@
 .child-level{position:relative;display:flex;align-items:center;gap:11px;max-width:260px;margin-top:12px;min-height:20px;font-size:12px;color:var(--muted);border-radius:10px}.child-level>span:first-child{white-space:nowrap;min-width:42px}.child-level progress{flex:1;width:auto;height:6px;margin:0;max-width:190px;background:#dce6d7}.child-level progress::-webkit-progress-bar{background:#dce6d7}.child-level progress::-moz-progress-bar{background:var(--green);border-radius:10px}#point-feedback{position:absolute;right:0;bottom:11px;pointer-events:none}.point-gain{display:inline-block;font-size:17px;font-weight:750;color:var(--green);animation:point-rise 750ms ease-out both}.level-celebrating{animation:level-glow 1.1s ease-out 1}#notice.level-up{background:#e9f1df;color:#244c32;border:1px solid #c2d6ae;box-shadow:0 3px 12px #244d2815;font-weight:650}#notice.level-up::before{content:'✦';display:inline-block;margin-right:9px;color:#98711f;animation:level-star 650ms ease-out 1}@keyframes point-rise{0%{opacity:0;transform:translateY(7px)}20%{opacity:1}75%{opacity:1}100%{opacity:0;transform:translateY(-13px)}}@keyframes level-star{0%{transform:scale(.75) rotate(-15deg)}45%{transform:scale(1.2) rotate(8deg)}100%{transform:scale(1) rotate(0)}}@keyframes level-glow{0%,100%{box-shadow:0 0 0 0 transparent}40%{box-shadow:0 0 0 7px #dceacaaa}}@media(prefers-reduced-motion:reduce){.point-gain,.level-celebrating,#notice.level-up::before{animation:none!important}.point-gain{opacity:1;transform:none}}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 .brand-name{display:flex;flex-direction:column;line-height:1.15}.brand-name small{font-size:10px;font-weight:400;letter-spacing:0;color:var(--muted);margin-top:5px}.child-header .brand-name small{font-size:9px;margin-top:4px}
+
+/* Full weekday names and local 12-hour times must fit on small screens. */
+.day-picks{flex-wrap:wrap}.day-column h3{overflow-wrap:anywhere}.task-time{width:auto;min-width:65px;flex-shrink:0}.week-task time{white-space:nowrap}
+
+/* Parent weather stays compact until forecast details are requested. */
+.parent-weather{margin:0 0 22px;border:1px solid var(--line);border-radius:14px;background:var(--soft)}
+.parent-weather>summary{display:list-item;padding:12px 16px;cursor:pointer;font-weight:400}
+.parent-weather>summary>span:first-of-type{font-size:24px;vertical-align:middle;margin-right:10px}
+.parent-weather>summary>span:last-of-type{display:inline-flex;flex-direction:column;vertical-align:middle;max-width:calc(100% - 65px)}
+.parent-weather>summary strong{font-size:14px}.parent-weather>summary .small{font-size:13px;overflow-wrap:anywhere}
+.parent-weather .weather{border:0;border-top:1px solid var(--line);border-radius:0 0 14px 14px;margin:0;box-shadow:none}
+.today-layout+.growth{margin-top:24px}

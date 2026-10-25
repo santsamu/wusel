@@ -102,7 +102,7 @@ class Application:
         if not re.fullmatch(r'[a-z0-9_.-]+', username):
             raise Problem('Username can contain letters, numbers, dots, underscores and hyphens.')
         password = body.get('password', '')
-        length = 10 if role == 'parent' else 6
+        length = 4
         if not isinstance(password, str) or not length <= len(password) <= 128:
             raise Problem(f'Password must be {length}–128 characters.')
         return name, username, password_hash(password)

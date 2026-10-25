@@ -17,7 +17,6 @@ const CATALOG = {
     "Password": "Password",
     "Create my garden": "Create account",
     "Sign in": "Sign in",
-    "Parent passwords need at least 10 characters.": "Parent passwords need at least 10 characters.",
     "Forgot a child’s password? A parent can reset it in Family.": "Forgot a child’s password? A parent can reset it in Family.",
     "YOUR GARDEN IS GROWING": "YOUR PROGRESS",
     "Progress to next level": "Progress to next level",
@@ -95,7 +94,6 @@ const CATALOG = {
     "Child": "Child",
     "Parent": "Parent",
     "Name": "Name",
-    "At least 6 characters for children, 10 for parents.": "At least 6 characters for children, 10 for parents.",
     "Create account": "Create account",
     "Your family": "Your family",
     "Reset a password": "Reset a password",
@@ -270,7 +268,8 @@ const CATALOG = {
     "Lavender": "Lavender",
     "Sunshine": "Sunshine",
     "Choose a valid color theme.": "Choose a valid color theme.",
-    "Choose a preference to change.": "Choose a preference to change."
+    "Choose a preference to change.": "Choose a preference to change.",
+    "Passwords need at least 4 characters.": "Passwords need at least 4 characters."
   },
   "de": {
     "SMALL STEPS. BRIGHTER DAYS.": "KLEINE SCHRITTE. GUTE TAGE.",
@@ -290,7 +289,6 @@ const CATALOG = {
     "Password": "Passwort",
     "Create my garden": "Konto erstellen",
     "Sign in": "Anmelden",
-    "Parent passwords need at least 10 characters.": "Elternpasswörter brauchen mindestens 10 Zeichen.",
     "Forgot a child’s password? A parent can reset it in Family.": "Kinderpasswort vergessen? Eltern können es unter Familie zurücksetzen.",
     "YOUR GARDEN IS GROWING": "DEIN FORTSCHRITT",
     "Progress to next level": "Fortschritt zur nächsten Stufe",
@@ -368,7 +366,6 @@ const CATALOG = {
     "Child": "Kind",
     "Parent": "Elternteil",
     "Name": "Name",
-    "At least 6 characters for children, 10 for parents.": "Mindestens 6 Zeichen für Kinder, 10 für Eltern.",
     "Create account": "Konto erstellen",
     "Your family": "Deine Familie",
     "Reset a password": "Ein Passwort zurücksetzen",
@@ -543,12 +540,20 @@ const CATALOG = {
     "Lavender": "Lavendel",
     "Sunshine": "Sonnenschein",
     "Choose a valid color theme.": "Wähle eine gültige Farbwelt.",
-    "Choose a preference to change.": "Wähle eine Einstellung aus."
+    "Choose a preference to change.": "Wähle eine Einstellung aus.",
+    "Passwords need at least 4 characters.": "Passwörter brauchen mindestens 4 Zeichen."
   }
 };
 'use strict';
 let language = (()=>{try {const saved=localStorage.getItem('garden-language');if(['en','de'].includes(saved))return saved;}catch{}return navigator.language.toLowerCase().startsWith('de')?'de':'en';})();
-function locale(){return language==='de'?'de-DE':'en-GB';}
+// Regional formats follow the device, independently of the interface language.
+function locale(){return navigator.languages?.[0]||navigator.language||undefined;}
+function dayNames(){return Array.from({length:7},(_,i)=>new Intl.DateTimeFormat(locale(),{weekday:'long',timeZone:'UTC'}).format(new Date(Date.UTC(2026,0,5+i))));}
+function dateLabel(value){return new Intl.DateTimeFormat(locale(),{weekday:'long',year:'numeric',month:'long',day:'numeric',timeZone:'UTC'}).format(new Date(value+'T12:00:00Z'));}
+// Routine times are wall-clock values: keep their hours unchanged across time zones.
+function timeLabel(value){const [hour,minute]=value.split(':').map(Number);return new Intl.DateTimeFormat(locale(),{hour:'numeric',minute:'2-digit',timeZone:'UTC'}).format(new Date(Date.UTC(2000,0,1,hour,minute)));}
+function dateTimeLabel(value,timeZone){return new Intl.DateTimeFormat(locale(),{dateStyle:'long',timeStyle:'short',timeZone}).format(new Date(value));}
+function temperatureLabel(value,unit){return typeof value==='number'&&Number.isFinite(value)?new Intl.NumberFormat(locale(),{maximumFractionDigits:0}).format(Math.abs(value)<0.5?0:value)+unit:'—';}
 function t(key,params={}) {const text=CATALOG[language]?.[key]??CATALOG.en[key]??key;return text.replace(/\{(\w+)\}/g,(_,k)=>String(params[k]??''));}
 function tx(key,params={}) {return esc(t(key,params));}
 function languagePicker(){return `<label class="language-picker">${tx('Language')}<select id="language-picker" aria-label="${tx('Language')}"><option value="en" lang="en" ${language==='en'?'selected':''}>English</option><option value="de" lang="de" ${language==='de'?'selected':''}>Deutsch</option></select></label>`;}
