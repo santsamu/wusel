@@ -1,5 +1,11 @@
 # Validation — version 0.5.2, 25 October 2026
 
+## 0.6.2 validation
+
+- Chrome at 390 × 844 passed German and English child settings-icon checks: no visible label, localized accessible name and tooltip, touch target at least 44 × 44 pixels, keyboard activation, settings-page navigation, current-page state and return to the child's day. No horizontal overflow or JavaScript errors. The German screen was visually inspected.
+- Node catalog and regional-format checks passed (199 direct UI lookups). No backend changes.
+
+
 ## 0.6.1 validation
 
 - Chrome checks at 360, 390 and 1280 pixels passed: separate child and administration navigation, child switching and context labels, active-tab scope, Family/Settings routing, collapsed account menu, English/German language changes with retained focus, Escape and outside-click dismissal, and no horizontal overflow or JavaScript errors. Phone and desktop views were visually inspected. Local demo account/weather data only.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.2
+
+- Replace the child header Settings text with a quiet gear icon, retaining a localized accessible name, tooltip, keyboard focus and a 44-pixel touch target.
+
 ## 0.6.1
 
 - Group parent navigation into the selected child’s pages and separate family administration.
