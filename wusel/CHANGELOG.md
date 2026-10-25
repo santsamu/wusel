@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0
+
+- Add explicit today/tomorrow timing for routine creation, editing and archiving; edits and archives default to tomorrow.
+- Keep today’s tasks and full-day target stable for tomorrow’s changes; label pending changes in the weekly plan and apply them across restarts.
+- Freeze daily plans except for intentional Apply today changes; retain earned and revoked badges.
+- Focus rewards on one next goal with progress and earned badges, with the full collection grouped on demand.
+
 ## 0.6.2
 
 - Replace the child header Settings text with a quiet gear icon, retaining a localized accessible name, tooltip, keyboard focus and a 44-pixel touch target.

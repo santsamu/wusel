@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS completions(id INTEGER PRIMARY KEY,routine INTEGER RE
 CREATE TABLE IF NOT EXISTS badges(child INTEGER REFERENCES users(id),badge TEXT,earned TEXT,
  revoked INTEGER DEFAULT 0,PRIMARY KEY(child,badge));
 CREATE TABLE IF NOT EXISTS daily_plans(child INTEGER REFERENCES users(id),day TEXT,routines TEXT NOT NULL,PRIMARY KEY(child,day));
+CREATE TABLE IF NOT EXISTS pending_routines(routine INTEGER PRIMARY KEY REFERENCES routines(id),effective_on TEXT NOT NULL,payload TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,user INTEGER REFERENCES users(id),csrf TEXT,expires REAL);
 CREATE TABLE IF NOT EXISTS attempts(key TEXT,at REAL);
 CREATE INDEX IF NOT EXISTS attempts_key ON attempts(key,at);
@@ -73,6 +74,8 @@ class Application:
         with self.connect() as db:
             db.execute('PRAGMA journal_mode=WAL')
             db.executescript(SCHEMA)
+            if 'starts_on' not in {row[1] for row in db.execute('PRAGMA table_info(routines)')}:
+                db.execute("ALTER TABLE routines ADD COLUMN starts_on TEXT NOT NULL DEFAULT ''")
             if 'language' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
                 db.execute("ALTER TABLE users ADD COLUMN language TEXT NOT NULL DEFAULT ''")
             if 'day_view' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
@@ -142,12 +145,34 @@ class Application:
         if not row:
             raise Problem('Child profile not found.', 404)
     def scheduled(self, r, day):
+        if r['starts_on'] and day.isoformat() < r['starts_on']:
+            return False
         return r['specific_date'] == day.isoformat() if r['specific_date'] else day.weekday() in json.loads(r['days'])
+    def activate_pending(self, db):
+        today = self.today().isoformat()
+        if not db.execute('SELECT 1 FROM pending_routines WHERE effective_on<=? LIMIT 1',(today,)).fetchone():
+            return
+        db.execute('BEGIN IMMEDIATE')
+        for change in db.execute('SELECT * FROM pending_routines WHERE effective_on<=?',(today,)).fetchall():
+            data = json.loads(change['payload'])
+            columns = ','.join(k+'=?' for k in data)
+            db.execute('UPDATE routines SET '+columns+' WHERE id=?',(*data.values(),change['routine']))
+            db.execute('DELETE FROM pending_routines WHERE routine=?',(change['routine'],))
+        db.commit()
+    def change_date(self, body):
+        choice = body.get('apply_from','today')
+        if choice not in ('today','tomorrow'):
+            raise Problem('Choose when to apply this change.')
+        return self.today() + timedelta(days=choice=='tomorrow')
+    def record_plan(self, db, child, replace=False):
+        today = self.today()
+        planned = [r['id'] for r in db.execute('SELECT * FROM routines WHERE child=? AND archived=0',(child,)) if self.scheduled(r,today)]
+        verb = 'REPLACE' if replace else 'IGNORE'
+        db.execute('INSERT OR '+verb+' INTO daily_plans(child,day,routines) VALUES(?,?,?)',(child,today.isoformat(),json.dumps(planned)))
     def day_stats(self, db, child):
         # Keep past plans immutable so later routine edits cannot rewrite a child's history.
         today = self.today()
-        planned = [r['id'] for r in db.execute('SELECT * FROM routines WHERE child=? AND archived=0',(child,)) if self.scheduled(r,today)]
-        db.execute('INSERT OR REPLACE INTO daily_plans(child,day,routines) VALUES(?,?,?)',(child,today.isoformat(),json.dumps(planned)))
+        self.record_plan(db,child)
         done = {(r['day'],r['routine']) for r in db.execute('SELECT day,routine FROM completions WHERE child=? AND voided=0 AND day<=?',(child,today.isoformat()))}
         full = []
         for plan in db.execute('SELECT day,routines FROM daily_plans WHERE child=? AND day<=? ORDER BY day',(child,today.isoformat())):
@@ -177,7 +202,8 @@ class Application:
         records = {r['badge']: dict(r) for r in db.execute('SELECT * FROM badges WHERE child=?', (child,))}
         return {'count':count,'xp':xp,'level':xp//100+1,'level_progress':xp%100,**stats,
                 'badges':[{'id':k,'name':n,'threshold':t,'icon':i,'kind':kind,'earned':records.get(k,{}).get('earned'),
-                           'revoked':bool(records.get(k,{}).get('revoked',0))} for (k,n,t,i),kind in ALL_BADGES]}
+                           'revoked':bool(records.get(k,{}).get('revoked',0)),
+                           'value':{'steps':count,'days':stats['full_days'],'streak':stats['current_streak']}[kind]} for (k,n,t,i),kind in ALL_BADGES]}
     def state(self, db, user):
         today = self.today()
         result = {'needs_setup':not db.execute('SELECT 1 FROM users LIMIT 1').fetchone(),
@@ -198,6 +224,19 @@ class Application:
                 item.update(done=bool(done and not done['voided']),locked=bool(done and done['locked']))
                 routines.append(item)
             child.update(routines=routines,progress=self.progress(db,c['id']))
+            projected = []
+            for item in routines:
+                change = db.execute('SELECT * FROM pending_routines WHERE routine=?',(item['id'],)).fetchone()
+                planned = dict(item)
+                if change:
+                    update = json.loads(change['payload'])
+                    if 'days' in update: update['days'] = json.loads(update['days'])
+                    planned.update(update)
+                    planned['effective_on'] = change['effective_on']
+                elif item['starts_on'] > today.isoformat():
+                    planned['effective_on'] = item['starts_on']
+                projected.append(planned)
+            child['planned_routines'] = projected
             if user['role']=='parent':
                 child['history'] = [dict(r) for r in db.execute('SELECT * FROM completions WHERE child=? ORDER BY day DESC,id DESC LIMIT 100', (c['id'],))]
             profiles.append(child)
@@ -334,18 +373,38 @@ class Application:
                     raise Problem('Choose a valid date.')
             elif not days:
                 raise Problem('Choose at least one weekday or a specific date.')
-            values = (title,description,at,json.dumps(sorted(set(days))),special,child)
+            effective = self.change_date(body)
+            db.execute('BEGIN IMMEDIATE')
+            self.record_plan(db,child)
+            data = dict(title=title,description=description,time=at,days=json.dumps(sorted(set(days))),specific_date=special,archived=0)
             if body.get('id'):
                 rid = self.integer(body,'id')
-                if not db.execute('UPDATE routines SET title=?,description=?,time=?,days=?,specific_date=? WHERE child=? AND id=? AND archived=0',(*values,rid)).rowcount:
+                if not db.execute('SELECT 1 FROM routines WHERE child=? AND id=? AND archived=0',(child,rid)).fetchone():
                     raise Problem('Routine not found.',404)
+                if effective > self.today():
+                    db.execute('INSERT OR REPLACE INTO pending_routines VALUES(?,?,?)',(rid,effective.isoformat(),json.dumps(data)))
+                else:
+                    db.execute('UPDATE routines SET title=?,description=?,time=?,days=?,specific_date=?,archived=?,starts_on=? WHERE id=?',(*data.values(),'',rid))
+                    db.execute('DELETE FROM pending_routines WHERE routine=?',(rid,))
             else:
-                db.execute('INSERT INTO routines(title,description,time,days,specific_date,child) VALUES(?,?,?,?,?,?)',values)
+                db.execute('INSERT INTO routines(title,description,time,days,specific_date,archived,child,starts_on) VALUES(?,?,?,?,?,?,?,?)',(*data.values(),child,effective.isoformat()))
+            if effective == self.today():
+                self.record_plan(db,child,replace=True)
             self.audit(db,user['id'],'routine',f'Saved routine for child {child}: {title}')
         elif path=='/api/archive':
             rid = self.integer(body,'routine')
-            if not db.execute('UPDATE routines SET archived=1 WHERE id=?',(rid,)).rowcount:
+            effective = self.change_date(body)
+            db.execute('BEGIN IMMEDIATE')
+            routine = db.execute('SELECT * FROM routines WHERE id=? AND archived=0',(rid,)).fetchone()
+            if not routine:
                 raise Problem('Routine not found.',404)
+            self.record_plan(db,routine['child'])
+            if effective > self.today():
+                db.execute('INSERT OR REPLACE INTO pending_routines VALUES(?,?,?)',(rid,effective.isoformat(),json.dumps({'archived':1})))
+            else:
+                db.execute('UPDATE routines SET archived=1 WHERE id=?',(rid,))
+                db.execute('DELETE FROM pending_routines WHERE routine=?',(rid,))
+                self.record_plan(db,routine['child'],replace=True)
             self.audit(db,user['id'],'archive',f'Archived routine {rid}')
         elif path=='/api/correct':
             cid = self.integer(body,'completion')
@@ -403,6 +462,7 @@ class Application:
                         raise Problem('Expected an object.')
                 db = self.connect()
                 try:
+                    self.activate_pending(db)
                     with db:
                         result,cookie = self.dispatch(db,path,method,body,self.session(db,env),env)
                 finally:

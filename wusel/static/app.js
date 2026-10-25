@@ -41,6 +41,9 @@ function today(c) {
   <aside class="panel encouragement"><span class="sun" aria-hidden="true">☀️</span><p class="eyebrow">${tx("A LITTLE REMINDER")}</p><h2>${tx("Progress grows")}<br>${tx("one step at a time.")}</h2><p>${tx("You don’t have to do everything at once. Just start with your next little step.")}</p><div class="divider"></div><p class="small muted">${tx("Every new day is a fresh start.")}</p></aside></section>${progress(c)}`;
 }
 function scheduleLabel(r) {return r.specific_date?dateLabel(r.specific_date):r.days.map(d=>dayNames()[d]).join(' · ');}
+function changeTiming(defaultValue='tomorrow'){
+ return `<label>${tx('Apply changes')}<select name="apply_from" required><option value="today" ${defaultValue==='today'?'selected':''}>${tx('Apply today')}</option><option value="tomorrow" ${defaultValue==='tomorrow'?'selected':''}>${tx('From tomorrow')}</option></select></label><p class="small muted">${tx('Applying today also changes today’s full-day target. Previously earned badges are kept.')}</p>`;
+}
 function scheduleEditor(c) {
  const r=editing || {title:'',description:'',time:'07:00',days:[0,1,2,3,4],specific_date:''};
  return `<details class="panel editor" ${editing?'open':''}><summary>${editing?t("Edit routine"):t("＋ Add a little step")}</summary><form data-form="routine">
@@ -48,19 +51,29 @@ function scheduleEditor(c) {
  <label>${tx("A little guidance (optional)")}<textarea name="description" maxlength="500" rows="2">${esc(r.description)}</textarea></label>
  <fieldset><legend>${tx("Repeat on these days")}</legend><div class="presets"><button type="button" class="text-button" data-action="preset" data-days="0,1,2,3,4">${tx("Weekdays")}</button><button type="button" class="text-button" data-action="preset" data-days="5,6">${tx("Weekend")}</button><button type="button" class="text-button" data-action="preset" data-days="0,1,2,3,4,5,6">${tx("Every day")}</button></div><div class="day-picks">${dayNames().map((d,i)=>`<label><input name="days" type="checkbox" value="${i}" ${r.days.includes(i)?'checked':''}><span>${d}</span></label>`).join('')}</div></fieldset>
  <label>${tx("Or, on one specific date (optional)")}<input type="date" name="specific_date" value="${esc(r.specific_date)}"></label><p class="small muted">${tx("A specific date takes priority over the weekday selection. Make a separate routine for a different weekend time.")}</p>
- <div class="actions"><button class="primary" type="submit">${editing?t("Save changes"):t("Add step")}</button>${editing?`<button type="button" data-action="cancel-edit">${tx("Cancel")}</button>`:''}</div></form></details>`;
+ ${changeTiming(editing?'tomorrow':'today')}<div class="actions"><button class="primary" type="submit">${editing?t("Save changes"):t("Add step")}</button>${editing?`<button type="button" data-action="cancel-edit">${tx("Cancel")}</button>`:''}</div></form></details>`;
 }
 function planner(c) {
+  const planned=c.planned_routines||c.routines;
   const monday=new Date(state.today+'T12:00:00Z');
   monday.setUTCDate(monday.getUTCDate()-(monday.getUTCDay()+6)%7);
   const dates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10);});
   return `<div class="heading"><div><p class="eyebrow">${tx("MAKE ROOM FOR GOOD HABITS")}</p><h1>${tx("Weekly plan")}</h1><p>${tx("{name}’s rhythm, with room for different days.",{name:c.name})}</p></div></div>
-  ${parent()?scheduleEditor(c):''}<section class="week-grid">${dates.map(d=>{let weekday=(new Date(d+'T12:00:00Z').getUTCDay()+6)%7;let rs=c.routines.filter(r=>r.specific_date?r.specific_date===d:r.days.includes(weekday));return `<div class="day-column ${d===state.today?'is-today':''}"><h3>${dayNames()[weekday]} <span>${d.slice(8)}</span></h3>${rs.length?rs.map(r=>`<div class="week-task"><time>${esc(timeLabel(r.time))}</time><strong>${esc(r.title)}</strong></div>`).join(''):`<p class="small muted">${tx("A clear day")}</p>`}</div>`;}).join('')}</section>
-  ${parent()?`<div class="section-heading"><h2>${tx("All planned steps")}</h2></div><div class="panel routine-list">${c.routines.length?c.routines.map(r=>`<article><div><h3>${esc(timeLabel(r.time))} · ${esc(r.title)}</h3><p class="small muted">${esc(scheduleLabel(r))}</p></div><div class="actions"><button data-action="edit" data-id="${r.id}">${tx("Edit")}</button><button class="text-button danger" data-action="archive" data-id="${r.id}">${tx("Archive")}</button></div></article>`).join(''):`<p>${tx("No routines yet. Add the first step above.")}</p>`}</div>`:''}`;
+  ${parent()?scheduleEditor(c):''}<section class="week-grid">${dates.map(d=>{let weekday=(new Date(d+'T12:00:00Z').getUTCDay()+6)%7;let rs=c.routines.map(r=>{const future=planned.find(p=>p.id===r.id);return future?.effective_on&&d>=future.effective_on?future:r;}).filter(r=>!r.archived&&(!r.starts_on||d>=r.starts_on)&&(r.specific_date?r.specific_date===d:r.days.includes(weekday))); return `<div class="day-column ${d===state.today?'is-today':''}"><h3>${dayNames()[weekday]} <span>${d.slice(8)}</span></h3>${rs.length?rs.map(r=>`<div class="week-task"><time>${esc(timeLabel(r.time))}</time><strong>${esc(r.title)}</strong></div>`).join(''):`<p class="small muted">${tx("A clear day")}</p>`}</div>`;}).join('')}</section>
+  ${parent()?`<div class="section-heading"><h2>${tx("All planned steps")}</h2></div><div class="panel routine-list">${planned.length?planned.map(r=>`<article><div><h3>${esc(timeLabel(r.time))} · ${esc(r.title)}</h3><p class="small muted">${esc(scheduleLabel(r))}</p>${r.effective_on?`<p class="small pending-change">${tx(r.archived?'Archived from {date}':'Changes from {date}',{date:dateLabel(r.effective_on)})}</p>`:''}</div><div class="actions"><button data-action="edit" data-id="${r.id}">${tx("Edit")}</button><button class="text-button danger" data-action="archive" data-id="${r.id}">${tx("Archive")}</button></div></article>`).join(''):`<p>${tx("No routines yet. Add the first step above.")}</p>`}</div>`:''}`;
+}
+function badgeCard(b,{goal=false}={}){
+ const value=Math.min(b.threshold,b.value||0);
+ const requirement=b.kind==='streak'?'{count} full days in a row':b.kind==='days'?(b.threshold===1?'{count} fully completed day':'{count} fully completed days'):(b.threshold===1?'{count} completed step':'{count} completed steps');
+ return `<article class="panel badge ${b.earned&&!b.revoked?'earned':'unearned'} ${goal?'next-badge':''}"><span class="badge-icon" aria-hidden="true">${b.icon}</span><h3>${esc(t(b.name))}</h3><p>${tx(requirement,{count:b.threshold})}</p>${goal?`<progress max="${b.threshold}" value="${value}" aria-label="${tx('Badge progress')}"></progress><p class="badge-count">${tx('{value} of {total}',{value,total:b.threshold})}</p>`:`<span class="pill">${b.earned?(b.revoked?t('Removed by a parent'):tx('Earned {date}',{date:dateLabel(b.earned)})):t('Still growing')}</span>`}${parent()&&b.earned?`<button class="text-button ${b.revoked?'':'danger'}" data-action="badge" data-id="${b.id}" data-revoked="${!b.revoked}">${b.revoked?t('Restore badge'):t('Remove badge')}</button>`:''}</article>`;
 }
 function rewards(c) {
- return `<div class="heading"><div><p class="eyebrow">${tx("CELEBRATE THE LITTLE WINS")}</p><h1>${tx(parent()?"{name}’s badges":"My badges",{name:c.name})}</h1><p>${tx("Something to be proud of, at your own pace.")}</p></div></div>${progress(c)}<p class="small muted">${tx('Full days count from this update onward. Complete every planned step; days without steps do not count. Earned badges stay yours, even after a break.')}</p><div class="badge-grid">${c.progress.badges.map(b=>`<article class="panel badge ${b.earned&&!b.revoked?'earned':'unearned'}"><span class="badge-icon" aria-hidden="true">${b.icon}</span><h3>${esc(t(b.name))}</h3><p>${tx(b.kind==='streak'?"{count} full days in a row":b.kind==='days'?(b.threshold===1?"{count} fully completed day":"{count} fully completed days"):(b.threshold===1?"{count} completed step":"{count} completed steps"),{count:b.threshold})}</p><span class="pill">${b.earned?(b.revoked?t("Removed by a parent"):tx("Earned {date}",{date:dateLabel(b.earned)})):t("Still growing")}</span>${parent()&&b.earned?`<button class="text-button ${b.revoked?'':'danger'}" data-action="badge" data-id="${b.id}" data-revoked="${!b.revoked}">${b.revoked?t("Restore badge"):t("Remove badge")}</button>`:''}</article>`).join('')}</div>`;
+ const badges=c.progress.badges,earned=badges.filter(b=>b.earned&&!b.revoked);
+ const next=badges.filter(b=>!b.earned).sort((a,b)=>(b.value||0)/b.threshold-(a.value||0)/a.threshold)[0];
+ const groups=[['steps','Steps'],['days','Full days'],['streak','Series']];
+ return `<div class="heading"><div><p class="eyebrow">${tx('CELEBRATE THE LITTLE WINS')}</p><h1>${tx(parent()?'{name}’s badges':'My badges',{name:c.name})}</h1><p>${tx('Something to be proud of, at your own pace.')}</p></div></div>${next?`<section class="badge-goal"><h2>${tx('Your next badge')}</h2>${badgeCard(next,{goal:true})}</section>`:''}<section class="earned-badges"><h2>${tx('Earned badges')}</h2>${earned.length?`<div class="badge-grid">${earned.map(b=>badgeCard(b)).join('')}</div>`:`<p class="muted">${tx('Your first badge is waiting. One little step at a time.')}</p>`}</section><details class="badge-collection"><summary>${tx('See all badges')}</summary><p class="small muted">${tx('Full days count from this update onward. Complete every planned step; days without steps do not count. Earned badges stay yours, even after a break.')}</p>${groups.map(([kind,label])=>`<section><h2>${esc(t(label))}</h2><div class="badge-grid">${badges.filter(b=>(b.kind||'steps')===kind).map(b=>badgeCard(b)).join('')}</div></section>`).join('')}</details>`;
 }
+
 function review(c) {
  return `<div class="heading"><div><p class="eyebrow">${tx("A HELPING HAND")}</p><h1>${tx("Review progress")}</h1><p>${tx("{name}’s latest 100 steps. Corrections update points and levels.",{name:c.name})}</p></div></div><p class="muted">${tx("Badges celebrate milestones already reached. Remove a badge separately in Badges if needed.")}</p><div class="panel history">${c.history.length?c.history.map(h=>`<article><div><h3>${esc(h.title)}</h3><p class="small muted">${esc(dateLabel(h.day))} · ${h.voided?(h.locked?t("Corrected by parent"):t("Undone")):t("+10 points")}</p></div><button data-action="correct" data-id="${h.id}" data-restore="${!!h.voided}">${h.voided?t("Restore"):t("Reverse completion")}</button></article>`).join(''):`<p>${tx("Completed steps will appear here.")}</p>`}</div>`;
 }
@@ -160,10 +173,15 @@ app.addEventListener('click',async e=>{
  const action=b.dataset.action,id=Number(b.dataset.id),c=current();
  if(action==='theme'){await setTheme(b.dataset.theme);return;}
  if(action==='view'){view=b.dataset.view;editing=null;render();document.querySelector('main h1,main h2')?.focus({preventScroll:true});window.scrollTo(0,0);return;}
- if(action==='edit'){editing=c.routines.find(r=>r.id===id);render();document.querySelector('.editor').scrollIntoView({behavior:'smooth'});return;}
+ if(action==='edit'){editing=(c.planned_routines||c.routines).find(r=>r.id===id);render();document.querySelector('.editor').scrollIntoView({behavior:'smooth'});return;}
  if(action==='cancel-edit'){editing=null;render();return;}
  if(action==='preset'){const ds=b.dataset.days.split(',');document.querySelectorAll('[name=days]').forEach(x=>x.checked=ds.includes(x.value));document.querySelector('[name=specific_date]').value='';return;}
- if(action==='archive'&&!confirm(t("Archive this routine? Past progress will be kept.")))return;
+ if(action==='archive'){
+  const dialog=document.createElement('dialog');dialog.className='archive-dialog';
+  dialog.innerHTML=`<h2>${tx('Archive routine')}</h2><p>${tx('Archive this routine? Past progress will be kept.')}</p><form data-form="archive"><input type="hidden" name="routine" value="${id}">${changeTiming()}<div class="actions"><button class="primary" type="submit">${tx('Archive')}</button><button type="button" data-action="close-dialog">${tx('Cancel')}</button></div></form>`;
+  app.append(dialog);dialog.addEventListener('close',()=>dialog.remove());dialog.showModal();return;
+ }
+ if(action==='close-dialog'){b.closest('dialog').close();return;}
  if(action==='badge'&&b.dataset.revoked==='true'&&!confirm(t("Remove this earned badge? You can restore it later.")))return;
  busy=true;b.disabled=true;
  const earnedBefore=new Set(c?.progress.badges.filter(b=>b.earned).map(b=>b.id)||[]);
@@ -178,7 +196,6 @@ app.addEventListener('click',async e=>{
    if(childCompleted&&earnedPoints>0){showPoints(earnedPoints);if(feedback)feedback.textContent=t('Well done!');await new Promise(resolve=>setTimeout(resolve,750));}
    else if(!childCompleted)notify(r.done?t('Step undone.'):t('Well done!'),1600);
   }
-  if(action==='archive')await api('archive',{routine:id});
   if(action==='badge')await api('badge',{child:c.id,badge:b.dataset.id,revoked:b.dataset.revoked==='true'});
   if(action==='correct')await api('correct',{completion:id,restore:b.dataset.restore==='true'});
   await refresh();
@@ -201,6 +218,7 @@ app.addEventListener('submit',async e=>{
   if(kind==='account')await api('users',d);
   if(kind==='child-view')await api('child-settings',{child:Number(d.child),day_view:d.day_view});
   if(kind==='password')await api('password',{...d,user:Number(d.user)});
+  if(kind==='archive'){await api('archive',{routine:Number(d.routine),apply_from:d.apply_from});f.closest('dialog').close();}
   if(kind==='routine') {await api('routines',{...d,id:d.id?Number(d.id):undefined,child:current().id,days:[...f.querySelectorAll('[name=days]:checked')].map(x=>Number(x.value))});editing=null;}
   if(kind!=='login')notify(kind==='login'?t("Welcome back."):kind==='password'?t("Password reset. Existing sessions for that account were signed out."):t("Saved. Your garden is up to date."));await refresh();
  }catch(err){notify(err.message);if(b)b.disabled=false;}finally{busy=false;}

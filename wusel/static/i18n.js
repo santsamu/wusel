@@ -291,7 +291,24 @@ const CATALOG = {
     "Parent account": "Parent account",
     "Child area": "Child area",
     "For {name}": "For {name}",
-    "Administration": "Administration"
+    "Administration": "Administration",
+    "Choose when to apply this change.": "Choose when to apply this change.",
+    "Apply changes": "Apply changes",
+    "Apply today": "Apply today",
+    "From tomorrow": "From tomorrow",
+    "Applying today also changes today’s full-day target. Previously earned badges are kept.": "Applying today also changes today’s full-day target. Previously earned badges are kept.",
+    "Archived from {date}": "Archived from {date}",
+    "Changes from {date}": "Changes from {date}",
+    "Archive routine": "Archive routine",
+    "Badge progress": "Badge progress",
+    "{value} of {total}": "{value} of {total}",
+    "Your next badge": "Your next badge",
+    "Earned badges": "Earned badges",
+    "Your first badge is waiting. One little step at a time.": "Your first badge is waiting. One little step at a time.",
+    "See all badges": "See all badges",
+    "Steps": "Steps",
+    "Full days": "Full days",
+    "Series": "Streaks"
   },
   "de": {
     "SMALL STEPS. BRIGHTER DAYS.": "KLEINE SCHRITTE. GUTE TAGE.",
@@ -585,7 +602,24 @@ const CATALOG = {
     "Parent account": "Elternkonto",
     "Child area": "Kinderbereich",
     "For {name}": "Für {name}",
-    "Administration": "Verwaltung"
+    "Administration": "Verwaltung",
+    "Choose when to apply this change.": "Wähle, ab wann diese Änderung gilt.",
+    "Apply changes": "Änderungen übernehmen",
+    "Apply today": "Ab heute",
+    "From tomorrow": "Ab morgen",
+    "Applying today also changes today’s full-day target. Previously earned badges are kept.": "Ab heute ändert sich auch das Tagesziel für einen vollständig erledigten Tag. Bereits verdiente Abzeichen bleiben erhalten.",
+    "Archived from {date}": "Archiviert ab {date}",
+    "Changes from {date}": "Änderungen ab {date}",
+    "Archive routine": "Routine archivieren",
+    "Badge progress": "Fortschritt zum Abzeichen",
+    "{value} of {total}": "{value} von {total}",
+    "Your next badge": "Dein nächstes Abzeichen",
+    "Earned badges": "Verdiente Abzeichen",
+    "Your first badge is waiting. One little step at a time.": "Dein erstes Abzeichen wartet. Ein kleiner Schritt nach dem anderen.",
+    "See all badges": "Alle Abzeichen ansehen",
+    "Steps": "Schritte",
+    "Full days": "Ganze Tage",
+    "Series": "Serien"
   }
 };
 'use strict';

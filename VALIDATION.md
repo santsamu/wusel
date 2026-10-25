@@ -1,5 +1,13 @@
 # Validation — version 0.5.2, 25 October 2026
 
+## 0.7.0 validation
+
+- All 65 existing and new backend tests passed, followed by one additional legacy-upgrade regression (66 total). Coverage includes queued edit/archive timing, stable today targets, intentional immediate changes, future tasks rejected today, replacement of pending edits, restart activation, invalid timing, child authorization and badge progress units. The upgrade test retained routines, points, full days and sessions from a database without the new schema.
+- Node badge-view regressions passed for closest-progress selection, empty/all-earned views, retained revocation, parent-only controls and German labels. Translation/format checks passed (212 direct UI lookups).
+- Chrome at 390 × 844 used the actual WSGI backend through a local request adapter: edited and archived a routine for tomorrow, verified today's task remained, deliberately archived today, and checked the focused badge view, 1-of-3 progress, two earned badges, collapsed/grouped 17-badge collection and parent-only controls. Each request recreated the application, exercising persisted pending changes. No JavaScript errors or horizontal overflow; the child view was visually inspected. All data was local demo data.
+- Built wusel-0.7.0.zip. Not deployed to the Pi by these checks.
+
+
 ## 0.6.2 validation
 
 - Chrome at 390 × 844 passed German and English child settings-icon checks: no visible label, localized accessible name and tooltip, touch target at least 44 × 44 pixels, keyboard activation, settings-page navigation, current-page state and return to the child's day. No horizontal overflow or JavaScript errors. The German screen was visually inspected.
