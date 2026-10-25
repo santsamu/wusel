@@ -1,0 +1,16 @@
+{
+  "configuration": {
+    "timezone": {
+      "name": "Timezone",
+      "description": "IANA timezone used for routines and weather times, e.g. Europe/Zurich."
+    },
+    "weather_entity": {
+      "name": "Weather entity",
+      "description": "Entity ID for your Home Assistant weather provider, e.g. weather.forecast_home. Leave empty to disable weather."
+    },
+    "secure_cookie": {
+      "name": "HTTPS-only login cookie",
+      "description": "Enable only when accessing the app through HTTPS."
+    }
+  }
+}

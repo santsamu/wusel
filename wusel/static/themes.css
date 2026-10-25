@@ -1,0 +1,23 @@
+/* Wusel account themes: calm surfaces and clear controls. */
+:root[data-theme="forest"]{--ink:#203e33;--green:#246b55;--muted:#5a6d63;--line:#cfdbce;--paper:#f5f8f1;--surface:#fffef9;--soft:#e5efde;--hover:#194f3e;--track:#d4e2c9;--deep:#cdddbe;}
+.swatch-forest{background:linear-gradient(135deg,#246b55 0 48%,#e5efde 48% 100%)}
+:root[data-theme="ocean"]{--ink:#233b4c;--green:#22658b;--muted:#526b7c;--line:#ccdde7;--paper:#f1f7fb;--surface:#fdfefe;--soft:#e0edf5;--hover:#174d6c;--track:#c8dfed;--deep:#b6d2e3;}
+.swatch-ocean{background:linear-gradient(135deg,#22658b 0 48%,#e0edf5 48% 100%)}
+:root[data-theme="berry"]{--ink:#482d3b;--green:#954369;--muted:#765a6b;--line:#e7cfdb;--paper:#fcf3f7;--surface:#fffdfe;--soft:#f4e1eb;--hover:#783454;--track:#e8cbd9;--deep:#e0bacc;}
+.swatch-berry{background:linear-gradient(135deg,#954369 0 48%,#f4e1eb 48% 100%)}
+:root[data-theme="lavender"]{--ink:#392e4c;--green:#6d4b91;--muted:#6a5e7b;--line:#ddd2e8;--paper:#f7f3fc;--surface:#fffefe;--soft:#ece2f6;--hover:#563875;--track:#dcd0eb;--deep:#ccbae0;}
+.swatch-lavender{background:linear-gradient(135deg,#6d4b91 0 48%,#ece2f6 48% 100%)}
+:root[data-theme="sunshine"]{--ink:#493a21;--green:#825518;--muted:#746143;--line:#e6d8bd;--paper:#fcf8ed;--surface:#fffefa;--soft:#f3e8c9;--hover:#67410f;--track:#e6d6aa;--deep:#dcc591;}
+.swatch-sunshine{background:linear-gradient(135deg,#825518 0 48%,#f3e8c9 48% 100%)}
+
+header,.panel,.focus-card,.task,.day-column,.forecast-slots li,button,input,textarea,select{background-color:var(--surface)}
+button:hover{background-color:var(--soft)}.primary{background-color:var(--green);color:white;border-color:var(--green)}.primary:hover{background-color:var(--hover)}.text-button,.nav-button{background:transparent}.nav-button.active{background:var(--green)}
+input,textarea,select,.day-picks span{border-color:var(--line)}.day-picks input:checked+span{background:var(--green);border-color:var(--green)}input[type=checkbox],input[type=radio]{accent-color:var(--green)}
+.focus-card,.check{border-color:var(--deep)}.task.next{border-color:var(--green)}.task.done,.day-column.is-today,.badge.earned{background:var(--soft);border-color:var(--deep)}.task.done .check{background:var(--green);border-color:var(--green)}.task.done h2{color:var(--muted);text-decoration:line-through}
+.growth,.weather,.weather-summary button,.weather-advice,.encouragement{background:var(--soft);border-color:var(--line)}.grow-icon{background:var(--deep)}.pill{background:var(--surface);border-color:var(--deep);color:var(--green)}.badge.earned{border-color:var(--deep)}
+progress,.child-level progress{background:var(--track);accent-color:var(--green)}progress::-webkit-progress-bar,.child-level progress::-webkit-progress-bar{background:var(--track)}progress::-webkit-progress-value{background:var(--green)}progress::-moz-progress-bar{background:var(--green)}
+.rain-chance{color:var(--muted)}.weather-summary button,.focus-label,.point-gain{color:var(--green)}.weather-summary button>span:nth-child(2){color:var(--ink)}#notice{background:var(--ink)}#notice.level-up{background:var(--soft);color:var(--ink);border-color:var(--deep)}
+.theme-picker{margin:26px 0 28px;padding:0;border:0}.theme-picker legend{font-size:15px;font-weight:650;margin-bottom:12px}.theme-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.theme-option{display:flex;align-items:center;gap:12px;text-align:left;min-height:62px;border:2px solid var(--line);font-size:14px;font-weight:500;border-radius:13px;padding:11px 14px}.theme-option[aria-pressed=true]{border-color:var(--green);background:var(--soft)}.theme-option>span:nth-child(2){flex:1;min-width:0}.theme-swatch{width:28px;height:28px;flex-shrink:0;border-radius:50%;border:1px solid #0002}.theme-check{width:16px;flex-shrink:0;color:var(--green);font-weight:750}.theme-option:last-child{grid-column:1/-1}.personal-settings{max-width:650px}.personal-settings h1{font-size:30px}
+@keyframes level-glow{0%,100%{box-shadow:0 0 0 0 transparent}40%{box-shadow:0 0 0 7px var(--soft)}}
+@media(max-width:680px){.theme-option{font-size:13px;padding:10px;gap:9px;min-height:58px}.theme-swatch{width:25px;height:25px}.theme-options{gap:9px}.theme-picker legend{font-size:14px}}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline-color:var(--green)}.day-picks input:focus-visible+span{outline-color:var(--green)}
