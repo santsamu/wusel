@@ -1,5 +1,12 @@
 # Validation — version 0.5.2, 25 October 2026
 
+## 0.7.1 validation
+
+- Chrome checks passed at 360, 390, 960 and 1280 pixels: child selector aligned with the first menu item, redundant visible labels removed, language/child switching, management routing, account-menu focus/Escape/outside dismissal and no horizontal overflow or JavaScript errors.
+- German earned badge dates were checked in 3-column grids at 960/1280 pixels and 2-column phone grids. Every pill stayed within its card content width; full dates were retained. Phone and 3-column screenshots were visually inspected using local demo data.
+- JavaScript syntax, Node badge-view regression tests and translation/format checks passed (209 direct UI lookups), plus Python catalog checks. No backend changes.
+
+
 ## 0.7.0 validation
 
 - All 65 existing and new backend tests passed, followed by one additional legacy-upgrade regression (66 total). Coverage includes queued edit/archive timing, stable today targets, intentional immediate changes, future tasks rejected today, replacement of pending edits, restart activation, invalid timing, child authorization and badge progress units. The upgrade test retained routines, points, full days and sessions from a database without the new schema.

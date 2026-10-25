@@ -308,7 +308,9 @@ const CATALOG = {
     "See all badges": "See all badges",
     "Steps": "Steps",
     "Full days": "Full days",
-    "Series": "Streaks"
+    "Series": "Streaks",
+    "Overview": "Overview",
+    "Earned": "Earned"
   },
   "de": {
     "SMALL STEPS. BRIGHTER DAYS.": "KLEINE SCHRITTE. GUTE TAGE.",
@@ -619,7 +621,9 @@ const CATALOG = {
     "See all badges": "Alle Abzeichen ansehen",
     "Steps": "Schritte",
     "Full days": "Ganze Tage",
-    "Series": "Serien"
+    "Series": "Serien",
+    "Overview": "Übersicht",
+    "Earned": "Erreicht am"
   }
 };
 'use strict';
@@ -634,7 +638,7 @@ function dateTimeLabel(value,timeZone){return new Intl.DateTimeFormat(locale(),{
 function temperatureLabel(value,unit){return typeof value==='number'&&Number.isFinite(value)?new Intl.NumberFormat(locale(),{maximumFractionDigits:0}).format(Math.abs(value)<0.5?0:value)+unit:'—';}
 function t(key,params={}) {const text=CATALOG[language]?.[key]??CATALOG.en[key]??key;return text.replace(/\{(\w+)\}/g,(_,k)=>String(params[k]??''));}
 function tx(key,params={}) {return esc(t(key,params));}
-function languagePicker(){return `<label class="language-picker">${tx('Language')}<select id="language-picker" aria-label="${tx('Language')}"><option value="en" lang="en" ${language==='en'?'selected':''}>English</option><option value="de" lang="de" ${language==='de'?'selected':''}>Deutsch</option></select></label>`;}
+function languagePicker(showLabel=true){return `<label class="language-picker">${showLabel?tx('Language'):''}<select id="language-picker" aria-label="${tx('Language')}"><option value="en" lang="en" ${language==='en'?'selected':''}>English</option><option value="de" lang="de" ${language==='de'?'selected':''}>Deutsch</option></select></label>`;}
 function drafts(){return [...document.querySelectorAll('form')].map(f=>({kind:f.dataset.form,child:f.dataset.child,open:f.closest('details')?.open,values:[...f.elements].filter(e=>e.name).map(e=>({name:e.name,value:e.value,checked:e.checked}))}));}
 function restoreDrafts(saved){for(const d of saved){const form=document.querySelector(`form[data-form="${d.kind}"]${d.child?'[data-child="'+d.child+'"]':''}`);if(!form)continue;const fields=[...form.elements];d.values.forEach((v,i)=>{const el=fields.filter(e=>e.name)[i];if(el){el.value=v.value;if(el.type==='checkbox')el.checked=v.checked;}});if(form.closest('details'))form.closest('details').open=!!d.open;}}
 async function setLanguage(value){

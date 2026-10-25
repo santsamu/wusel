@@ -1,6 +1,6 @@
 # Wusel
 
-**von Wild & Weich · Version 0.7.0**
+**von Wild & Weich · Version 0.7.1**
 
 Beim Bearbeiten und Archivieren von Routinen wählen Eltern „Ab heute“ oder „Ab morgen“ (Standard). Neue Routinen gelten standardmäßig ab heute. Ab heute wird auch das aktuelle Tagesziel bewusst angepasst; ab morgen bleiben heutige Aufgaben und Tagesziel unverändert. Vorgemerkte Änderungen werden im Wochenplan angezeigt und ab dem gewählten Datum wirksam. Verdiente Abzeichen bleiben erhalten. Die Abzeichenansicht zeigt zuerst ein nächstes Ziel mit Fortschritt und verdiente Abzeichen; „Alle Abzeichen ansehen“ öffnet die Sammlung nach Schritten, ganzen Tagen und Serien.
 
@@ -64,7 +64,7 @@ Ab Version 0.5.2 nutzt Wusel direkt das Netzwerk des Pi und lauscht über IPv4 u
 
 Prüfe nach dem Update `http://homeassistant.local:8099/health` und die IPv4-Adresse des Pi, zum Beispiel `http://YOUR_PI_IP:8099/health`. Beide sollen `{"ok":true}` liefern. Im Protokoll erscheinen die Listener-Adressen (`0.0.0.0:8099` sowie `[::]:8099` bei aktiviertem IPv6) und anschließend `Wusel ready: HTTP port 8099`.
 
-Übernimm alle neuen App-Dateien, einschließlich `server.py`, `Dockerfile` und `config.yaml`. Aktualisiere beziehungsweise baue die installierte App neu und prüfe Version **0.7.0**. Ein bloßer Neustart des alten Containers ändert den Netzwerkmodus noch nicht. Installationskennung und gespeicherte Daten bleiben erhalten.
+Übernimm alle neuen App-Dateien, einschließlich `server.py`, `Dockerfile` und `config.yaml`. Aktualisiere beziehungsweise baue die installierte App neu und prüfe Version **0.7.1**. Ein bloßer Neustart des alten Containers ändert den Netzwerkmodus noch nicht. Installationskennung und gespeicherte Daten bleiben erhalten.
 
 Wusel teilt damit die Netzwerkschnittstellen des Pi. Dafür sind weder das Abschalten des Schutzmodus noch eine Portfreigabe am Router nötig. Die vorhandene Anmeldung und die Hinweise zu HTTP/HTTPS gelten weiterhin.
 
@@ -85,7 +85,7 @@ Die Trennung von Ordner und Installationskennung beschreibt Home Assistant unter
 
 **Kinder:** Erledige den nächsten Schritt über **Erledigt**. **Meinen Tag ansehen** öffnet die Checkliste mit Rückgängig-Funktion. **Meine Abzeichen** öffnet die Belohnungen. Unter **Einstellungen** stehen Sprache, Farbwelt und Abmelden bereit. Antippen der Wetterzeile öffnet die Vorhersage.
 
-**Eltern:** Unter **Familie** lassen sich Konten anlegen, Passwörter zurücksetzen und Startansichten wählen. Im **Wochenplan** werden Routinen erstellt oder bearbeitet. Unter **Prüfen** können Erledigungen zurückgenommen oder wiederhergestellt werden. **Abzeichen** erlaubt das Entfernen und Wiederherstellen von Abzeichen. Eltern wählen ihre Farben unter **Einstellungen**; Sprache und Abmelden stehen im Kontomenü oben rechts. Kinderseiten sind unter dem ausgewählten Kind zusammengefasst; Familie und Einstellungen stehen separat unter Verwaltung.
+**Eltern:** Unter **Familie** lassen sich Konten anlegen, Passwörter zurücksetzen und Startansichten wählen. Im **Wochenplan** werden Routinen erstellt oder bearbeitet. Unter **Prüfen** können Erledigungen zurückgenommen oder wiederhergestellt werden. **Abzeichen** erlaubt das Entfernen und Wiederherstellen von Abzeichen. Eltern wählen ihre Farben unter **Einstellungen**; Sprache und Abmelden stehen im Kontomenü oben rechts. Die Kinderauswahl steht direkt neben Übersicht, Wochenplan, Abzeichen und Prüfen; Familie und Einstellungen folgen in derselben Navigation. Überflüssige sichtbare Beschriftungen für Kind, Verwaltung, Sprache und Kontorolle entfallen; zugängliche Namen bleiben erhalten.
 
 Ein erledigter Schritt gibt zehn Punkte. Alle hundert Punkte folgt eine neue Stufe. Abzeichen gibt es nach 1, 5, 20, 50 und 100 erledigten Schritten. Wiederholtes Tippen und Rückgängig/Wiederankreuzen erzeugen keine zusätzlichen Punkte und spielen die Punkteanimation nicht erneut ab. Eine Elternkorrektur entfernt die Punkte und sperrt die Erledigung bis zur Wiederherstellung. Entferne ein zu Unrecht erhaltenes Abzeichen separat.
 
@@ -137,6 +137,6 @@ node tests/test_i18n.cjs
 python tools/package.py
 ```
 
-Das Paketwerkzeug schreibt `wusel-0.7.0.zip` in den Unterordner `dist` des Projekts. Im ZIP liegt die App-Konfiguration unter `wusel/wusel/config.yaml`. Lokale Daten, virtuelle Umgebungen und Bytecode werden nicht eingepackt.
+Das Paketwerkzeug schreibt `wusel-0.7.1.zip` in den Unterordner `dist` des Projekts. Im ZIP liegt die App-Konfiguration unter `wusel/wusel/config.yaml`. Lokale Daten, virtuelle Umgebungen und Bytecode werden nicht eingepackt.
 
 Prüfungen und Grenzen stehen in [VALIDATION.md](../VALIDATION.md). Der Produktionsserver wurde lokal über IPv4 und IPv6 geprüft. Der neue Container-Netzwerkmodus, der Zugriff über den Hostnamen, Live-Wetter und Backup/Wiederherstellung müssen nach dem Update auf dem Pi überprüft werden.

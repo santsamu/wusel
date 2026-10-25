@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.1
+
+- Compact parent navigation with an inline child selector and shorter labels; remove redundant visible child, administration, language and account-role labels.
+- Preserve accessible control names and account-menu keyboard behavior.
+- Split earned-badge labels and full dates across lines, containing long dates at every badge-grid size.
+
 ## 0.7.0
 
 - Add explicit today/tomorrow timing for routine creation, editing and archiving; edits and archives default to tomorrow.
