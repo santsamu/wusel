@@ -1,6 +1,6 @@
 # Wusel
 
-**von Wild & Weich · Version 0.6.0**
+**von Wild & Weich · Version 0.6.1**
 
 17 badges celebrate steps (1, 5, 10, 20, 50, 100, 150, 250, 500, 1000), full days (1, 10, 30), and streaks (3, 7, 14, 30 consecutive calendar days). Full days start counting with version 0.6.0 and require at least one planned step and every step completed. Empty or incomplete days break a streak; today has until midnight. Past daily plans survive later schedule edits. Corrections recalculate streaks; earned badges remain and parents can revoke them.
 
@@ -62,7 +62,7 @@ From version 0.5.2, Wusel uses the Pi's host network and listens on IPv4 and IPv
 
 After updating, test `http://homeassistant.local:8099/health` and the Pi's IPv4 address, for example `http://YOUR_PI_IP:8099/health`. Both should return `{"ok":true}`. Wusel logs the bound addresses (`0.0.0.0:8099` and `[::]:8099` when IPv6 is enabled), followed by `Wusel ready: HTTP port 8099`.
 
-Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.6.0** before starting it; restarting an older container alone does not switch its network mode. The installation ID and persistent data remain unchanged.
+Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.6.1** before starting it; restarting an older container alone does not switch its network mode. The installation ID and persistent data remain unchanged.
 
 Host networking shares the Pi's network interfaces with the app. It does not require protection mode to be disabled or router port forwarding to be enabled. The existing family authentication and HTTP/HTTPS guidance still apply.
 
@@ -83,7 +83,7 @@ Home Assistant documents the distinction between app folders and installation ID
 
 **Children:** Complete the next task with **Done**. **See my day** opens the checklist, including undo. **My badges** opens rewards. **Settings** contains language, color theme, and sign out. Tap the weather row for the forecast.
 
-**Parents:** Use **Family** to create accounts, reset passwords, and choose each child's default home view. Use **Weekly plan** to create or edit routines, **Review** to reverse or restore completions, and **Badges** to remove or restore badges. Parents choose their own colors in **Settings**; their language selector is in the header.
+**Parents:** Use **Family** to create accounts, reset passwords, and choose each child's default home view. Use **Weekly plan** to create or edit routines, **Review** to reverse or restore completions, and **Badges** to remove or restore badges. Parents choose their own colors in **Settings**; language and sign-out are in the account menu at the top right. Child pages are grouped under the selected child; Family and Settings are separate under Administration.
 
 Each completion gives 10 points. Every 100 points advances a level; milestone badges are awarded at 1, 5, 20, 50, and 100 completed steps. Duplicate taps and undo/recheck do not multiply points or replay the reward animation. Reversing a completion removes its points and locks it until a parent restores it. Remove an incorrectly earned badge separately.
 
@@ -135,6 +135,6 @@ node tests/test_i18n.cjs
 python tools/package.py
 ```
 
-The package command writes `wusel-0.6.0.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
+The package command writes `wusel-0.6.1.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
 
 See [VALIDATION.md](VALIDATION.md) for checks and test boundaries. The production server has been tested over IPv4 and IPv6 locally. The updated container network mode, hostname access, live weather, and backup/restore still need verification after updating the Pi.

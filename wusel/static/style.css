@@ -28,3 +28,19 @@
 .parent-weather>summary strong{font-size:14px}.parent-weather>summary .small{font-size:13px;overflow-wrap:anywhere}
 .parent-weather .weather{border:0;border-top:1px solid var(--line);border-radius:0 0 14px 14px;margin:0;box-shadow:none}
 .today-layout+.growth{margin-top:24px}
+
+/* Clearly distinguish child-specific pages from family administration. */
+.parent-header{align-items:center;gap:16px}.parent-account{position:relative;flex-shrink:0}
+.parent-account>summary{cursor:pointer;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:white;font-size:14px}
+.parent-account>summary>span{display:inline-block;vertical-align:middle;max-width:150px;overflow-wrap:anywhere}
+.parent-account small{display:block;color:var(--muted);font-size:11px;font-weight:400}
+.parent-account-panel{position:absolute;right:0;top:calc(100% + 8px);width:260px;max-width:calc(100vw - 40px);padding:20px;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px #0002;z-index:15}
+.parent-account-panel .language-picker{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 16px}
+.parent-account-panel .language-picker select{margin:0;min-width:120px}.parent-account-panel button{width:100%;text-align:left}
+.parent-navigation{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;padding:22px 0;border-bottom:1px solid var(--line)}
+.parent-navigation section{min-width:0}.parent-navigation nav{display:flex;flex-wrap:wrap;gap:6px;border:0;padding:12px 0 0;margin:0}
+.parent-navigation .child-picker{display:flex;align-items:center;gap:12px;margin:0;width:auto;font-size:13px;font-weight:600}
+.parent-navigation .child-picker select{flex:none;width:180px;max-width:100%;margin:0}
+.nav-scope{display:flex;align-items:center;min-height:46px;margin:0;font-size:13px;font-weight:600;color:var(--muted)}
+.family-navigation{border-left:1px solid var(--line);padding-left:24px}
+@media(max-width:680px){.parent-header{align-items:center}.parent-account>summary{padding:6px 10px;font-size:13px}.parent-account>summary>span{max-width:115px}.parent-navigation{grid-template-columns:1fr;gap:16px;padding:18px 0}.family-navigation{border-left:0;border-top:1px solid var(--line);padding:12px 0 0;display:flex;align-items:center;justify-content:space-between;gap:8px}.family-navigation .nav-scope{font-size:12px;min-height:0}.parent-navigation .family-navigation nav{padding:0;flex-wrap:wrap}.parent-navigation .nav-button{font-size:12px;padding:9px 10px}.parent-navigation .child-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px}.child-tabs .nav-button{text-align:left}}

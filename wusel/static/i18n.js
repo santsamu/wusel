@@ -285,7 +285,13 @@ const CATALOG = {
     "{count} full days in a row": "{count} full days in a row",
     "{count} fully completed day": "{count} fully completed day",
     "{count} fully completed days": "{count} fully completed days",
-    "Full days count from this update onward. Complete every planned step; days without steps do not count. Earned badges stay yours, even after a break.": "Full days count from this update onward. Complete every planned step; days without steps do not count. Earned badges stay yours, even after a break."
+    "Full days count from this update onward. Complete every planned step; days without steps do not count. Earned badges stay yours, even after a break.": "Full days count from this update onward. Complete every planned step; days without steps do not count. Earned badges stay yours, even after a break.",
+    "Day overview": "Day overview",
+    "Review completions": "Review completions",
+    "Parent account": "Parent account",
+    "Child area": "Child area",
+    "For {name}": "For {name}",
+    "Administration": "Administration"
   },
   "de": {
     "SMALL STEPS. BRIGHTER DAYS.": "KLEINE SCHRITTE. GUTE TAGE.",
@@ -573,7 +579,13 @@ const CATALOG = {
     "{count} full days in a row": "{count} vollständig erledigte Tage in Folge",
     "{count} fully completed day": "{count} vollständig erledigter Tag",
     "{count} fully completed days": "{count} vollständig erledigte Tage",
-    "Full days count from this update onward. Complete every planned step; days without steps do not count. Earned badges stay yours, even after a break.": "Ganze Tage zählen ab diesem Update. Erledige alle geplanten Schritte; Tage ohne Schritte zählen nicht. Verdiente Abzeichen bleiben dir auch nach einer Pause erhalten."
+    "Full days count from this update onward. Complete every planned step; days without steps do not count. Earned badges stay yours, even after a break.": "Ganze Tage zählen ab diesem Update. Erledige alle geplanten Schritte; Tage ohne Schritte zählen nicht. Verdiente Abzeichen bleiben dir auch nach einer Pause erhalten.",
+    "Day overview": "Tagesübersicht",
+    "Review completions": "Erledigungen prüfen",
+    "Parent account": "Elternkonto",
+    "Child area": "Kinderbereich",
+    "For {name}": "Für {name}",
+    "Administration": "Verwaltung"
   }
 };
 'use strict';
@@ -593,9 +605,10 @@ function drafts(){return [...document.querySelectorAll('form')].map(f=>({kind:f.
 function restoreDrafts(saved){for(const d of saved){const form=document.querySelector(`form[data-form="${d.kind}"]${d.child?'[data-child="'+d.child+'"]':''}`);if(!form)continue;const fields=[...form.elements];d.values.forEach((v,i)=>{const el=fields.filter(e=>e.name)[i];if(el){el.value=v.value;if(el.type==='checkbox')el.checked=v.checked;}});if(form.closest('details'))form.closest('details').open=!!d.open;}}
 async function setLanguage(value){
  if(!['en','de'].includes(value)||busy)return;
+ const accountOpen=!!document.querySelector('.parent-account[open]');
  const saved=drafts();language=value;try{localStorage.setItem('garden-language',value);}catch{}
  const notice=document.querySelector('#notice');notice.textContent='';
- render();restoreDrafts(saved);document.querySelector('#language-picker')?.focus();
+ render();restoreDrafts(saved);if(accountOpen)document.querySelector('.parent-account').open=true;document.querySelector('#language-picker')?.focus();
  if(state.user){busy=true;try{await api('preferences',{language:value});state.user.language=value;}catch(e){notify(e.message);}finally{busy=false;}}
 }
 function errorText(message){

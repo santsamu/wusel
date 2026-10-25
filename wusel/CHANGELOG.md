@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1
+
+- Group parent navigation into the selected child’s pages and separate family administration.
+- Rename parent My day to Day overview and Review to Review completions.
+- Move parent language and sign-out into a compact account dropdown with keyboard dismissal.
+
 ## 0.6.0
 
 - Expand to 17 English/German badges, including full-day totals and 3/7/14/30-day streaks.

@@ -1,5 +1,11 @@
 # Validation — version 0.5.2, 25 October 2026
 
+## 0.6.1 validation
+
+- Chrome checks at 360, 390 and 1280 pixels passed: separate child and administration navigation, child switching and context labels, active-tab scope, Family/Settings routing, collapsed account menu, English/German language changes with retained focus, Escape and outside-click dismissal, and no horizontal overflow or JavaScript errors. Phone and desktop views were visually inspected. Local demo account/weather data only.
+- JavaScript syntax, Node translation/format checks and Python catalog checks passed. Backend behavior is unchanged from the 58-test 0.6.0 run.
+
+
 ## 0.6.0 validation
 
 - All 58 Python tests passed. New cases cover partial/empty/missing days, consecutive calendar days across the year boundary, every full-day/streak threshold through 30, today's unfinished-day grace, undo/recheck, historical correction/restore, retained revocation, routine archival/edits, restart, account isolation and safe legacy step-badge backfill.
