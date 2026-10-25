@@ -14,7 +14,7 @@ async function api(path, body) {
   if (!response.ok) throw new Error(errorText(data.error || 'Could not save. Please try again.'));
   return data;
 }
-async function refresh(quiet=false) { const fresh=await api('state'); if(quiet && JSON.stringify(fresh)===JSON.stringify(state)){loadWeather();return;} state=fresh; if(state.user && !state.user.language){await api('preferences',{language});state.user.language=language;} if(state.user?.language) language=state.user.language; if (!state.user) {view='today'; selected=null;weatherData=null;weatherFetched=0;} render(); if(state.user)loadWeather(); }
+async function refresh(quiet=false) { const fresh=await api('state'); if(quiet && JSON.stringify(fresh)===JSON.stringify(state)){updateChildGreeting();loadWeather();return;} state=fresh; if(state.user && !state.user.language){await api('preferences',{language});state.user.language=language;} if(state.user?.language) language=state.user.language; if (!state.user) {view='today'; selected=null;weatherData=null;weatherFetched=0;} render(); if(state.user)loadWeather(); }
 const field = (label,name,type='text',extra='') => `<label>${esc(t(label))}<input name="${name}" type="${type}" ${extra} required></label>`;
 function auth() {
   const setup = state.needs_setup;
@@ -105,7 +105,11 @@ function celebrateLevel(level,badge){
  notify(message,2400);document.querySelector('#notice').classList.add('level-up');
  const levelBar=document.querySelector('.child-level');if(levelBar){levelBar.classList.add('level-celebrating');setTimeout(()=>levelBar.classList.remove('level-celebrating'),1200);}
 }
-function childHeading(c,title){const {tasks,done}=dayCount(c);return `<div class="child-heading"><p class="small muted">${esc(dateLabel(state.today))}</p><h1>${title}</h1>${tasks.length?`<p class="day-tally">${tx('{done} of {total} done',{done,total:tasks.length})}</p>`:''}${childLevel(c)}</div>`;}
+function updateChildGreeting(now=new Date()){
+ const heading=document.querySelector('[data-child-greeting]');
+ if(heading&&current())heading.textContent=t(greetingKey(state.timezone,now),{name:current().name});
+}
+function childHeading(c,title,greeting=false){const {tasks,done}=dayCount(c);return `<div class="child-heading"><p class="small muted">${esc(dateLabel(state.today))}</p><h1 ${greeting?'data-child-greeting':''}>${title}</h1>${tasks.length?`<p class="day-tally">${tx('{done} of {total} done',{done,total:tasks.length})}</p>`:''}${childLevel(c)}</div>`;}
 function childTools(){return `<div class="child-tools"><button data-action="view" data-view="daylist">${tx('See my day')}</button><button class="text-button" data-action="view" data-view="badges">${tx('My badges')}</button></div>`;}
 function childToday(c){
  const {tasks,done}=dayCount(c),next=tasks.find(r=>!r.done&&!r.locked);
@@ -117,11 +121,11 @@ function childToday(c){
   const key=!tasks.length?'Nothing planned today':done===tasks.length?'All done for today':'A parent is reviewing a step.';
   card=`<section class="focus-card focus-finished"><span aria-hidden="true">${tasks.length&&done===tasks.length?'✓':'☁️'}</span><h2 id="next-step-title" tabindex="-1">${tx(key)}</h2></section>`;
  }
- return `${childHeading(c,tx('Hi, {name}',{name:c.name}))}${card}${weatherSummary()}${childTools()}`;
+ return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}${card}${weatherSummary()}${childTools()}`;
 }
 function childChecklist(c){
  const {tasks}=dayCount(c);
- return `${childHeading(c,tx('My day'))}<section class="child-checklist">${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''}"><time class="task-time">${esc(timeLabel(r.time))}</time><div class="task-content"><h2>${esc(r.title)}</h2>${r.locked?`<p>${tx('A parent is reviewing a step.')}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t('Undo'):t('Complete')} ${esc(r.title)}" ${r.locked?'disabled':''}>${r.done?'✓':'○'}</button></article>`).join(''):`<p>${tx('Nothing planned today')}</p>`}</section><div class="child-tools"><button data-action="view" data-view="focus">${tx('One task at a time')}</button><button class="text-button" data-action="view" data-view="plan">${tx('Weekly plan')}</button></div>`;
+ return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}<section class="child-checklist">${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''}"><time class="task-time">${esc(timeLabel(r.time))}</time><div class="task-content"><h2>${esc(r.title)}</h2>${r.locked?`<p>${tx('A parent is reviewing a step.')}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t('Undo'):t('Complete')} ${esc(r.title)}" ${r.locked?'disabled':''}>${r.done?'✓':'○'}</button></article>`).join(''):`<p>${tx('Nothing planned today')}</p>`}</section><div class="child-tools"><button data-action="view" data-view="focus">${tx('One task at a time')}</button><button class="text-button" data-action="view" data-view="plan">${tx('Weekly plan')}</button></div>`;
 }
 const themes=[['forest','Forest','#246b55'],['ocean','Ocean','#22658b'],['berry','Berry','#954369'],['lavender','Lavender','#6d4b91'],['sunshine','Sunshine','#825518']];
 function applyTheme(value){const theme=themes.find(([id])=>id===value)||themes[0];document.documentElement.dataset.theme=theme[0];document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme[2]);}

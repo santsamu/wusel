@@ -310,7 +310,10 @@ const CATALOG = {
     "Full days": "Full days",
     "Series": "Streaks",
     "Overview": "Overview",
-    "Earned": "Earned"
+    "Earned": "Earned",
+    "Good morning, {name}": "Good morning, {name}",
+    "Hello, {name}": "Hello, {name}",
+    "Good evening, {name}": "Good evening, {name}"
   },
   "de": {
     "SMALL STEPS. BRIGHTER DAYS.": "KLEINE SCHRITTE. GUTE TAGE.",
@@ -623,7 +626,10 @@ const CATALOG = {
     "Full days": "Ganze Tage",
     "Series": "Serien",
     "Overview": "Übersicht",
-    "Earned": "Erreicht am"
+    "Earned": "Erreicht am",
+    "Good morning, {name}": "Guten Morgen, {name}",
+    "Hello, {name}": "Hallo, {name}",
+    "Good evening, {name}": "Guten Abend, {name}"
   }
 };
 'use strict';
@@ -671,3 +677,10 @@ function auditText(detail){
 }
 
 if(document.querySelector('.loading'))document.querySelector('.loading').textContent=t('Opening your garden…');
+
+function greetingKey(timeZone,now=new Date()){
+ const hour=Number(new Intl.DateTimeFormat('en-GB',{timeZone,hour:'numeric',hourCycle:'h23'}).format(now));
+ if(hour>=5&&hour<12)return 'Good morning, {name}';
+ if(hour>=18&&hour<22)return 'Good evening, {name}';
+ return 'Hello, {name}';
+}

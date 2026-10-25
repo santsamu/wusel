@@ -36,3 +36,17 @@ for(const [value,unit,expected] of [[9.6,'°C','10°C'],[-1.5,'°C','-2°C'],[-0
 }
 `,sandbox);
 console.log('Regional date, time and temperature checks passed.');
+
+vm.runInContext(`
+for(const [hour,key] of [[0,'Hello, {name}'],[4,'Hello, {name}'],[5,'Good morning, {name}'],[11,'Good morning, {name}'],[12,'Hello, {name}'],[17,'Hello, {name}'],[18,'Good evening, {name}'],[21,'Good evening, {name}'],[22,'Hello, {name}']]){
+ const now=new Date(Date.UTC(2026,0,2,hour-1));
+ if(greetingKey('Europe/Zurich',now)!==key)throw Error('Greeting boundary: '+hour);
+ for(const lang of ['de','en'])if(!CATALOG[lang][key])throw Error('Missing greeting translation');
+}
+const summer=new Date('2026-07-01T03:00:00Z');
+if(greetingKey('Europe/Zurich',summer)!=='Good morning, {name}')throw Error('Summer timezone');
+if(greetingKey('America/New_York',summer)!=='Hello, {name}')throw Error('Configured timezone must control greeting');
+language='de';if(t(greetingKey('Europe/Zurich',summer),{name:'Alex'})!=='Guten Morgen, Alex')throw Error('German greeting');
+language='en';if(t(greetingKey('Europe/Zurich',summer),{name:'Alex'})!=='Good morning, Alex')throw Error('English greeting');
+`,sandbox);
+console.log('Greeting boundaries, configured timezone, summer offset and English/German checks passed.');

@@ -1,5 +1,12 @@
 # Validation — version 0.5.2, 25 October 2026
 
+## 0.7.2 validation
+
+- Node tests passed greeting time boundaries, configured timezone differences, summer offset and English/German interpolation, plus existing translation/format and badge-view regressions.
+- Chrome at 390 × 844 passed English/German focus and checklist views: morning/day/evening/night greetings, updates on unchanged-state refreshes, retained task-button focus and heading DOM node, no overflow or JavaScript errors. Browser timezone was New York while Wusel used Zurich, confirming the app setting controls the greeting. The German evening screen was visually inspected with local demo data.
+- JavaScript syntax and Python catalog checks passed. No backend changes.
+
+
 ## 0.7.1 validation
 
 - Chrome checks passed at 360, 390, 960 and 1280 pixels: child selector aligned with the first menu item, redundant visible labels removed, language/child switching, management routing, account-menu focus/Escape/outside dismissal and no horizontal overflow or JavaScript errors.

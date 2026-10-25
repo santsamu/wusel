@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.2
+
+- Greet children by time of day in both focus and checklist views, in English and German.
+- Use the configured Wusel timezone: morning 05:00–11:59, evening 18:00–21:59, neutral hello otherwise.
+- Update greetings during quiet refreshes without replacing the task or moving keyboard focus.
+
 ## 0.7.1
 
 - Compact parent navigation with an inline child selector and shorter labels; remove redundant visible child, administration, language and account-role labels.
