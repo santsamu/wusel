@@ -325,6 +325,22 @@ class Application:
             return {'ok':True,'earned_points':10 if done and old is None else 0},None
         if user['role']!='parent':
             raise Problem('Only a parent can do this.',403)
+        if path=='/api/reset-child':
+            child = self.integer(body,'child')
+            db.execute('BEGIN IMMEDIATE')
+            self.child(db,child)
+            account = db.execute('SELECT username FROM users WHERE id=?',(child,)).fetchone()
+            if body.get('confirmation') != account['username']:
+                raise Problem('Enter the child’s username to confirm the reset.')
+            if not password_matches(str(body.get('current_password','')),user['password']):
+                raise Problem('Enter your current parent password.',403)
+            db.execute('DELETE FROM completions WHERE child=?',(child,))
+            db.execute('DELETE FROM badges WHERE child=?',(child,))
+            db.execute('DELETE FROM daily_plans WHERE child=?',(child,))
+            db.execute('DELETE FROM sessions WHERE user=?',(child,))
+            db.execute("UPDATE users SET language='',theme='forest',day_view='focus' WHERE id=?",(child,))
+            self.audit(db,user['id'],'reset',f'Reset child account: {account["username"]}')
+            return {'ok':True},None
         if path=='/api/child-settings':
             child = self.integer(body,'child')
             self.child(db,child)

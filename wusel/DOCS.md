@@ -1,6 +1,8 @@
 # Wusel
 
-**von Wild & Weich · Version 0.7.3**
+**von Wild & Weich · Version 0.8.0**
+
+Parents can permanently reset a child account’s progress under Family. This removes completions, points, badges, day/streak history and personal settings, returning the child to level 1 and signing them out everywhere. Name, username, password and all created tasks (including archived tasks and pending changes) are kept. Confirmation requires the child username and the current parent password. The reset is recorded in the parent activity log.
 
 When editing or archiving routines, parents choose Apply today or From tomorrow (the default). New routines default to today. Apply today deliberately updates today’s tasks and full-day target; From tomorrow leaves both unchanged today. Pending changes appear in the weekly plan and become effective from the selected date. Earned badges are retained. The badge screen starts with one next goal and progress, plus earned badges; See all badges expands the collection into Steps, Full days and Streaks.
 
@@ -19,7 +21,7 @@ A calm routine app for children and parents, hosted locally on Home Assistant OS
 - A full checklist and badges available on request. Parents choose each child's default home view.
 - Separate parent and child logins. All parents manage all children in this family installation.
 - Routines for selected weekdays, weekends, every day, or one specific date.
-- English and German, plus six personal themes: Forest, Ocean, Berry, Lavender, Sunshine, and Petrol.
+- English and German, plus six personal themes: Forest, Ocean, Berry, Lavender, Sunshine, and Lagoon (petrol).
 - A compact weather hint with a detailed forecast on request, using your existing Home Assistant weather entity.
 
 ## Folder layout
@@ -64,7 +66,7 @@ From version 0.5.2, Wusel uses the Pi's host network and listens on IPv4 and IPv
 
 After updating, test `http://homeassistant.local:8099/health` and the Pi's IPv4 address, for example `http://YOUR_PI_IP:8099/health`. Both should return `{"ok":true}`. Wusel logs the bound addresses (`0.0.0.0:8099` and `[::]:8099` when IPv6 is enabled), followed by `Wusel ready: HTTP port 8099`.
 
-Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.7.3** before starting it; restarting an older container alone does not switch its network mode. The installation ID and persistent data remain unchanged.
+Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.8.0** before starting it; restarting an older container alone does not switch its network mode. The installation ID and persistent data remain unchanged.
 
 Host networking shares the Pi's network interfaces with the app. It does not require protection mode to be disabled or router port forwarding to be enabled. The existing family authentication and HTTP/HTTPS guidance still apply.
 
@@ -137,6 +139,6 @@ node tests/test_i18n.cjs
 python tools/package.py
 ```
 
-The package command writes `wusel-0.7.3.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
+The package command writes `wusel-0.8.0.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
 
 See [VALIDATION.md](../VALIDATION.md) for checks and test boundaries. The production server has been tested over IPv4 and IPv6 locally. The updated container network mode, hostname access, live weather, and backup/restore still need verification after updating the Pi.

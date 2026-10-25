@@ -314,7 +314,18 @@ const CATALOG = {
     "Good morning, {name}": "Good morning, {name}",
     "Hello, {name}": "Hello, {name}",
     "Good evening, {name}": "Good evening, {name}",
-    "Petrol": "Petrol"
+    "Petrol": "Petrol",
+    "Lagoon": "Lagoon",
+    "Reset progress": "Reset progress",
+    "Reset {name}’s account": "Reset {name}’s account",
+    "This permanently deletes completions, points, levels, badges, streaks and personal settings. Created tasks, including archived tasks and scheduled changes, and login details are kept. The child will be signed out.": "This permanently deletes completions, points, levels, badges, streaks and personal settings. Created tasks, including archived tasks and scheduled changes, and login details are kept. The child will be signed out.",
+    "Type {username} to confirm.": "Type {username} to confirm.",
+    "Child username": "Child username",
+    "Your current parent password": "Your current parent password",
+    "Reset permanently": "Reset permanently",
+    "Child account reset. Created tasks were kept.": "Child account reset. Created tasks were kept.",
+    "Enter the child’s username to confirm the reset.": "Enter the child’s username to confirm the reset.",
+    "Reset child account: {username}": "Reset child account: {username}"
   },
   "de": {
     "SMALL STEPS. BRIGHTER DAYS.": "KLEINE SCHRITTE. GUTE TAGE.",
@@ -631,7 +642,18 @@ const CATALOG = {
     "Good morning, {name}": "Guten Morgen, {name}",
     "Hello, {name}": "Hallo, {name}",
     "Good evening, {name}": "Guten Abend, {name}",
-    "Petrol": "Petrol"
+    "Petrol": "Petrol",
+    "Lagoon": "Lagune",
+    "Reset progress": "Fortschritt zurücksetzen",
+    "Reset {name}’s account": "Konto von {name} zurücksetzen",
+    "This permanently deletes completions, points, levels, badges, streaks and personal settings. Created tasks, including archived tasks and scheduled changes, and login details are kept. The child will be signed out.": "Erledigungen, Punkte, Level, Abzeichen, Serien und persönliche Einstellungen werden endgültig gelöscht. Erstellte Aufgaben einschließlich archivierter Aufgaben und vorgemerkter Änderungen sowie die Zugangsdaten bleiben erhalten. Das Kind wird abgemeldet.",
+    "Type {username} to confirm.": "Gib zur Bestätigung {username} ein.",
+    "Child username": "Benutzername des Kindes",
+    "Your current parent password": "Dein aktuelles Elternpasswort",
+    "Reset permanently": "Endgültig zurücksetzen",
+    "Child account reset. Created tasks were kept.": "Kinderkonto zurückgesetzt. Erstellte Aufgaben wurden behalten.",
+    "Enter the child’s username to confirm the reset.": "Gib den Benutzernamen des Kindes ein, um das Zurücksetzen zu bestätigen.",
+    "Reset child account: {username}": "Kinderkonto zurückgesetzt: {username}"
   }
 };
 'use strict';
@@ -667,6 +689,7 @@ function errorText(message){
 }
 function auditText(detail){
  const patterns=[
+ [/^Reset child account: (.+)$/,m=>t('Reset child account: {username}',{username:m[1]})],
  [/^Changed day view for child (\d+): (focus|checklist)$/,m=>t('Changed day view for child {child}: {mode}',{child:m[1],mode:t(m[2]==='focus'?'One task at a time':'Full checklist')})],
  [/^Created the first parent account$/,()=>t('Created the first parent account')],
  [/^Created (parent|child) account: (.+)$/,m=>t('Created {role} account: {username}',{role:t(m[1]==='parent'?'Parent':'Child'),username:m[2]})],

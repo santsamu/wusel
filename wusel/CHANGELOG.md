@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0
+
+- Add parent-only child account reset with username and parent-password confirmation.
+- Delete progress/history and personal settings atomically, revoke child sessions, retain all tasks and login details, and log the reset.
+- Rename the Petrol color theme to Lagoon (German: Lagune), retaining its stored identifier and palette.
+
 ## 0.7.3
 
 - Add Petrol as a sixth personal color theme for children and parents.

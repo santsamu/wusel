@@ -1,5 +1,12 @@
 # Validation — version 0.5.2, 25 October 2026
 
+## 0.8.0 validation
+
+- All 70 Python tests passed. Four new reset tests cover atomic rejection of wrong confirmation/password, parent-only access, CSRF, invalid targets, deleting progress/plans/settings/sessions, exact preservation of task rows and pending changes, retained credentials, isolation of other accounts, audit records, repeat reset, restart, no old badges reappearing and fresh point earning.
+- Chrome at 390 × 844 used the actual WSGI backend with local demo accounts: child-specific confirmation, cancel preserving 20 points, invalid username leaving the dialog open, successful reset, retained pending task edit, child-session revocation, login with the original password, zero points/default settings and the German Lagune label. No horizontal overflow or JavaScript errors; the confirmation dialog was visually inspected.
+- Node translation, format, greeting, reset-audit/Lagoon naming and badge-view checks passed. No live Pi data was reset.
+
+
 ## 0.7.3 validation
 
 - All seven theme tests and three catalog tests passed. Theme tests now include Petrol in the allowlist and exercise its persistence across restart/login. Existing isolation, partial updates, invalid inputs, migration and authorization checks passed.

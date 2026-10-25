@@ -50,3 +50,11 @@ language='de';if(t(greetingKey('Europe/Zurich',summer),{name:'Alex'})!=='Guten M
 language='en';if(t(greetingKey('Europe/Zurich',summer),{name:'Alex'})!=='Good morning, Alex')throw Error('English greeting');
 `,sandbox);
 console.log('Greeting boundaries, configured timezone, summer offset and English/German checks passed.');
+
+vm.runInContext(`
+language='de';
+if(auditText('Reset child account: alex')!=='Kinderkonto zurückgesetzt: alex')throw Error('Reset audit translation');
+if(t('Lagoon')!=='Lagune')throw Error('Lagoon translation');
+language='en';if(t('Lagoon')!=='Lagoon')throw Error('English Lagoon name');
+`,sandbox);
+console.log('Child-reset audit and Lagoon naming checks passed.');

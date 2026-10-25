@@ -52,3 +52,5 @@
 
 /* Full earned dates wrap within badge cards at every column count. */
 .badge{min-width:0}.badge .pill{max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.5;padding:6px 10px;margin-top:4px}.badge-earned-label,.badge .pill time{display:block}
+
+.account>div{min-width:0;overflow-wrap:anywhere}.reset-child-button{margin-left:auto;font-size:12px;flex-shrink:0}.reset-child-dialog .actions{flex-wrap:wrap}@media(max-width:680px){.account{flex-wrap:wrap}.reset-child-button{margin-left:0}}
