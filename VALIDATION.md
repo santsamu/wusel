@@ -1,5 +1,12 @@
 # Validation history
 
+## 0.12.4 validation
+
+- Time-aware focus now excludes saved deferrals from automatic selection, including after reload. Explicit Do next remains available. The collapsed list uses For later when it contains deferred current/future tasks.
+- Node regressions passed for deferred-current versus upcoming priority, simulated reload with cleared page choice, explicit reselection, deferred-only state and German labeling, together with all existing time, translation, correction and badge regressions.
+- Chrome at 390 x 844 with real WSGI demo data verified deferring a task still within its current window, unchanged selection after reload, discoverable deferred-task details, explicit reselection, no points before completion and normal points afterward. No overflow or JavaScript errors; screenshot visually inspected.
+- Focused metadata/package tests and the 0.12.4 source archive passed validation. GitHub Actions runs all backend checks and both architecture builds.
+
 ## 0.12.3 validation
 
 - Added neutral time windows and time-aware focus selection. Earlier unfinished steps stay available in a collapsed section, with explicit Do next selection scoped to the current child/day and page session. No backend completion or reward changes.

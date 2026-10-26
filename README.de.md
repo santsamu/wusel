@@ -2,7 +2,7 @@
 
 [![Build, test and validate](https://github.com/santsamu/wusel/actions/workflows/ci.yml/badge.svg)](https://github.com/santsamu/wusel/actions/workflows/ci.yml)
 
-**von Wild & Weich · Version 0.12.3**
+**von Wild & Weich · Version 0.12.4**
 
 Ab Version 0.12.0 lautet die Installationskennung `wusel` (lokal: `local_wusel`). Diese Version ist eine saubere Neuinstallation mit neuer Datenbank `/data/wusel.sqlite3`, `WUSEL_*`-Umgebungsvariablen und neuen Sitzungskennungen. Frühere Installationskennungen und Daten werden nicht übernommen. Kopiere die aktuelle innere App-Struktur nach `/local_apps/wusel` (beziehungsweise `/addons/wusel`), lade den Store neu und installiere Wusel neu. Richte danach das erste Elternkonto mit dem Einrichtungscode aus den Logs ein.
 
@@ -10,7 +10,7 @@ Eltern erhalten im Aufgabenformular Hinweise für kurze, konkrete Schritte und k
 
 Aufgaben können ein optionales Symbol erhalten, etwa Zahnbürste, Kleidung, Essen, Schulranzen, Bett oder Medikament. Eltern wählen das Symbol beim Erstellen oder Bearbeiten einer Aufgabe; „Kein Symbol“ ist der Standard. Das Symbol erscheint zusätzlich zum Aufgabentext in Fokusansicht, Tagesliste und Wochenplan. Die bestehende Auswahl „Ab heute/ab morgen“ gilt auch für Symboländerungen. Das Medikamentensymbol ist eine visuelle Merkhilfe und bestätigt keine tatsächliche Einnahme.
 
-Die Kinderansicht zeigt vor der geplanten Uhrzeit „Später heute“, bis 30 Minuten danach „Jetzt dran“ und anschließend „Noch offen“. Aktuelle Schritte haben Vorrang vor späteren. Ältere offene Schritte bleiben unter „Von vorhin“ eingeklappt erreichbar. „Als Nächstes machen“ holt einen davon in die Fokusansicht, ohne ihn abzuhaken. Diese Auswahl gilt in der aktuellen Seitensitzung für dieses Kind und diesen Tag bis zur Erledigung oder Zurückstellung. Uhrzeitabhängige Anzeigen aktualisieren sich beim regelmäßigen Abgleich ohne Neuladen. Schritte werden weder automatisch übersprungen noch erledigt. Nach dem Erledigen ist 15 Sekunden lang direktes Rückgängigmachen möglich; bei Tastaturfokus bleibt die Aktion länger verfügbar. Speicher- und Verbindungsstatus sind sichtbar. Bei unklarer Speicherung wird nur der Stand abgefragt, nicht automatisch erneut gespeichert. Das nächste Abzeichenziel bleibt bis zum Erreichen stabil; vollständige Verleihungsdaten sind aufklappbar und lesbar. Eltern-Rückmeldungen nennen Kind und Gültigkeitszeitpunkt. Unter Wochenplan → Pausentage verwalten lassen sich heute und zukünftige Zeiträume planen oder entfernen. Pausentage erhöhen und unterbrechen eine Serie nicht; Aufgaben sind freiwillig, ihre Erledigung gibt weiterhin Punkte. Vergangene Pausentage bleiben unverändert.
+Die Kinderansicht zeigt vor der geplanten Uhrzeit „Später heute“, bis 30 Minuten danach „Jetzt dran“ und anschließend „Noch offen“. Aktuelle Schritte haben Vorrang vor späteren. Ältere offene Schritte bleiben unter „Von vorhin“ eingeklappt erreichbar. „Als Nächstes machen“ holt einen davon in die Fokusansicht, ohne ihn abzuhaken. Diese Auswahl gilt in der aktuellen Seitensitzung für dieses Kind und diesen Tag bis zur Erledigung oder Zurückstellung. Uhrzeitabhängige Anzeigen aktualisieren sich beim regelmäßigen Abgleich ohne Neuladen. Zurückgestellte Schritte bleiben auch nach einem Neuladen außerhalb der automatischen Fokusauswahl. Sie lassen sich mit „Als Nächstes machen“ wieder auswählen. Enthält die Liste aktuelle oder zukünftige zurückgestellte Aufgaben, heißt sie „Für später“. Schritte werden weder automatisch übersprungen noch erledigt. Nach dem Erledigen ist 15 Sekunden lang direktes Rückgängigmachen möglich; bei Tastaturfokus bleibt die Aktion länger verfügbar. Speicher- und Verbindungsstatus sind sichtbar. Bei unklarer Speicherung wird nur der Stand abgefragt, nicht automatisch erneut gespeichert. Das nächste Abzeichenziel bleibt bis zum Erreichen stabil; vollständige Verleihungsdaten sind aufklappbar und lesbar. Eltern-Rückmeldungen nennen Kind und Gültigkeitszeitpunkt. Unter Wochenplan → Pausentage verwalten lassen sich heute und zukünftige Zeiträume planen oder entfernen. Pausentage erhöhen und unterbrechen eine Serie nicht; Aufgaben sind freiwillig, ihre Erledigung gibt weiterhin Punkte. Vergangene Pausentage bleiben unverändert.
 
 Eltern können unter Familie den Fortschritt eines Kinderkontos endgültig zurücksetzen. Gelöscht werden Erledigungen, Punkte, Abzeichen, Tages- und Serienfortschritt, geplante Pausentage sowie persönliche Einstellungen. Das Kind startet wieder auf Level 1 und wird auf allen Geräten abgemeldet. Name, Benutzername, Passwort und alle erstellten Aufgaben (auch archivierte Aufgaben und vorgemerkte Änderungen) bleiben erhalten. Bestätigung: Benutzername des Kindes und aktuelles Elternpasswort. Der Vorgang wird im Elternprotokoll dokumentiert.
 
@@ -76,7 +76,7 @@ Ab Version 0.5.2 nutzt Wusel direkt das Netzwerk des Pi und lauscht über IPv4 u
 
 Prüfe nach dem Update `http://homeassistant.local:8099/health` und die IPv4-Adresse des Pi, zum Beispiel `http://YOUR_PI_IP:8099/health`. Beide sollen `{"ok":true}` liefern. Im Protokoll erscheinen die Listener-Adressen (`0.0.0.0:8099` sowie `[::]:8099` bei aktiviertem IPv6) und anschließend `Wusel ready: HTTP port 8099`.
 
-Übernimm alle neuen App-Dateien, einschließlich `server.py`, `Dockerfile` und `config.yaml`. Aktualisiere beziehungsweise baue die installierte App neu und prüfe Version **0.12.3**. Ein bloßer Neustart des alten Containers ändert den Netzwerkmodus noch nicht. Bei späteren Updates bleibt der Slug `wusel` unverändert.
+Übernimm alle neuen App-Dateien, einschließlich `server.py`, `Dockerfile` und `config.yaml`. Aktualisiere beziehungsweise baue die installierte App neu und prüfe Version **0.12.4**. Ein bloßer Neustart des alten Containers ändert den Netzwerkmodus noch nicht. Bei späteren Updates bleibt der Slug `wusel` unverändert.
 
 Wusel teilt damit die Netzwerkschnittstellen des Pi. Dafür sind weder das Abschalten des Schutzmodus noch eine Portfreigabe am Router nötig. Die vorhandene Anmeldung und die Hinweise zu HTTP/HTTPS gelten weiterhin.
 
@@ -150,10 +150,10 @@ python -m unittest discover -s tests -v
 node tests/test_i18n.cjs
 node tests/test_badge_view.cjs
 python tools/package.py
-python tools/validate.py --archive dist/wusel-0.12.3.zip
+python tools/validate.py --archive dist/wusel-0.12.4.zip
 ```
 
-Das Paketwerkzeug schreibt `wusel-0.12.3.zip` in den Unterordner `dist` des Projekts. Im ZIP liegt die App-Konfiguration unter `wusel/wusel/config.yaml`. Lokale Daten, virtuelle Umgebungen und Bytecode werden nicht eingepackt.
+Das Paketwerkzeug schreibt `wusel-0.12.4.zip` in den Unterordner `dist` des Projekts. Im ZIP liegt die App-Konfiguration unter `wusel/wusel/config.yaml`. Lokale Daten, virtuelle Umgebungen und Bytecode werden nicht eingepackt.
 
 Prüfungen und Grenzen stehen in [VALIDATION.md](VALIDATION.md). Der Produktionsserver wurde lokal über IPv4 und IPv6 geprüft. Der neue Container-Netzwerkmodus, der Zugriff über den Hostnamen, Live-Wetter und Backup/Wiederherstellung müssen nach dem Update auf dem Pi überprüft werden.
 

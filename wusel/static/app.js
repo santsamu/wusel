@@ -165,13 +165,15 @@ function pendingReview(tasks){
 function childTaskModel(c,now=new Date()){
  const {tasks,done}=dayCount(c),available=tasks.filter(r=>!r.done&&!r.locked);
  const chosen=focusChoice&&focusChoice.child===c.id&&focusChoice.day===state.today?available.find(r=>r.id===focusChoice.routine):null;
- const next=chosen||available.find(r=>taskTimingKey(r.time,state.timezone,now)==='Now it’s time')||available.find(r=>taskTimingKey(r.time,state.timezone,now)==='Later today');
- const earlier=available.filter(r=>r.id!==next?.id&&taskTimingKey(r.time,state.timezone,now)==='Still open');
- const signature=JSON.stringify([next?.id,tasks.map(r=>[r.id,r.done,r.locked,taskTimingKey(r.time,state.timezone,now)]),c.rest_day]);
+ const ready=available.filter(r=>!r.defer_order);
+ const next=chosen||ready.find(r=>taskTimingKey(r.time,state.timezone,now)==='Now it’s time')||ready.find(r=>taskTimingKey(r.time,state.timezone,now)==='Later today');
+ const earlier=available.filter(r=>r.id!==next?.id&&(r.defer_order||taskTimingKey(r.time,state.timezone,now)==='Still open'));
+ const signature=JSON.stringify([next?.id,tasks.map(r=>[r.id,r.done,r.locked,r.defer_order,taskTimingKey(r.time,state.timezone,now)]),c.rest_day]);
  return {tasks,done,next,earlier,signature};
 }
-function earlierSteps(steps){
- return steps.length?`<details class="earlier-steps"><summary>${tx(steps.length===1?'From earlier · {count} step':'From earlier · {count} steps',{count:steps.length})}</summary>${steps.map(r=>`<article><div><h3>${taskIcon(r)}${esc(r.title)}</h3><p class="small muted"><time>${esc(timeLabel(r.time))}</time> · ${tx('Still open')}</p></div><button data-action="do-next" data-id="${r.id}" aria-label="${tx('Do next: {task}',{task:r.title})}">${tx('Do next')}</button></article>`).join('')}</details>`:'';
+function earlierSteps(steps,now=new Date()){
+ const later=steps.some(r=>taskTimingKey(r.time,state.timezone,now)!=='Still open');
+ return steps.length?`<details class="earlier-steps"><summary>${tx(later?(steps.length===1?'For later · {count} step':'For later · {count} steps'):(steps.length===1?'From earlier · {count} step':'From earlier · {count} steps'),{count:steps.length})}</summary>${steps.map(r=>`<article><div><h3>${taskIcon(r)}${esc(r.title)}</h3><p class="small muted"><time>${esc(timeLabel(r.time))}</time> · ${tx(taskTimingKey(r.time,state.timezone,now)==='Still open'?'Still open':'For later today')}</p></div><button data-action="do-next" data-id="${r.id}" aria-label="${tx('Do next: {task}',{task:r.title})}">${tx('Do next')}</button></article>`).join('')}</details>`:'';
 }
 function childTaskContent(c,now=new Date()){
  const {tasks,done,next,earlier}=childTaskModel(c,now);
@@ -186,7 +188,7 @@ function childTaskContent(c,now=new Date()){
   const key=earlier.length?'Nothing due right now':c.rest_day?'Rest day':!tasks.length?'Nothing planned today':done===tasks.length?'All done for today':'This step is open again. Let’s check it together.';
   card=`<section class="focus-card focus-finished"><span aria-hidden="true">${tasks.length&&done===tasks.length?'✓':'☁️'}</span><h2 id="next-step-title" tabindex="-1">${tx(key)}</h2></section>`;
  }
- return `${card}${earlierSteps(earlier)}${pendingReview(tasks)}`;
+ return `${card}${earlierSteps(earlier,now)}${pendingReview(tasks)}`;
 }
 function updateChildFocus(now=new Date()){
  const region=document.querySelector('[data-child-tasks]'),c=current();

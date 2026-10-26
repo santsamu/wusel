@@ -46,6 +46,18 @@ assert.equal(childTaskModel(chronological,new Date('2026-10-26T11:01:00Z')).next
 assert.notEqual(childTaskModel(chronological,at).signature,childTaskModel(chronological,new Date('2026-10-26T11:01:00Z')).signature);
 const deferred={...c,routines:[task(2,'11:45'),task(1,'11:30',{defer_order:1})]};
 assert.equal(childTaskModel(deferred,at).next.id,2);
+// Saved deferrals must remain outside automatic focus after a page reload clears manual choice.
+const deferredCurrent={...c,routines:[task(3,'12:01'),task(2,'11:45',{defer_order:1})]};
+focusChoice=null;
+assert.equal(childTaskModel(deferredCurrent,at).next.id,3);
+assert.deepEqual(childTaskModel(deferredCurrent,at).earlier.map(r=>r.id),[2]);
+language='de';assert(childTaskContent(deferredCurrent,at).includes('Für später'));
+focusChoice={child:2,day:state.today,routine:2};assert.equal(childTaskModel(deferredCurrent,at).next.id,2);
+focusChoice=null;
+const onlyDeferred={...c,routines:[task(2,'11:45',{defer_order:1})]};
+assert.equal(childTaskModel(onlyDeferred,at).next,undefined);
+assert.equal(childTaskModel(onlyDeferred,at).earlier.length,1);
+
 assert(childTaskContent({...c,rest_day:true},at).includes(t('Optional today')));
 assert(!childTaskContent({...c,routines:[]},at).includes('earlier-steps'));
 assert(!childTaskContent({...c,routines:[task(1,'07:00',{done:true})]},at).includes('earlier-steps'));

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.12.4
+
+- Keep Come back later tasks outside automatic focus after refresh or reload, even when their scheduled time is current. Children can explicitly choose them again from the collapsed list.
+- Label the collapsed list For later when it also contains deferred current/future tasks; keep From earlier for older tasks.
+
 ## 0.12.3
 
 - Label steps as Later today, Now (up to 30 minutes after their scheduled time) or Still open, without overdue warnings.

@@ -1,5 +1,8 @@
 const CATALOG = {
   "en": {
+    "For later · {count} step": "For later · {count} step",
+    "For later · {count} steps": "For later · {count} steps",
+
     "From earlier · {count} step": "From earlier · {count} step",
     "Still open": "Still open",
     "From earlier · {count} steps": "From earlier · {count} steps",
@@ -414,6 +417,9 @@ const CATALOG = {
     "Opening Wusel…": "Opening Wusel…"
   },
   "de": {
+    "For later · {count} step": "Für später · {count} Schritt",
+    "For later · {count} steps": "Für später · {count} Schritte",
+
     "From earlier · {count} step": "Von vorhin · {count} Schritt",
     "Still open": "Noch offen",
     "From earlier · {count} steps": "Von vorhin · {count} Schritte",
