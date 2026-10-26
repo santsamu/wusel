@@ -75,3 +75,13 @@ const ranges=restRanges(dates);
 if(ranges.length!==2||ranges[0].end!==dates[365]||ranges[1].start!==dates[366])throw Error('Long rest ranges must remain removable within API limits');
 `,sandbox);
 console.log('Long rest-range grouping stays within API limits.');
+
+vm.runInContext("function esc(value){return String(value??'');}",sandbox);
+vm.runInContext(source.slice(source.indexOf('const taskIcons='),source.indexOf('function scheduleEditor(')),sandbox);
+vm.runInContext(`
+if(taskIcon({icon:''})!==''||taskIcon({icon:'<script>'})!=='')throw Error('No unknown or empty icon rendering');
+if(!taskIcon({icon:'medicine'}).includes('💊')||!taskIcon({icon:'medicine'}).includes('aria-hidden="true"'))throw Error('Medicine icon with preserved accessible text');
+language='de';if(!taskIconPicker({icon:'medicine'}).includes('Medikament'))throw Error('German icon label');
+language='en';if(!taskIconPicker({icon:'medicine'}).includes('Medicine'))throw Error('English icon label');
+`,sandbox);
+console.log('Optional task icon rendering and English/German medicine label passed.');

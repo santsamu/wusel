@@ -12,6 +12,8 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 from weather import Weather
 
+TASK_ICONS = ('','tooth','clothes','food','bag','book','bed','wash','water','shoes','play','tidy','quiet','medicine')
+
 BADGES = [('first', 'First step', 1, '🌱'), ('five', 'Growing strong', 5, '🌿'),
           ('twenty', 'Routine explorer', 20, '🌻'), ('fifty', 'Shining star', 50, '⭐'),
           ('hundred', 'Routine champion', 100, '🏆'),
@@ -75,6 +77,8 @@ class Application:
         with self.connect() as db:
             db.execute('PRAGMA journal_mode=WAL')
             db.executescript(SCHEMA)
+            if 'icon' not in {row[1] for row in db.execute('PRAGMA table_info(routines)')}:
+                db.execute("ALTER TABLE routines ADD COLUMN icon TEXT NOT NULL DEFAULT ''")
             if 'badge_goal' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
                 db.execute("ALTER TABLE users ADD COLUMN badge_goal TEXT NOT NULL DEFAULT ''")
             if 'starts_on' not in {row[1] for row in db.execute('PRAGMA table_info(routines)')}:
@@ -427,21 +431,27 @@ class Application:
                     raise Problem('Choose a valid date.')
             elif not days:
                 raise Problem('Choose at least one weekday or a specific date.')
+            icon = body.get('icon','')
+            if icon not in TASK_ICONS:
+                raise Problem('Choose a valid task icon.')
             effective = self.change_date(body)
             db.execute('BEGIN IMMEDIATE')
             self.record_plan(db,child)
-            data = dict(title=title,description=description,time=at,days=json.dumps(sorted(set(days))),specific_date=special,archived=0)
+            data = dict(title=title,description=description,time=at,days=json.dumps(sorted(set(days))),specific_date=special,archived=0,icon=icon)
             if body.get('id'):
                 rid = self.integer(body,'id')
-                if not db.execute('SELECT 1 FROM routines WHERE child=? AND id=? AND archived=0',(child,rid)).fetchone():
+                old = db.execute('SELECT icon FROM routines WHERE child=? AND id=? AND archived=0',(child,rid)).fetchone()
+                if not old:
                     raise Problem('Routine not found.',404)
+                if 'icon' not in body:
+                    data['icon'] = old['icon']
                 if effective > self.today():
                     db.execute('INSERT OR REPLACE INTO pending_routines VALUES(?,?,?)',(rid,effective.isoformat(),json.dumps(data)))
                 else:
-                    db.execute('UPDATE routines SET title=?,description=?,time=?,days=?,specific_date=?,archived=?,starts_on=? WHERE id=?',(*data.values(),'',rid))
+                    db.execute('UPDATE routines SET title=?,description=?,time=?,days=?,specific_date=?,archived=?,icon=?,starts_on=? WHERE id=?',(*data.values(),'',rid))
                     db.execute('DELETE FROM pending_routines WHERE routine=?',(rid,))
             else:
-                db.execute('INSERT INTO routines(title,description,time,days,specific_date,archived,child,starts_on) VALUES(?,?,?,?,?,?,?,?)',(*data.values(),child,effective.isoformat()))
+                db.execute('INSERT INTO routines(title,description,time,days,specific_date,archived,icon,child,starts_on) VALUES(?,?,?,?,?,?,?,?,?)',(*data.values(),child,effective.isoformat()))
             if effective == self.today():
                 self.record_plan(db,child,replace=True)
             self.audit(db,user['id'],'routine',f'Saved routine for child {child}: {title}')

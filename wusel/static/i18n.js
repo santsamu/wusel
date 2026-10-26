@@ -359,7 +359,23 @@ const CATALOG = {
     "Could not confirm the save. Check the connection before trying again.": "Could not confirm the save. Check the connection before trying again.",
     "A full day means every planned step is done. Planned rest days pause your series. Earned badges stay yours.": "A full day means every planned step is done. Planned rest days pause your series. Earned badges stay yours.",
     "This permanently deletes completions, points, levels, badges, streaks, planned rest days and personal settings. Created tasks, including archived tasks and scheduled changes, and login details are kept. The child will be signed out.": "This permanently deletes completions, points, levels, badges, streaks, planned rest days and personal settings. Created tasks, including archived tasks and scheduled changes, and login details are kept. The child will be signed out.",
-    "The end date must be on or after the start date.": "The end date must be on or after the start date."
+    "The end date must be on or after the start date.": "The end date must be on or after the start date.",
+    "Task icon (optional)": "Task icon (optional)",
+    "No icon": "No icon",
+    "Choose a valid task icon.": "Choose a valid task icon.",
+    "Teeth": "Teeth",
+    "Clothes": "Clothes",
+    "Meal": "Meal",
+    "Schoolbag": "Schoolbag",
+    "Reading": "Reading",
+    "Bedtime": "Bedtime",
+    "Washing": "Washing",
+    "Water": "Water",
+    "Shoes": "Shoes",
+    "Play": "Play",
+    "Tidying": "Tidying",
+    "Quiet time": "Quiet time",
+    "Medicine": "Medicine"
   },
   "de": {
     "SMALL STEPS. BRIGHTER DAYS.": "KLEINE SCHRITTE. GUTE TAGE.",
@@ -721,7 +737,23 @@ const CATALOG = {
     "Could not confirm the save. Check the connection before trying again.": "Speichern konnte nicht bestätigt werden. Prüfe die Verbindung, bevor du es erneut versuchst.",
     "A full day means every planned step is done. Planned rest days pause your series. Earned badges stay yours.": "Ein ganzer Tag bedeutet: Alle geplanten Schritte sind erledigt. Geplante Pausentage pausieren deine Serie. Verdiente Abzeichen bleiben dir erhalten.",
     "This permanently deletes completions, points, levels, badges, streaks, planned rest days and personal settings. Created tasks, including archived tasks and scheduled changes, and login details are kept. The child will be signed out.": "Erledigungen, Punkte, Level, Abzeichen, Serien, geplante Pausentage und persönliche Einstellungen werden endgültig gelöscht. Erstellte Aufgaben einschließlich archivierter Aufgaben und vorgemerkter Änderungen sowie die Zugangsdaten bleiben erhalten. Das Kind wird abgemeldet.",
-    "The end date must be on or after the start date.": "Das Enddatum muss am oder nach dem Startdatum liegen."
+    "The end date must be on or after the start date.": "Das Enddatum muss am oder nach dem Startdatum liegen.",
+    "Task icon (optional)": "Aufgabensymbol (optional)",
+    "No icon": "Kein Symbol",
+    "Choose a valid task icon.": "Wähle ein gültiges Aufgabensymbol.",
+    "Teeth": "Zähne",
+    "Clothes": "Kleidung",
+    "Meal": "Mahlzeit",
+    "Schoolbag": "Schulranzen",
+    "Reading": "Lesen",
+    "Bedtime": "Schlafenszeit",
+    "Washing": "Waschen",
+    "Water": "Wasser",
+    "Shoes": "Schuhe",
+    "Play": "Spielen",
+    "Tidying": "Aufräumen",
+    "Quiet time": "Ruhezeit",
+    "Medicine": "Medikament"
   }
 };
 'use strict';

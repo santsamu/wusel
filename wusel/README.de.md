@@ -1,6 +1,8 @@
 # Wusel
 
-**von Wild & Weich · Version 0.9.0**
+**von Wild & Weich · Version 0.10.0**
+
+Aufgaben können ein optionales Symbol erhalten, etwa Zahnbürste, Kleidung, Essen, Schulranzen, Bett oder Medikament. Eltern wählen das Symbol beim Erstellen oder Bearbeiten einer Aufgabe; „Kein Symbol“ ist der Standard. Das Symbol erscheint zusätzlich zum Aufgabentext in Fokusansicht, Tagesliste und Wochenplan. Die bestehende Auswahl „Ab heute/ab morgen“ gilt auch für Symboländerungen. Das Medikamentensymbol ist eine visuelle Merkhilfe und bestätigt keine tatsächliche Einnahme.
 
 Die Kinderansicht unterscheidet „Jetzt dran“ und „Später heute“, ohne Schritte zu sperren. Nach dem Erledigen ist 15 Sekunden lang direktes Rückgängigmachen möglich; bei Tastaturfokus bleibt die Aktion länger verfügbar. Speicher- und Verbindungsstatus sind sichtbar. Bei unklarer Speicherung wird nur der Stand abgefragt, nicht automatisch erneut gespeichert. Das nächste Abzeichenziel bleibt bis zum Erreichen stabil; vollständige Verleihungsdaten sind aufklappbar und lesbar. Eltern-Rückmeldungen nennen Kind und Gültigkeitszeitpunkt. Unter Wochenplan → Pausentage verwalten lassen sich heute und zukünftige Zeiträume planen oder entfernen. Pausentage erhöhen und unterbrechen eine Serie nicht; Aufgaben sind freiwillig, ihre Erledigung gibt weiterhin Punkte. Vergangene Pausentage bleiben unverändert.
 
@@ -68,7 +70,7 @@ Ab Version 0.5.2 nutzt Wusel direkt das Netzwerk des Pi und lauscht über IPv4 u
 
 Prüfe nach dem Update `http://homeassistant.local:8099/health` und die IPv4-Adresse des Pi, zum Beispiel `http://YOUR_PI_IP:8099/health`. Beide sollen `{"ok":true}` liefern. Im Protokoll erscheinen die Listener-Adressen (`0.0.0.0:8099` sowie `[::]:8099` bei aktiviertem IPv6) und anschließend `Wusel ready: HTTP port 8099`.
 
-Übernimm alle neuen App-Dateien, einschließlich `server.py`, `Dockerfile` und `config.yaml`. Aktualisiere beziehungsweise baue die installierte App neu und prüfe Version **0.9.0**. Ein bloßer Neustart des alten Containers ändert den Netzwerkmodus noch nicht. Installationskennung und gespeicherte Daten bleiben erhalten.
+Übernimm alle neuen App-Dateien, einschließlich `server.py`, `Dockerfile` und `config.yaml`. Aktualisiere beziehungsweise baue die installierte App neu und prüfe Version **0.10.0**. Ein bloßer Neustart des alten Containers ändert den Netzwerkmodus noch nicht. Installationskennung und gespeicherte Daten bleiben erhalten.
 
 Wusel teilt damit die Netzwerkschnittstellen des Pi. Dafür sind weder das Abschalten des Schutzmodus noch eine Portfreigabe am Router nötig. Die vorhandene Anmeldung und die Hinweise zu HTTP/HTTPS gelten weiterhin.
 
@@ -141,6 +143,6 @@ node tests/test_i18n.cjs
 python tools/package.py
 ```
 
-Das Paketwerkzeug schreibt `wusel-0.9.0.zip` in den Unterordner `dist` des Projekts. Im ZIP liegt die App-Konfiguration unter `wusel/wusel/config.yaml`. Lokale Daten, virtuelle Umgebungen und Bytecode werden nicht eingepackt.
+Das Paketwerkzeug schreibt `wusel-0.10.0.zip` in den Unterordner `dist` des Projekts. Im ZIP liegt die App-Konfiguration unter `wusel/wusel/config.yaml`. Lokale Daten, virtuelle Umgebungen und Bytecode werden nicht eingepackt.
 
 Prüfungen und Grenzen stehen in [VALIDATION.md](../VALIDATION.md). Der Produktionsserver wurde lokal über IPv4 und IPv6 geprüft. Der neue Container-Netzwerkmodus, der Zugriff über den Hostnamen, Live-Wetter und Backup/Wiederherstellung müssen nach dem Update auf dem Pi überprüft werden.

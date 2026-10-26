@@ -1,5 +1,13 @@
 # Validation — version 0.5.2, 25 October 2026
 
+## 0.10.0 validation
+
+- All 85 backend checks passed across the full suite and focused rerun. Six icon regressions cover default/allowed choices including medicine, frontend/backend choice parity, invalid-value atomicity, child authorization, today/tomorrow behavior, restart, legacy edits, reset preservation, explicit removal and migration with retained points/old pending edits. The final focused icon/catalog run passed all nine checks after fixing a missing test import.
+- The HTTP integration tests required an unrestricted rerun because Windows sandbox loopback access was blocked; those checks passed in the full rerun.
+- Chrome at 360 × 844 with the actual WSGI backend passed 13 icon choices plus No icon, English/German medicine labels, icon/title draft preservation while changing language, persisted edits, child focus/checklist/week rendering, icon removal and no horizontal overflow or JavaScript errors. The medicine icon was visually inspected; text remained present and the decorative icon had aria-hidden. All data was local demo data.
+- Node translation/format/greeting, optional-icon and badge-view checks passed. Built wusel-0.10.0.zip; no live Pi data changed.
+
+
 ## 0.9.0 validation
 
 - All 79 Python tests passed. New tests cover neutral rest-day gaps, full-day totals on optional-task days, current-series grace, stable goal selection across changes/restart/earning/revocation, rest-day add/remove permissions and validation, account isolation, reset cleanup, stale-date completion rejection and migration without losing points or badges.

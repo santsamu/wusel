@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.0
+
+- Add 13 optional task icons, including medicine, with English/German labels and no icon by default.
+- Show icons beside task text in child focus/checklist and weekly/parent task views.
+- Preserve icons through scheduled edits, restarts and child resets; migrate existing tasks without changing their appearance or progress.
+
 ## 0.9.0
 
 - Distinguish due and future child steps using the configured timezone, without locking early completion.
