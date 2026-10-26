@@ -75,6 +75,24 @@ class WuselTests(unittest.TestCase):
         self.parent.call('correct',{'completion':cid,'restore':True})
         self.assertEqual(self.profile()['progress']['xp'],10)
         self.assertEqual(self.child.call('complete',{'routine':rid,'done':True})[0],200)
+    def test_overview_and_review_share_parent_correction_lifecycle(self):
+        rid=self.create()
+        self.child.call('complete',{'routine':rid,'done':True})
+        cid=self.profile(self.parent)['history'][0]['id']
+        for reopen,restore in [
+            (('complete',{'routine':rid,'done':False}),('correct',{'completion':cid,'restore':True})),
+            (('correct',{'completion':cid}),('complete',{'routine':rid,'done':True}))]:
+            self.assertEqual(self.parent.call(*reopen)[0],200)
+            step=self.profile()['routines'][0]
+            self.assertFalse(step['done']);self.assertTrue(step['locked'])
+            self.assertEqual(self.profile()['progress']['xp'],0)
+            self.assertEqual(self.child.call('complete',{'routine':rid,'done':True})[0],403)
+            self.assertEqual(self.parent.call(*restore)[0],200)
+            step=self.profile()['routines'][0]
+            self.assertTrue(step['done']);self.assertFalse(step['locked'])
+            self.assertEqual(self.profile()['progress']['xp'],10)
+        with self.app.connect() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM audit WHERE action='correction'").fetchone()[0],4)
     def test_revoked_badge_stays_revoked(self):
         rid=self.create();self.child.call('complete',{'routine':rid,'done':True})
         self.assertEqual(self.parent.call('badge',{'child':2,'badge':'first','revoked':True})[0],200)

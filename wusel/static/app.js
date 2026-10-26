@@ -63,12 +63,16 @@ function progress(c) {
   const p=c.progress;
   return `<section class="growth panel"><div class="grow-icon" aria-hidden="true">🌿</div><div><p class="eyebrow">${tx("YOUR PROGRESS")}</p><h3>${tx("Level {level} · Little steps add up",{level:p.level})}</h3><progress max="100" value="${p.level_progress}" aria-label="${tx("Progress to next level")}"></progress><p class="small muted">${tx("{xp} points earned · {remaining} to level {level}",{xp:p.xp,remaining:100-p.level_progress,level:p.level+1})}</p></div><span class="pill">${tx(p.count===1?"{count} step taken":"{count} steps taken",{count:p.count})}</span></section>`;
 }
+function parentStepControl(r){
+ const label=r.done?'Reopen step':r.locked?'Confirm done':'Mark done';
+ return `<button class="parent-step-control" data-action="complete" data-id="${r.id}" aria-label="${tx(label)}: ${esc(r.title)}">${tx(label)}</button>`;
+}
 function today(c) {
   const tasks=c.routines.filter(r=>r.scheduled), done=tasks.filter(r=>r.done).length, next=tasks.find(r=>!r.done&&!r.locked);
   return `<div class="heading"><div><p class="eyebrow">${esc(dateLabel(state.today))}</p><h1>${tx(parent()?"{name}’s day":"Hello, {name} ☀️",{name:c.name})}</h1><p>${tx("One thing at a time. You’ve got this.")}</p></div><div class="daily-count"><strong>${done}<span> / ${tasks.length}</span></strong><span>${tx("steps completed")}</span></div></div>
-  ${restNote(c)}${parentWeather()}
+  ${restNote(c)}${parentWeather()}<p class="small muted">${tx("Reopening a step removes its points and waits for your confirmation. Confirm done after checking it together.")}</p>
   <section class="today-layout"><div><div class="section-heading"><h2>${tx("Today’s little steps")}</h2><span class="muted small">${tx("10 points per step")}</span></div>
-  ${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''} ${next?.id===r.id?'next':''}"><div class="task-time">${esc(timeLabel(r.time))}${next?.id===r.id?`<span class="next-label">${tx("UP NEXT")}</span>`:''}</div><div class="task-content"><h3>${taskIcon(r)}${esc(r.title)}</h3>${r.description?`<p>${esc(r.description)}</p>`:''}${r.locked?`<p class="small">${tx("This step is open again. Let’s check it together.")}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t("Undo"):t("Complete")} ${esc(r.title)}" ${r.locked?'disabled':''}>${r.done?'✓':`<span aria-hidden="true">○</span>`}</button></article>`).join(''):`<div class="panel empty"><span aria-hidden="true">☁️</span><h3>${tx("A little breathing room")}</h3><p>${parent()?t("Add a routine in Weekly plan to get started."):t("No steps planned for today. Enjoy your day!")}</p></div>`}
+  ${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''} ${next?.id===r.id?'next':''}"><div class="task-time">${esc(timeLabel(r.time))}${next?.id===r.id?`<span class="next-label">${tx("UP NEXT")}</span>`:''}</div><div class="task-content"><h3>${taskIcon(r)}${esc(r.title)}</h3>${r.description?`<p>${esc(r.description)}</p>`:''}${r.locked?`<p class="small">${tx("This step is open again. Let’s check it together.")}</p>`:''}</div>${parentStepControl(r)}</article>`).join(''):`<div class="panel empty"><span aria-hidden="true">☁️</span><h3>${tx("A little breathing room")}</h3><p>${parent()?t("Add a routine in Weekly plan to get started."):t("No steps planned for today. Enjoy your day!")}</p></div>`}
   ${tasks.length&&done===tasks.length?`<div class="celebrate" role="status">${tx("🌻 All your steps are done. Look at you grow!")}</div>`:''}</div>
   <aside class="panel encouragement"><span class="sun" aria-hidden="true">☀️</span><p class="eyebrow">${tx("A LITTLE REMINDER")}</p><h2>${tx("Progress grows")}<br>${tx("one step at a time.")}</h2><p>${tx("You don’t have to do everything at once. Just start with your next little step.")}</p><div class="divider"></div><p class="small muted">${tx("Every new day is a fresh start.")}</p></aside></section>${progress(c)}`;
 }
@@ -114,7 +118,7 @@ function rewards(c) {
 }
 
 function review(c) {
- return `<div class="heading"><div><p class="eyebrow">${tx("A HELPING HAND")}</p><h1>${tx("Review progress")}</h1><p>${tx("{name}’s latest 100 steps. Corrections update points and levels.",{name:c.name})}</p></div></div><p class="muted">${tx("Badges celebrate milestones already reached. Remove a badge separately in Badges if needed.")}</p><div class="panel history">${c.history.length?c.history.map(h=>`<article><div><h3>${esc(h.title)}</h3><p class="small muted">${esc(dateLabel(h.day))} · ${h.voided?(h.locked?t("Reopened for review"):t("Undone")):t("+10 points")}</p></div><button data-action="correct" data-id="${h.id}" data-restore="${!!h.voided}">${h.voided?t("Restore"):t("Reopen step")}</button></article>`).join(''):`<p>${tx("Completed steps will appear here.")}</p>`}</div>`;
+ return `<div class="heading"><div><p class="eyebrow">${tx("A HELPING HAND")}</p><h1>${tx("Review progress")}</h1><p>${tx("{name}’s latest 100 steps. Corrections update points and levels.",{name:c.name})}</p></div></div><p class="small muted">${tx("Reopening a step removes its points and waits for your confirmation. Confirm done after checking it together.")}</p><p class="muted">${tx("Badges celebrate milestones already reached. Remove a badge separately in Badges if needed.")}</p><div class="panel history">${c.history.length?c.history.map(h=>`<article><div><h3>${esc(h.title)}</h3><p class="small muted">${esc(dateLabel(h.day))} · ${h.voided?(h.locked?t("Reopened for review"):t("Undone")):t("+10 points")}</p></div><button data-action="correct" data-id="${h.id}" data-restore="${!!h.voided}">${h.voided?t("Confirm done"):t("Reopen step")}</button></article>`).join(''):`<p>${tx("Completed steps will appear here.")}</p>`}</div>`;
 }
 function family() {
  const accounts=[...state.parents.map(p=>({...p,role:'parent'})),...state.children.map(c=>({...c,role:'child'}))];
@@ -154,6 +158,9 @@ function updateTaskTiming(now=new Date()){
 function childHeading(c,title,greeting=false){const {tasks,done}=dayCount(c);return `<div class="child-heading"><p class="small muted">${esc(dateLabel(state.today))}</p><h1 ${greeting?'data-child-greeting':''}>${title}</h1>${tasks.length&&!c.rest_day?`<p class="day-tally">${tx('{done} of {total} done',{done,total:tasks.length})}</p>`:''}${childLevel(c)}</div>`;}
 function childTools(){return `<div class="child-tools"><button data-action="view" data-view="daylist">${tx('See my day')}</button><button class="text-button" data-action="view" data-view="badges">${tx('My badges')}</button></div>`;}
 function taskHelp(r,canDefer){return `<details class="task-help"><summary>${tx('I need help')}</summary><p>${esc(r.description||t('Ask an adult nearby to help you get started.'))}</p><div class="help-actions"><button data-action="ask-adult">${tx('Ask an adult')}</button><button data-action="defer" data-id="${r.id}" ${canDefer?'':'disabled'}>${tx('Come back later')}</button></div>${!canDefer?`<p class="small muted">${tx('There are no other steps to switch to. You can ask an adult or take a break.')}</p>`:''}<p data-help-response role="status"></p></details>`;}
+function pendingReview(tasks){
+ return tasks.filter(r=>r.locked&&!r.done).map(r=>`<article class="focus-card review-pending"><p class="focus-label">${tx('Check together')} <time>${esc(timeLabel(r.time))}</time></p><div class="focus-title">${taskIcon(r)}<h2>${esc(r.title)}</h2></div>${r.first_action?`<p class="first-action">${esc(r.first_action)}</p>`:''}${r.description?`<p class="focus-instruction">${esc(r.description)}</p>`:''}<p class="review-note">${tx('This step is open again. Let’s check it together.')}</p></article>`).join('');
+}
 function childToday(c){
  const {tasks,done}=dayCount(c),next=tasks.find(r=>!r.done&&!r.locked);
  let card;
@@ -161,11 +168,13 @@ function childToday(c){
   const instruction=next.first_action?`<p class="first-action">${esc(next.first_action)}</p>`:'';
   const canDefer=tasks.filter(r=>!r.done&&!r.locked).length>1;
   card=`<article class="focus-card"><p class="focus-label"><span data-task-timing data-time="${esc(next.time)}">${tx(c.rest_day?'Optional today':taskTimingKey(next.time,state.timezone))}</span> <time>${esc(timeLabel(next.time))}</time></p><div class="focus-title">${taskIcon(next)}<h2 id="next-step-title" tabindex="-1">${esc(next.title)}</h2></div>${instruction}<button class="primary focus-done" data-action="complete" data-id="${next.id}" aria-label="${tx('Done: {task}',{task:next.title})}">${tx('Done')} <span aria-hidden="true">✓</span></button><p id="step-feedback" class="step-feedback" role="status" aria-live="polite"></p>${taskHelp(next,canDefer)}</article>`;
+ }else if(tasks.some(r=>r.locked&&!r.done)){
+  card='';
  }else{
   const key=c.rest_day?'Rest day':!tasks.length?'Nothing planned today':done===tasks.length?'All done for today':'This step is open again. Let’s check it together.';
   card=`<section class="focus-card focus-finished"><span aria-hidden="true">${tasks.length&&done===tasks.length?'✓':'☁️'}</span><h2 id="next-step-title" tabindex="-1">${tx(key)}</h2></section>`;
  }
- return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}${restNote(c)}${card}${undoFeedback()}${weatherSummary()}${childTools()}`;
+ return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}${restNote(c)}${card}${pendingReview(tasks)}${undoFeedback()}${weatherSummary()}${childTools()}`;
 }
 function childChecklist(c){
  const {tasks}=dayCount(c);
@@ -260,7 +269,7 @@ app.addEventListener('click',async e=>{
    r.done=!r.done;
    const feedback=document.querySelector('#step-feedback');
    if(childCompleted&&earnedPoints>0&&!c.reduced_rewards){showPoints(earnedPoints);if(feedback)feedback.textContent=t('Well done!');await new Promise(resolve=>setTimeout(resolve,750));}
-   else if(!childCompleted)notify(!r.done?t('Step undone.'):t('Well done!'),1600);
+   else if(!childCompleted)notify(parent()?t('Saved for {name}.',{name:c.name}):!r.done?t('Step undone.'):t('Well done!'),1600);
   }
   if(action==='badge')await api('badge',{child:c.id,badge:b.dataset.id,revoked:b.dataset.revoked==='true'});
   if(action==='correct')await api('correct',{completion:id,restore:b.dataset.restore==='true'});

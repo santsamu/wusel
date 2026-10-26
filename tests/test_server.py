@@ -50,13 +50,12 @@ class ProductionServerTests(unittest.TestCase):
                 state=json.load(response);self.assertTrue(state['needs_setup']);self.assertIsNone(state['user'])
 
 class HostNetworkConfigurationTests(unittest.TestCase):
-    def test_host_network_has_literal_web_port(self):
+    def test_host_network_has_supervisor_web_port_template(self):
         folder=Path(__file__).resolve().parents[1]/'wusel'
         config=(folder/'config.yaml').read_text(encoding='utf-8')
         self.assertIn('host_network: true',config)
         self.assertIn('init: true',config)
-        self.assertIn('http://[HOST]:8099/',config)
-        self.assertNotIn('[PORT:',config)
+        self.assertIn('http://[HOST]:[PORT:8099]/',config)
         self.assertNotIn('\nports:',config)
         self.assertIn('server.py',(folder/'Dockerfile').read_text(encoding='utf-8'))
 

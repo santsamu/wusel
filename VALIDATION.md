@@ -1,5 +1,13 @@
 # Validation history
 
+## 0.12.2 validation
+
+- Unified parent Overview and Review corrections through the same backend helper. New lifecycle coverage checks reopening/restoring across both routes, child lock enforcement, points and audit records.
+- The full 101-test Python run passed 100 checks and exposed an obsolete fixed-port manifest assertion from 0.12.1. That assertion was corrected and passed a focused rerun alongside the correction lifecycle test. CI reruns the complete suite.
+- Node checks passed for English/German corrected-task details (only pending tasks, mixed tasks, multiple pending steps and rest days), explicit parent controls, escaping, translations and existing badge regressions.
+- Chrome at 390 x 844 with the real WSGI backend passed task details and instructions on the child home screen, Overview reopen, Review confirmation and Overview confirmation, correct points and no overflow or JavaScript errors. Screenshots were visually inspected. Only local demo data was used.
+- Source metadata and the 0.12.2 source package passed validation; GitHub Actions builds and checks both container architectures.
+
 ## 0.12.1 validation
 
 - Fixed the Supervisor-rejected webui URL: the host-network manifest now uses the required port placeholder. The earlier validator accepted the invalid literal port and did not validate this Supervisor constraint.

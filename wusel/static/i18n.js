@@ -1,5 +1,10 @@
 const CATALOG = {
   "en": {
+    "Check together": "Check together",
+    "Confirm done": "Confirm done",
+    "Mark done": "Mark done",
+    "Reopening a step removes its points and waits for your confirmation. Confirm done after checking it together.": "Reopening a step removes its points and waits for your confirmation. Confirm done after checking it together.",
+
     "SMALL STEPS. BRIGHTER DAYS.": "SMALL STEPS. BRIGHTER DAYS.",
     "A little structure.": "A little structure.",
     "A lot of growing.": "A lot of growing.",
@@ -402,6 +407,11 @@ const CATALOG = {
     "Opening Wusel…": "Opening Wusel…"
   },
   "de": {
+    "Check together": "Gemeinsam anschauen",
+    "Confirm done": "Erledigung bestätigen",
+    "Mark done": "Als erledigt markieren",
+    "Reopening a step removes its points and waits for your confirmation. Confirm done after checking it together.": "Beim erneuten Öffnen werden die Punkte abgezogen. Der Schritt wartet auf deine Bestätigung. Bestätige die Erledigung, nachdem ihr ihn gemeinsam angeschaut habt.",
+
     "SMALL STEPS. BRIGHTER DAYS.": "KLEINE SCHRITTE. GUTE TAGE.",
     "A little structure.": "Ein bisschen Struktur.",
     "A lot of growing.": "Viel Raum zum Wachsen.",

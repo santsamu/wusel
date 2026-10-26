@@ -71,3 +71,7 @@
 .child-view-settings>summary{font-size:20px;font-weight:600;cursor:pointer}.child-view-settings .child-support-form{display:block;padding:20px 0}.child-support-form h3{margin:0 0 14px}.child-support-form>label:not(.support-toggle){max-width:340px}.child-support-form .support-toggle{display:flex;align-items:flex-start;gap:12px;margin:18px 0}.support-toggle input[type=checkbox]{width:20px;min-height:20px;height:20px;margin:3px 0 0;flex-shrink:0}.support-toggle span{font-size:15px}.support-toggle small{display:block;font-size:13px;line-height:1.6;font-weight:400;color:var(--muted);margin-top:4px}.quiet-rewards .point-gain,.quiet-rewards .level-celebrating{animation:none!important}
 
 .child-checklist .task-content p{font-size:14px;line-height:1.6}
+
+.review-note{margin-top:18px;line-height:1.6;overflow-wrap:anywhere}.review-pending .focus-label{flex-wrap:wrap}
+
+.parent-step-control{max-width:150px;white-space:normal;font-size:13px;flex-shrink:0}@media(max-width:600px){.task:has(.parent-step-control){display:grid;grid-template-columns:60px minmax(0,1fr)}.parent-step-control{grid-column:2;justify-self:start;max-width:100%}}

@@ -2,7 +2,7 @@
 
 [![Build, test and validate](https://github.com/santsamu/wusel/actions/workflows/ci.yml/badge.svg)](https://github.com/santsamu/wusel/actions/workflows/ci.yml)
 
-**von Wild & Weich · Version 0.12.1**
+**von Wild & Weich · Version 0.12.2**
 
 Version 0.12.0 uses the app identity `wusel` (`local_wusel` for local installations). This is a clean-install release with a new `/data/wusel.sqlite3` database, `WUSEL_*` environment variables and new session identifiers. Previous installation identities and data are not migrated. Copy the current inner app folder to `/local_apps/wusel` (or `/addons/wusel`), reload the store and install Wusel fresh. Create the first parent account using the setup code from the app logs.
 
@@ -76,7 +76,7 @@ From version 0.5.2, Wusel uses the Pi's host network and listens on IPv4 and IPv
 
 After updating, test `http://homeassistant.local:8099/health` and the Pi's IPv4 address, for example `http://YOUR_PI_IP:8099/health`. Both should return `{"ok":true}`. Wusel logs the bound addresses (`0.0.0.0:8099` and `[::]:8099` when IPv6 is enabled), followed by `Wusel ready: HTTP port 8099`.
 
-Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.12.1** before starting it; restarting an older container alone does not switch its network mode. For subsequent updates, keep the app slug set to `wusel`.
+Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.12.2** before starting it; restarting an older container alone does not switch its network mode. For subsequent updates, keep the app slug set to `wusel`.
 
 Host networking shares the Pi's network interfaces with the app. It does not require protection mode to be disabled or router port forwarding to be enabled. The existing family authentication and HTTP/HTTPS guidance still apply.
 
@@ -99,7 +99,7 @@ Home Assistant documents the distinction between app folders and installation ID
 
 **Parents:** Use **Family** to create accounts, reset passwords, and choose each child's default home view. Use **Weekly plan** to create or edit routines, **Review** to reverse or restore completions, and **Badges** to remove or restore badges. Parents choose their own colors in **Settings**; language and sign-out are in the account menu at the top right. The child selector sits beside Overview, Weekly plan, Badges and Review, followed by Family and Settings. Redundant visible child, administration, language and account-role labels are omitted; controls retain accessible names.
 
-Each completion gives 10 points. Every 100 points advances a level; step badges are awarded at 1, 5, 10, 20, 50, 100, 150, 250, 500 and 1000 completed steps, with additional full-day and streak badges. Duplicate taps and undo/recheck do not multiply points or replay the reward animation. Reversing a completion removes its points and locks it until a parent restores it. Remove an incorrectly earned badge separately.
+Each completion gives 10 points. Every 100 points advances a level; step badges are awarded at 1, 5, 10, 20, 50, 100, 150, 250, 500 and 1000 completed steps, with additional full-day and streak badges. Duplicate taps and undo/recheck do not multiply points or replay the reward animation. Overview and Review use the same correction flow: Reopen step removes its points and locks it until a parent selects Confirm done. The child home screen keeps the task details visible while awaiting confirmation. Remove an incorrectly earned badge separately.
 
 For different weekday/weekend times, create two routines with different day selections. A date-specific task adds a task for that date; it does not cancel other recurring tasks. Times are helpful cues, not alarms or restrictions on when today's tasks can be completed.
 
@@ -150,10 +150,10 @@ python -m unittest discover -s tests -v
 node tests/test_i18n.cjs
 node tests/test_badge_view.cjs
 python tools/package.py
-python tools/validate.py --archive dist/wusel-0.12.1.zip
+python tools/validate.py --archive dist/wusel-0.12.2.zip
 ```
 
-The package command writes `wusel-0.12.1.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
+The package command writes `wusel-0.12.2.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
 
 See [VALIDATION.md](VALIDATION.md) for checks and test boundaries. The production server has been tested over IPv4 and IPv6 locally. The updated container network mode, hostname access, live weather, and backup/restore still need verification after updating the Pi.
 

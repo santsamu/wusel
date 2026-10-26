@@ -154,6 +154,12 @@ class Application:
         db.execute('INSERT INTO sessions VALUES(?,?,?,?)',
                    (hashlib.sha256(token.encode()).hexdigest(), uid, csrf, self.now()+43200))
         return f'wusel_session={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=43200' + ('; Secure' if self.secure_cookie else '')
+    def correct_completion(self, db, user, completion, restore):
+        db.execute('UPDATE completions SET voided=?,locked=? WHERE id=?',
+                   (int(not restore),int(not restore),completion['id']))
+        if restore:
+            self.award(db,completion['child'])
+        self.audit(db,user['id'],'correction',f'{"Restored" if restore else "Reversed"} completion {completion["id"]}: {completion["title"]} ({completion["day"]})')
     def child(self, db, uid):
         row = db.execute("SELECT id FROM users WHERE id=? AND role='child'", (uid,)).fetchone()
         if not row:
@@ -348,6 +354,9 @@ class Application:
             if type(done) is not bool:
                 raise Problem('Choose completed or not completed.')
             old = db.execute('SELECT * FROM completions WHERE routine=? AND day=?',(rid,today.isoformat())).fetchone()
+            if old and user['role']=='parent':
+                self.correct_completion(db,user,old,done)
+                return {'ok':True,'earned_points':0},None
             if old and old['locked']:
                 raise Problem('This step is open again. Let’s check it together.',403)
             if old:
@@ -525,10 +534,7 @@ class Application:
             restore = body.get('restore',False)
             if type(restore) is not bool:
                 raise Problem('Choose a valid correction.')
-            db.execute('UPDATE completions SET voided=?,locked=? WHERE id=?',(int(not restore),int(not restore),cid))
-            if restore:
-                self.award(db,c['child'])
-            self.audit(db,user['id'],'correction',f'{"Restored" if restore else "Reversed"} completion {cid}: {c["title"]} ({c["day"]})')
+            self.correct_completion(db,user,c,restore)
         elif path=='/api/badge':
             child = self.integer(body,'child')
             self.child(db,child)

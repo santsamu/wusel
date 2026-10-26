@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.2
+
+- Keep corrected task titles, icons, times and instructions visible on the child home screen while awaiting parental confirmation, including when other tasks remain.
+- Unify Overview and Review: reopening removes points and locks the step until a parent confirms completion, with the same audit trail and no duplicate rewards.
+- Use explicit parent action labels and explain the correction flow in English and German.
+
 ## 0.12.1
 
 - Fix the web interface URL template to use Home Assistant's required port placeholder so Supervisor can load Wusel in the store.
