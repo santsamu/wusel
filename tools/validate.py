@@ -32,6 +32,12 @@ def require(condition, message):
     if not condition:
         raise ValueError(message)
 
+def validate_webui(value):
+    # Supervisor requires port placeholders even when host networking is enabled.
+    require(isinstance(value,str) and re.fullmatch(r'(?:https?|\[PROTO:\w+\]):\/\/\[HOST\]:\[PORT:\d+\].*',value),
+            'Web URL must use the Home Assistant host and port placeholders')
+    require(value=='http://[HOST]:[PORT:8099]/','Web URL must match the listener port')
+
 def validate(root=ROOT):
     app = root/'wusel'
     config = load_yaml((app/'config.yaml').read_text(encoding='utf-8-sig'))
@@ -40,7 +46,7 @@ def validate(root=ROOT):
     require(config.get('slug')=='wusel','Home Assistant app identity must be wusel')
     require(set(config.get('arch',[]))=={'aarch64','amd64'},'Manifest and build matrix must cover both architectures')
     require(config.get('host_network') is True,'Host networking is required for the current listener')
-    require(config.get('webui')=='http://[HOST]:8099/','Web URL must match the listener port')
+    validate_webui(config.get('webui'))
     require(config.get('backup')=='cold','SQLite backups must stop the app')
     require(set(config['options'])==set(config['schema']),'Options must match the Home Assistant schema')
     ZoneInfo(config['options']['timezone'])

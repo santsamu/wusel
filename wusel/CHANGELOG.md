@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.12.1
+
+- Fix the web interface URL template to use Home Assistant's required port placeholder so Supervisor can load Wusel in the store.
+- Validate Supervisor URL placeholder syntax and the listener port in CI, with a regression for the rejected fixed-port form.
+
 ## 0.12.0
 
 - Use wusel consistently for the Home Assistant slug, SQLite database, environment variables, request header, session cookie and browser preferences.

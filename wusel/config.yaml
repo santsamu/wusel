@@ -1,5 +1,5 @@
 name: Wusel
-version: "0.12.0"
+version: "0.12.1"
 slug: wusel
 description: Calm daily routines, family accounts, and little rewards.
 arch:
@@ -10,7 +10,7 @@ boot: auto
 init: true
 stage: experimental
 host_network: true
-webui: "http://[HOST]:8099/"
+webui: "http://[HOST]:[PORT:8099]/"
 options:
   weather_entity: ""
   timezone: Europe/Zurich

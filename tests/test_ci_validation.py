@@ -16,7 +16,7 @@ sys.path[:0]=[str(ROOT),str(ROOT/'wusel')]
 from app import Application, create_app
 from tools.package import build
 from tools.smoke import smoke
-from tools.validate import load_yaml, validate, validate_archive
+from tools.validate import load_yaml, validate, validate_archive, validate_webui
 
 class CIValidationTests(unittest.TestCase):
     def setUp(self):
@@ -45,6 +45,12 @@ class CIValidationTests(unittest.TestCase):
         self.assertTrue(application.db_path.is_file())
         with application.connect() as db:
             self.assertEqual(db.execute('SELECT COUNT(*) FROM users').fetchone()[0],0)
+    def test_webui_requires_supervisor_placeholders_and_listener_port(self):
+        validate_webui('http://[HOST]:[PORT:8099]/')
+        for value in ['http://[HOST]:8099/','http://[HOST]:[PORT:8080]/',
+                      'http://localhost:[PORT:8099]/',None]:
+            with self.subTest(value=value),self.assertRaises(ValueError):
+                validate_webui(value)
     def test_duplicate_yaml_keys_are_rejected(self):
         with self.assertRaises(ValueError):load_yaml('version: 1\nversion: 2\n')
     def test_private_runtime_and_traversal_members_are_rejected(self):

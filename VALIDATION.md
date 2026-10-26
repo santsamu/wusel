@@ -1,5 +1,11 @@
 # Validation history
 
+## 0.12.1 validation
+
+- Fixed the Supervisor-rejected webui URL: the host-network manifest now uses the required port placeholder. The earlier validator accepted the invalid literal port and did not validate this Supervisor constraint.
+- Six focused metadata/packaging tests passed, including a regression rejecting literal ports, incorrect listener ports, missing host placeholders and missing values. Source metadata and the 0.12.1 ZIP passed validation.
+- AMD64 and ARM64 container checks and the complete test suite run in GitHub Actions; store loading on the actual Pi still requires replacing the local manifest and reloading the store.
+
 ## 0.12.0 validation
 
 - Renamed the Home Assistant identity, database, environment variables, request header, session cookie, browser language storage and remaining internal branding to Wusel. No tracked file contents or paths retain the prior garden name.
