@@ -5,8 +5,8 @@ from test_app import Client
 from app import Application
 
 class RoutineTimingTests(unittest.TestCase):
-    setUp=app_tests.GardenTests.setUp
-    tearDown=app_tests.GardenTests.tearDown
+    setUp=app_tests.WuselTests.setUp
+    tearDown=app_tests.WuselTests.tearDown
     def create(self,**extra):
         body={'child':2,'title':'Original','description':'Help','time':'07:00','days':list(range(7)),'specific_date':'','apply_from':'today',**extra}
         self.assertEqual(self.parent.call('routines',body)[0],200)

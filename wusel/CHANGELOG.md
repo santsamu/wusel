@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.0
+
+- Use wusel consistently for the Home Assistant slug, SQLite database, environment variables, request header, session cookie and browser preferences.
+- Remove prior identity compatibility instructions and remaining old branding keys.
+- Clean installation required; previous application identities/data are not migrated.
+
 ## 0.11.0
 
 - Add parent task-writing guidance and an optional first small action.

@@ -5,8 +5,8 @@ from test_app import Client
 from app import Application
 
 class ChildResetTests(unittest.TestCase):
-    setUp=app_tests.GardenTests.setUp
-    tearDown=app_tests.GardenTests.tearDown
+    setUp=app_tests.WuselTests.setUp
+    tearDown=app_tests.WuselTests.tearDown
     def seed(self):
         for name in ['First','Archived']:
             self.parent.call('routines',{'child':2,'title':name,'description':'Keep me','time':'07:00','days':[0,1,2,3,4,5,6]})

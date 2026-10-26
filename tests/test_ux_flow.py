@@ -46,8 +46,8 @@ class RestSeriesTests(unittest.TestCase):
         self.assertNotEqual(self.progress()['next_badge'],'first')
 
 class RestApiTests(unittest.TestCase):
-    setUp=app_tests.GardenTests.setUp
-    tearDown=app_tests.GardenTests.tearDown
+    setUp=app_tests.WuselTests.setUp
+    tearDown=app_tests.WuselTests.tearDown
     def body(self,**extra):return {'child':2,'start':'2026-10-26','end':'2026-10-28',**extra}
     def test_rest_range_add_remove_isolation_and_permissions(self):
         self.assertEqual(self.child.call('rest-days',self.body())[0],403)

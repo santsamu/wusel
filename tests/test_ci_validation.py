@@ -1,17 +1,19 @@
 """Regression checks for CI metadata, packaging and the container smoke runner."""
 import contextlib
 import io
+import os
 from pathlib import Path
 import sys
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 from zipfile import ZipFile
 from wsgiref.simple_server import WSGIRequestHandler, make_server
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT),str(ROOT/'wusel')]
-from app import Application
+from app import Application, create_app
 from tools.package import build
 from tools.smoke import smoke
 from tools.validate import load_yaml, validate, validate_archive
@@ -32,11 +34,22 @@ class CIValidationTests(unittest.TestCase):
         return target
     def test_source_and_complete_archive_validate(self):
         version=validate();validate_archive(self.archive(),version)
+    def test_environment_creates_fresh_wusel_installation(self):
+        settings={'WUSEL_DATA':str(self.path),'WUSEL_TIMEZONE':'Europe/Berlin',
+                  'WUSEL_SECURE_COOKIE':'1','WUSEL_WEATHER_ENTITY':''}
+        with patch.dict(os.environ,settings),contextlib.redirect_stdout(io.StringIO()):
+            application=create_app()
+        self.assertEqual(application.zone.key,'Europe/Berlin')
+        self.assertTrue(application.secure_cookie)
+        self.assertEqual(application.db_path,self.path/'wusel.sqlite3')
+        self.assertTrue(application.db_path.is_file())
+        with application.connect() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM users').fetchone()[0],0)
     def test_duplicate_yaml_keys_are_rejected(self):
         with self.assertRaises(ValueError):load_yaml('version: 1\nversion: 2\n')
     def test_private_runtime_and_traversal_members_are_rejected(self):
         version=validate()
-        for name in ['wusel/data/garden.sqlite3','wusel/work/accounts.json','wusel/.env','wusel/setup-code','../outside','/absolute']:
+        for name in ['wusel/data/wusel.sqlite3','wusel/work/accounts.json','wusel/.env','wusel/setup-code','../outside','/absolute']:
             with self.subTest(name=name),self.assertRaises(ValueError):validate_archive(self.archive({name:b'test'}),version)
     def test_missing_runtime_file_and_wrong_version_are_rejected(self):
         with self.assertRaises(ValueError):validate_archive(self.archive(omit='wusel/wusel/server.py'),validate())

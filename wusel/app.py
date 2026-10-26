@@ -71,7 +71,7 @@ class Application:
     def __init__(self, data_dir, tz='Europe/Zurich', secure_cookie=False, weather_entity=''):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.db_path = self.data_dir / 'garden.sqlite3'
+        self.db_path = self.data_dir / 'wusel.sqlite3'
         self.zone = ZoneInfo(tz)
         self.secure_cookie = secure_cookie
         self.weather = Weather(weather_entity)
@@ -142,7 +142,7 @@ class Application:
         cookie = SimpleCookie()
         try:
             cookie.load(environ.get('HTTP_COOKIE', ''))
-            token = cookie['garden_session'].value if 'garden_session' in cookie else ''
+            token = cookie['wusel_session'].value if 'wusel_session' in cookie else ''
         except Exception:
             token = ''
         return db.execute('''SELECT users.*,sessions.csrf FROM sessions JOIN users ON users.id=sessions.user
@@ -153,7 +153,7 @@ class Application:
         db.execute('DELETE FROM sessions WHERE expires<=?', (self.now(),))
         db.execute('INSERT INTO sessions VALUES(?,?,?,?)',
                    (hashlib.sha256(token.encode()).hexdigest(), uid, csrf, self.now()+43200))
-        return f'garden_session={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=43200' + ('; Secure' if self.secure_cookie else '')
+        return f'wusel_session={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=43200' + ('; Secure' if self.secure_cookie else '')
     def child(self, db, uid):
         row = db.execute("SELECT id FROM users WHERE id=? AND role='child'", (uid,)).fetchone()
         if not row:
@@ -285,7 +285,7 @@ class Application:
             return self.weather.get(self.zone),None
         if method!='POST':
             raise Problem('Page not found.',404)
-        if env.get('HTTP_X_GARDEN_REQUEST')!='1':
+        if env.get('HTTP_X_WUSEL_REQUEST')!='1':
             raise Problem('Request could not be verified. Reload the page.',403)
         if path=='/api/setup':
             self.throttle(db,'setup:'+env.get('REMOTE_ADDR',''))
@@ -330,9 +330,9 @@ class Application:
             db.execute('UPDATE users SET '+columns+' WHERE id=?',(*changes.values(),user['id']))
             return {'ok':True},None
         if path=='/api/logout':
-            raw = SimpleCookie(env.get('HTTP_COOKIE',''))['garden_session'].value
+            raw = SimpleCookie(env.get('HTTP_COOKIE',''))['wusel_session'].value
             db.execute('DELETE FROM sessions WHERE token=?',(hashlib.sha256(raw.encode()).hexdigest(),))
-            return {'ok':True},'garden_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0'
+            return {'ok':True},'wusel_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0'
         if path=='/api/complete':
             rid = self.integer(body,'routine')
             db.execute('BEGIN IMMEDIATE')
@@ -596,12 +596,12 @@ class Application:
         return [payload]
 
 def create_app():
-    data = Path(os.environ.get('GARDEN_DATA','/data'))
+    data = Path(os.environ.get('WUSEL_DATA','/data'))
     options = data/'options.json'
     config = json.loads(options.read_text()) if options.exists() else {}
-    app = Application(data,config.get('timezone',os.environ.get('GARDEN_TIMEZONE','Europe/Zurich')),
-                      config.get('secure_cookie',False) or os.environ.get('GARDEN_SECURE_COOKIE')=='1',
-                      config.get('weather_entity',os.environ.get('GARDEN_WEATHER_ENTITY','')))
+    app = Application(data,config.get('timezone',os.environ.get('WUSEL_TIMEZONE','Europe/Zurich')),
+                      config.get('secure_cookie',False) or os.environ.get('WUSEL_SECURE_COOKIE')=='1',
+                      config.get('weather_entity',os.environ.get('WUSEL_WEATHER_ENTITY','')))
     with app.connect() as db:
         if not db.execute('SELECT 1 FROM users LIMIT 1').fetchone():
             print(f'Wusel first-run setup code: {app.setup_code}',flush=True)
@@ -609,7 +609,7 @@ def create_app():
 
 if __name__=='__main__':
     app = create_app()
-    if os.environ.get('GARDEN_DEV')=='1':
+    if os.environ.get('WUSEL_DEV')=='1':
         from wsgiref.simple_server import make_server
         print('Local preview: http://127.0.0.1:8099',flush=True)
         make_server('127.0.0.1',8099,app).serve_forever()

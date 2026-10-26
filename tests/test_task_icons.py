@@ -6,8 +6,8 @@ from app import Application,TASK_ICONS
 from test_app import Client
 
 class TaskIconTests(unittest.TestCase):
-    setUp=app_tests.GardenTests.setUp
-    tearDown=app_tests.GardenTests.tearDown
+    setUp=app_tests.WuselTests.setUp
+    tearDown=app_tests.WuselTests.tearDown
     def body(self,**extra):return {'child':2,'title':'Task','description':'','time':'07:00','days':list(range(7)),**extra}
     def test_frontend_and_backend_icon_choices_match(self):
         import ast

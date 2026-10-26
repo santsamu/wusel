@@ -1,6 +1,6 @@
 name: Wusel
-version: "0.11.0"
-slug: routine_garden
+version: "0.12.0"
+slug: wusel
 description: Calm daily routines, family accounts, and little rewards.
 arch:
   - aarch64

@@ -7,7 +7,6 @@ from zipfile import ZIP_DEFLATED, ZipFile
 PROJECT = Path(__file__).resolve().parents[1]
 APP = PROJECT / 'wusel'
 SKIP = {'__pycache__', '.venv', 'node_modules', '.git', 'work'}
-LEGACY_NAMES = ('routine' + '-garden', 'routine' + '_garden')
 
 def files():
     for name in ('wusel', 'tests', 'tools', '.github'):
@@ -28,10 +27,6 @@ def build(output=None):
     version = match.group(1)
     output = (output or PROJECT / 'dist' / f'wusel-{version}.zip').resolve()
     selected = sorted(set(files()))
-    for path in selected:
-        relative = path.relative_to(PROJECT).as_posix()
-        if any(name in relative for name in LEGACY_NAMES):
-            raise ValueError('Legacy path in distribution: '+relative)
     output.parent.mkdir(parents=True,exist_ok=True)
     with ZipFile(output,'w',ZIP_DEFLATED) as archive:
         for path in selected:
@@ -42,8 +37,6 @@ def build(output=None):
         required = ('wusel/wusel/config.yaml','wusel/README.md','wusel/README.de.md','wusel/tools/package.py')
         if any(name not in archive.namelist() for name in required):
             raise ValueError('Required distribution file missing')
-        if any(any(old in name for old in LEGACY_NAMES) for name in archive.namelist()):
-            raise ValueError('Legacy path in archive')
     print(f'Created {output.name}: {len(selected)} files ({output.stat().st_size} bytes)')
     return output
 

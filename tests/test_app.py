@@ -15,7 +15,7 @@ class Client:
         raw=json.dumps(body).encode() if body is not None else b''
         env={'REQUEST_METHOD':'POST' if body is not None else 'GET','PATH_INFO':'/api/'+path,
              'CONTENT_TYPE':'application/json','CONTENT_LENGTH':str(len(raw)),'wsgi.input':io.BytesIO(raw),
-             'REMOTE_ADDR':'127.0.0.1','HTTP_COOKIE':self.cookie,'HTTP_X_GARDEN_REQUEST':'1','HTTP_X_CSRF_TOKEN':self.csrf}
+             'REMOTE_ADDR':'127.0.0.1','HTTP_COOKIE':self.cookie,'HTTP_X_WUSEL_REQUEST':'1','HTTP_X_CSRF_TOKEN':self.csrf}
         env.update(extra or {})
         captured={}
         def start(status,headers): captured.update(status=int(status.split()[0]),headers=dict(headers))
@@ -24,7 +24,7 @@ class Client:
         if path=='state' and 'csrf' in data:self.csrf=data['csrf']
         return captured['status'],data
 
-class GardenTests(unittest.TestCase):
+class WuselTests(unittest.TestCase):
     def setUp(self):
         scratch=Path.cwd()/'work'/'test-data'
         scratch.mkdir(parents=True,exist_ok=True)
@@ -83,6 +83,8 @@ class GardenTests(unittest.TestCase):
         self.parent.call('badge',{'child':2,'badge':'first','revoked':False})
         self.assertFalse(self.profile()['progress']['badges'][0]['revoked'])
     def test_midnight_and_persistence(self):
+        self.assertEqual(self.app.db_path, Path(self.temp.name)/'wusel.sqlite3')
+        self.assertTrue(self.child.cookie.startswith('wusel_session='))
         rid=self.create();self.child.call('complete',{'routine':rid,'done':True})
         self.app.today=lambda:date(2026,10,27)
         self.assertFalse(self.profile()['routines'][0]['done'])
@@ -95,7 +97,7 @@ class GardenTests(unittest.TestCase):
     def test_validation_csrf_setup_and_missing_login(self):
         self.assertEqual(Client(self.app).call('complete',{'routine':1,'done':True})[0],401)
         self.assertEqual(self.parent.call('users',{}, {'HTTP_X_CSRF_TOKEN':'bad'})[0],403)
-        self.assertEqual(self.parent.call('login',{}, {'HTTP_X_GARDEN_REQUEST':''})[0],403)
+        self.assertEqual(self.parent.call('login',{}, {'HTTP_X_WUSEL_REQUEST':''})[0],403)
         self.assertEqual(self.parent.call('setup',{})[0],409)
         for extra in [{'days':[]},{'days':[7]},{'time':'29:00'},{'specific_date':'bad'},{'specific_date':1}]:
             body={'child':2,'title':'Task','description':'','time':'07:00','days':[0],**extra}

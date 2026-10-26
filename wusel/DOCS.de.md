@@ -1,6 +1,8 @@
 # Wusel
 
-**von Wild & Weich · Version 0.11.0**
+**von Wild & Weich · Version 0.12.0**
+
+Ab Version 0.12.0 lautet die Installationskennung `wusel` (lokal: `local_wusel`). Diese Version ist eine saubere Neuinstallation mit neuer Datenbank `/data/wusel.sqlite3`, `WUSEL_*`-Umgebungsvariablen und neuen Sitzungskennungen. Frühere Installationskennungen und Daten werden nicht übernommen. Kopiere die aktuelle innere App-Struktur nach `/local_apps/wusel` (beziehungsweise `/addons/wusel`), lade den Store neu und installiere Wusel neu. Richte danach das erste Elternkonto mit dem Einrichtungscode aus den Logs ein.
 
 Eltern erhalten im Aufgabenformular Hinweise für kurze, konkrete Schritte und können eine optionale erste kleine Handlung ergänzen. Die Kinderansicht zeigt diese direkt unter dem Titel. „Ich brauche Hilfe“ öffnet die vorhandene Anleitung; „Erwachsenen fragen“ fordert dazu auf, einen Erwachsenen vor Ort zu holen. Es wird keine Nachricht versendet. „Später wiederkommen“ verschiebt den Schritt hinter andere offene Schritte desselben Tages, ohne ihn abzuhaken oder Punkte zu verändern. Gibt es keinen anderen verfügbaren Schritt, bleibt diese Option mit Erklärung deaktiviert. Unter Familie → Unterstützung für Kinder können Eltern pro Kind Serien-Abzeichen ausblenden und ruhige Belohnungen aktivieren. Verdiente Abzeichen und Punkte bleiben erhalten; ruhige Belohnungen unterdrücken Punkteanimationen, Level-Jubel und Abzeichenmeldungen unabhängig von der Geräteeinstellung. Korrekturen verwenden neutrale Formulierungen; Eltern behalten ihre bisherigen Kontrollen. Die neuen Einstellungen bleiben beim Upgrade standardmäßig auf Serien sichtbar/ruhige Belohnungen aus. Beim Zurücksetzen werden sie und die Zurückstellungen gelöscht, Aufgaben samt Anleitung bleiben erhalten.
 
@@ -72,20 +74,20 @@ Ab Version 0.5.2 nutzt Wusel direkt das Netzwerk des Pi und lauscht über IPv4 u
 
 Prüfe nach dem Update `http://homeassistant.local:8099/health` und die IPv4-Adresse des Pi, zum Beispiel `http://YOUR_PI_IP:8099/health`. Beide sollen `{"ok":true}` liefern. Im Protokoll erscheinen die Listener-Adressen (`0.0.0.0:8099` sowie `[::]:8099` bei aktiviertem IPv6) und anschließend `Wusel ready: HTTP port 8099`.
 
-Übernimm alle neuen App-Dateien, einschließlich `server.py`, `Dockerfile` und `config.yaml`. Aktualisiere beziehungsweise baue die installierte App neu und prüfe Version **0.11.0**. Ein bloßer Neustart des alten Containers ändert den Netzwerkmodus noch nicht. Installationskennung und gespeicherte Daten bleiben erhalten.
+Übernimm alle neuen App-Dateien, einschließlich `server.py`, `Dockerfile` und `config.yaml`. Aktualisiere beziehungsweise baue die installierte App neu und prüfe Version **0.12.0**. Ein bloßer Neustart des alten Containers ändert den Netzwerkmodus noch nicht. Bei späteren Updates bleibt der Slug `wusel` unverändert.
 
 Wusel teilt damit die Netzwerkschnittstellen des Pi. Dafür sind weder das Abschalten des Schutzmodus noch eine Portfreigabe am Router nötig. Die vorhandene Anmeldung und die Hinweise zu HTTP/HTTPS gelten weiterhin.
 
 Technische Referenzen: [Waitress IPv4/IPv6-Listener](https://docs.pylonsproject.org/projects/waitress/en/latest/arguments.html), [Home Assistant Host-Netzwerk](https://contributors.home-assistant.io/apps/reference/configuration/).
 
-## Bestehende Installation aktualisieren
+## Updates nach der Neuinstallation von 0.12.0
 
 1. Erstelle ein Home Assistant Backup einschließlich Wusel und stoppe Wusel.
 2. Suche Wusels bisherigen Quellordner im Ordner für lokale Apps. Benenne diesen bei Bedarf in `wusel` um und ersetze seine App-Dateien durch den Inhalt des neuen inneren Ordners `wusel`. Im überwachten App-Ordner soll nur eine Quellkopie dieser App liegen; sichere Quellkopien außerhalb davon.
-3. Lass den Wert `slug` in `config.yaml` unverändert. Diese Kompatibilitätskennung bezeichnet die bestehende Installation und ist vom Anzeigenamen und Quellordner getrennt. Home Assistant identifiziert darüber die App und ihre gespeicherten Daten.
+3. Behalte bei Updates nach dieser Neuinstallation `slug: wusel` in `config.yaml` bei. Home Assistant identifiziert damit die App und ihre gespeicherten Daten.
 4. Aktualisiere die Store-Liste, führe das Update beziehungsweise einen Rebuild aus und starte Wusel. Behalte die App währenddessen installiert, damit ihr Datenvolume erhalten bleibt.
 
-Konten, Routinen, Erledigungen, Sprachen und Farbwelten bleiben im dauerhaften Verzeichnis `/data` erhalten. Fehlende Einstellungen älterer Versionen werden automatisch ergänzt. Diese Version ergänzt IPv4/IPv6 im Host-Netzwerk und klare Startmeldungen; das Speicherformat bleibt gleich.
+Bei Updates dieser Installation bleiben Konten und Fortschritte in `/data/wusel.sqlite3` erhalten. Schemaanpassungen erfolgen automatisch.
 
 Die Trennung von Ordner und Installationskennung beschreibt Home Assistant unter [How apps work](https://contributors.home-assistant.io/apps/how-apps-work/).
 
@@ -128,12 +130,12 @@ Benötigt Python 3.12 oder neuer. Im äußeren Projektordner, mit PowerShell:
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r .\wusel\requirements.txt
-$env:GARDEN_DATA = Join-Path $PWD "work\dev-data"
-$env:GARDEN_DEV = "1"
+$env:WUSEL_DATA = Join-Path $PWD "work\dev-data"
+$env:WUSEL_DEV = "1"
 .\.venv\Scripts\python.exe .\wusel\app.py
 ```
 
-Öffne `http://127.0.0.1:8099` und verwende den Einrichtungscode aus dem Terminal. Die vorhandenen Umgebungsvariablen `GARDEN_*` bleiben aus Kompatibilitätsgründen erhalten. Der Entwicklungsserver bindet nur an localhost; der Container verwendet Waitress.
+Öffne `http://127.0.0.1:8099` und verwende den Einrichtungscode aus dem Terminal. Die lokale Entwicklung verwendet die Umgebungsvariablen `WUSEL_*`. Der Entwicklungsserver bindet nur an localhost; der Container verwendet Waitress.
 
 ## Prüfen und Paket erstellen
 
@@ -146,10 +148,10 @@ python -m unittest discover -s tests -v
 node tests/test_i18n.cjs
 node tests/test_badge_view.cjs
 python tools/package.py
-python tools/validate.py --archive dist/wusel-0.11.0.zip
+python tools/validate.py --archive dist/wusel-0.12.0.zip
 ```
 
-Das Paketwerkzeug schreibt `wusel-0.11.0.zip` in den Unterordner `dist` des Projekts. Im ZIP liegt die App-Konfiguration unter `wusel/wusel/config.yaml`. Lokale Daten, virtuelle Umgebungen und Bytecode werden nicht eingepackt.
+Das Paketwerkzeug schreibt `wusel-0.12.0.zip` in den Unterordner `dist` des Projekts. Im ZIP liegt die App-Konfiguration unter `wusel/wusel/config.yaml`. Lokale Daten, virtuelle Umgebungen und Bytecode werden nicht eingepackt.
 
 Prüfungen und Grenzen stehen in [VALIDATION.md](../VALIDATION.md). Der Produktionsserver wurde lokal über IPv4 und IPv6 geprüft. Der neue Container-Netzwerkmodus, der Zugriff über den Hostnamen, Live-Wetter und Backup/Wiederherstellung müssen nach dem Update auf dem Pi überprüft werden.
 

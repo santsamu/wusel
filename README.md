@@ -2,7 +2,9 @@
 
 [![Build, test and validate](https://github.com/santsamu/wusel/actions/workflows/ci.yml/badge.svg)](https://github.com/santsamu/wusel/actions/workflows/ci.yml)
 
-**von Wild & Weich · Version 0.11.0**
+**von Wild & Weich · Version 0.12.0**
+
+Version 0.12.0 uses the app identity `wusel` (`local_wusel` for local installations). This is a clean-install release with a new `/data/wusel.sqlite3` database, `WUSEL_*` environment variables and new session identifiers. Previous installation identities and data are not migrated. Copy the current inner app folder to `/local_apps/wusel` (or `/addons/wusel`), reload the store and install Wusel fresh. Create the first parent account using the setup code from the app logs.
 
 The task editor suggests brief, concrete steps and offers an optional first small action, shown beneath the child’s task title. I need help reveals existing guidance; Ask an adult asks the child to seek a nearby adult and does not send a message. Come back later moves the step behind other unfinished steps for that day without completion or points; it is disabled with an explanation when no other available step exists. Under Family → Child support settings, parents can hide series badges and enable quiet rewards per child. Earned badges and points are retained; quiet rewards suppress point animations, level celebrations and badge messages independently of device motion settings. Corrections use neutral wording while retaining parental controls. Upgrade defaults preserve visible series and normal rewards. Child reset clears these preferences and deferrals, retaining tasks and guidance.
 
@@ -74,20 +76,20 @@ From version 0.5.2, Wusel uses the Pi's host network and listens on IPv4 and IPv
 
 After updating, test `http://homeassistant.local:8099/health` and the Pi's IPv4 address, for example `http://YOUR_PI_IP:8099/health`. Both should return `{"ok":true}`. Wusel logs the bound addresses (`0.0.0.0:8099` and `[::]:8099` when IPv6 is enabled), followed by `Wusel ready: HTTP port 8099`.
 
-Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.11.0** before starting it; restarting an older container alone does not switch its network mode. The installation ID and persistent data remain unchanged.
+Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.12.0** before starting it; restarting an older container alone does not switch its network mode. For subsequent updates, keep the app slug set to `wusel`.
 
 Host networking shares the Pi's network interfaces with the app. It does not require protection mode to be disabled or router port forwarding to be enabled. The existing family authentication and HTTP/HTTPS guidance still apply.
 
 Implementation references: [Waitress dual-stack listeners](https://docs.pylonsproject.org/projects/waitress/en/latest/arguments.html), [Home Assistant host networking](https://contributors.home-assistant.io/apps/reference/configuration/).
 
-## Updating an existing installation
+## Future updates after installing 0.12.0
 
 1. Make a Home Assistant backup that includes Wusel, then stop Wusel.
 2. Find the existing Wusel source folder in Home Assistant's local apps folder. Rename that source folder to `wusel` if necessary, then replace its app files with the new inner `wusel` folder's contents. Keep only one source copy of this app in the scanned local apps folder; keep source backups elsewhere.
-3. Leave the `slug` value in `config.yaml` unchanged. It is the existing installation's compatibility ID, separate from its display name and source folder. Home Assistant uses this ID to identify the app and its persistent data.
+3. For updates after this clean installation, keep `slug: wusel` in `config.yaml`. Home Assistant uses this ID to identify the app and its persistent data.
 4. Check for updates in the app store, update or rebuild Wusel, and start it. Keep the app installed throughout the update so its data volume is retained.
 
-Existing users, routines, completions, themes, and language choices remain in the app's persistent `/data` directory. Database settings added by earlier releases are migrated automatically. This release adds dual-stack host networking and startup diagnostics; the storage format is unchanged.
+For subsequent updates of this installation, accounts and progress stay in `/data/wusel.sqlite3`; schema changes are migrated automatically.
 
 Home Assistant documents the distinction between app folders and installation IDs in [How apps work](https://contributors.home-assistant.io/apps/how-apps-work/).
 
@@ -130,12 +132,12 @@ Requires Python 3.12+. From the outer project folder, in PowerShell:
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r .\wusel\requirements.txt
-$env:GARDEN_DATA = Join-Path $PWD "work\dev-data"
-$env:GARDEN_DEV = "1"
+$env:WUSEL_DATA = Join-Path $PWD "work\dev-data"
+$env:WUSEL_DEV = "1"
 .\.venv\Scripts\python.exe .\wusel\app.py
 ```
 
-Open `http://127.0.0.1:8099` and use the setup code printed in the terminal. The existing `GARDEN_*` environment variable names are supported for compatibility. The development server binds to localhost; the container uses Waitress for production.
+Open `http://127.0.0.1:8099` and use the setup code printed in the terminal. Local development uses the `WUSEL_*` environment variables. The development server binds to localhost; the container uses Waitress for production.
 
 ## Test and package
 
@@ -148,10 +150,10 @@ python -m unittest discover -s tests -v
 node tests/test_i18n.cjs
 node tests/test_badge_view.cjs
 python tools/package.py
-python tools/validate.py --archive dist/wusel-0.11.0.zip
+python tools/validate.py --archive dist/wusel-0.12.0.zip
 ```
 
-The package command writes `wusel-0.11.0.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
+The package command writes `wusel-0.12.0.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
 
 See [VALIDATION.md](VALIDATION.md) for checks and test boundaries. The production server has been tested over IPv4 and IPv6 locally. The updated container network mode, hostname access, live weather, and backup/restore still need verification after updating the Pi.
 

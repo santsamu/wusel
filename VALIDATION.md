@@ -1,4 +1,13 @@
-# Validation — version 0.5.2, 25 October 2026
+# Validation history
+
+## 0.12.0 validation
+
+- Renamed the Home Assistant identity, database, environment variables, request header, session cookie, browser language storage and remaining internal branding to Wusel. No tracked file contents or paths retain the prior garden name.
+- All 98 existing Python tests passed with local HTTP access enabled. The new clean-install environment regression passed separately (99 total); persistence checks also verify the new database and cookie identifiers.
+- Node translation, formatting, greeting, optional-icon and badge-view regressions passed, plus JavaScript syntax checks.
+- Metadata/version checks and the 0.12.0 source ZIP validation passed. This release requires a fresh installation; no live Home Assistant data was modified.
+- Container builds and startup checks for AMD64 and ARM64 run in GitHub Actions. ARM64 validation uses QEMU, not a physical Pi.
+
 
 ## CI pipeline validation
 

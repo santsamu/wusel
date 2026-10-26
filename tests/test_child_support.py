@@ -5,8 +5,8 @@ from app import Application
 from test_app import Client
 
 class ChildSupportTests(unittest.TestCase):
-    setUp=app_tests.GardenTests.setUp
-    tearDown=app_tests.GardenTests.tearDown
+    setUp=app_tests.WuselTests.setUp
+    tearDown=app_tests.WuselTests.tearDown
     def task(self,**extra):
         body={'child':2,'title':'Task','description':'Ask together','first_action':'Pick up your toothbrush','time':'07:00','days':list(range(7)),**extra}
         self.assertEqual(self.parent.call('routines',body)[0],200)

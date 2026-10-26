@@ -1,8 +1,8 @@
 FROM python:3.12-slim
-ARG BUILD_VERSION=0.11.0
+ARG BUILD_VERSION=0.12.0
 ARG BUILD_ARCH
 LABEL io.hass.version="${BUILD_VERSION}" io.hass.type="app" io.hass.arch="aarch64|amd64"
-ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 GARDEN_DATA=/data
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 WUSEL_DATA=/data
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

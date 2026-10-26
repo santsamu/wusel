@@ -37,7 +37,7 @@ def validate(root=ROOT):
     config = load_yaml((app/'config.yaml').read_text(encoding='utf-8-sig'))
     version = config.get('version')
     require(isinstance(version,str) and re.fullmatch(r'\d+\.\d+\.\d+',version),'App version must be semantic x.y.z')
-    require(config.get('slug')=='routine_garden','Preserve the installed Home Assistant identity')
+    require(config.get('slug')=='wusel','Home Assistant app identity must be wusel')
     require(set(config.get('arch',[]))=={'aarch64','amd64'},'Manifest and build matrix must cover both architectures')
     require(config.get('host_network') is True,'Host networking is required for the current listener')
     require(config.get('webui')=='http://[HOST]:8099/','Web URL must match the listener port')

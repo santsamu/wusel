@@ -4,21 +4,17 @@ const CATALOG = {
     "A little structure.": "A little structure.",
     "A lot of growing.": "A lot of growing.",
     "A calm place for your family's daily routines. One small step at a time.": "A calm place for your family's daily routines. One small step at a time.",
-    "Your family. Your pace. Your garden.": "Your family. Your pace. Your garden.",
     "LET’S GET GROWING": "LET’S GET GROWING",
     "WELCOME BACK": "WELCOME BACK",
     "Create your parent account": "Create your parent account",
-    "Sign in to your garden": "Sign in to Wusel",
     "Find the setup code in the Home Assistant app logs.": "Find the setup code in the Home Assistant app logs.",
     "Parents and children each use their own account.": "Parents and children each use their own account.",
     "Setup code": "Setup code",
     "Your name": "Your name",
     "Username": "Username",
     "Password": "Password",
-    "Create my garden": "Create account",
     "Sign in": "Sign in",
     "Forgot a child’s password? A parent can reset it in Family.": "Forgot a child’s password? A parent can reset it in Family.",
-    "YOUR GARDEN IS GROWING": "YOUR PROGRESS",
     "Progress to next level": "Progress to next level",
     "Level {level} · Little steps add up": "Level {level} · Little steps add up",
     "{xp} points earned · {remaining} to level {level}": "{xp} points earned · {remaining} to level {level}",
@@ -88,7 +84,6 @@ const CATALOG = {
     "Completed steps will appear here.": "Completed steps will appear here.",
     "YOUR LITTLE TEAM": "YOUR LITTLE TEAM",
     "Family": "Family",
-    "All parents in this garden can manage every child.": "All parents in this garden can manage every child.",
     "Add an account": "Add an account",
     "Account type": "Account type",
     "Child": "Child",
@@ -105,23 +100,18 @@ const CATALOG = {
     "My day": "My day",
     "Badges": "Badges",
     "Review": "Review",
-    "My garden": "My account",
     "Sign out": "Sign out",
     "Main": "Main",
-    "Garden for": "Child",
     "Let’s plant the first seed": "Let’s plant the first seed",
     "Add a child account to start planning their day.": "Add a child account to start planning their day.",
     "Add your family": "Add your family",
     "A little more rhythm. A little more room to grow.": "A little more rhythm. A little more room to grow.",
-    "Local family garden": "Wusel · Wild & Weich",
     "Archive this routine? Past progress will be kept.": "Archive this routine? Past progress will be kept.",
     "Remove this earned badge? You can restore it later.": "Remove this earned badge? You can restore it later.",
     "Step undone.": "Step undone.",
     "One more little step. Well done! +10 points": "One more little step. Well done! +10 points",
     "Welcome back.": "Welcome back.",
     "Password reset. Existing sessions for that account were signed out.": "Password reset. Existing sessions for that account were signed out.",
-    "Saved. Your garden is up to date.": "Saved.",
-    "Could not open your garden": "Could not open Wusel",
     "Reload the page to try again.": "Reload the page to try again.",
     "Could not save. Please try again.": "Could not save. Please try again.",
     "Language": "Language",
@@ -229,7 +219,6 @@ const CATALOG = {
     "Revoked badge {badge} for child {child}": "Revoked badge {badge} for child {child}",
     "Restored badge {badge} for child {child}": "Restored badge {badge} for child {child}",
     "From Home Assistant": "From Home Assistant",
-    "Opening your garden…": "Opening Wusel…",
     "Example weather for preview only": "Example weather for preview only",
     "{done} of {total} done": "{done} of {total} done",
     "Hi, {name}": "Hi, {name}",
@@ -402,28 +391,32 @@ const CATALOG = {
     "Keep points and badges; use a simple acknowledgement instead of animations and celebrations.": "Keep points and badges; use a simple acknowledgement instead of animations and celebrations.",
     "Kept for later. Let’s try another step.": "Kept for later. Let’s try another step.",
     "Changed support settings for child {child}": "Changed support settings for child {child}",
-    "When off, series are hidden from the child’s collection and next goal. Earned badges are kept.": "When off, series are hidden from the child’s collection and next goal. Earned badges are kept."
+    "When off, series are hidden from the child’s collection and next goal. Earned badges are kept.": "When off, series are hidden from the child’s collection and next goal. Earned badges are kept.",
+    "Your family. Your pace. Wusel.": "Your family. Your pace. Wusel.",
+    "Sign in to Wusel": "Sign in to Wusel",
+    "YOUR PROGRESS": "YOUR PROGRESS",
+    "All parents in this family can manage every child.": "All parents in this family can manage every child.",
+    "My account": "My account",
+    "Wusel · Wild & Weich": "Wusel · Wild & Weich",
+    "Could not open Wusel": "Could not open Wusel",
+    "Opening Wusel…": "Opening Wusel…"
   },
   "de": {
     "SMALL STEPS. BRIGHTER DAYS.": "KLEINE SCHRITTE. GUTE TAGE.",
     "A little structure.": "Ein bisschen Struktur.",
     "A lot of growing.": "Viel Raum zum Wachsen.",
     "A calm place for your family's daily routines. One small step at a time.": "Ein ruhiger Ort für die täglichen Routinen deiner Familie. Ein kleiner Schritt nach dem anderen.",
-    "Your family. Your pace. Your garden.": "Deine Familie. Dein Tempo. Dein Garten.",
     "LET’S GET GROWING": "LASS UNS LOSLEGEN",
     "WELCOME BACK": "WILLKOMMEN ZURÜCK",
     "Create your parent account": "Elternkonto erstellen",
-    "Sign in to your garden": "Bei Wusel anmelden",
     "Find the setup code in the Home Assistant app logs.": "Den Einrichtungscode findest du im Protokoll der Home Assistant App.",
     "Parents and children each use their own account.": "Eltern und Kinder nutzen jeweils ein eigenes Konto.",
     "Setup code": "Einrichtungscode",
     "Your name": "Dein Name",
     "Username": "Benutzername",
     "Password": "Passwort",
-    "Create my garden": "Konto erstellen",
     "Sign in": "Anmelden",
     "Forgot a child’s password? A parent can reset it in Family.": "Kinderpasswort vergessen? Eltern können es unter Familie zurücksetzen.",
-    "YOUR GARDEN IS GROWING": "DEIN FORTSCHRITT",
     "Progress to next level": "Fortschritt zur nächsten Stufe",
     "Level {level} · Little steps add up": "Stufe {level} · Kleine Schritte zählen",
     "{xp} points earned · {remaining} to level {level}": "{xp} Punkte gesammelt · Noch {remaining} bis Stufe {level}",
@@ -493,7 +486,6 @@ const CATALOG = {
     "Completed steps will appear here.": "Erledigte Schritte erscheinen hier.",
     "YOUR LITTLE TEAM": "DEIN KLEINES TEAM",
     "Family": "Familie",
-    "All parents in this garden can manage every child.": "Alle Eltern in diesem Garten können alle Kinder verwalten.",
     "Add an account": "Konto hinzufügen",
     "Account type": "Kontotyp",
     "Child": "Kind",
@@ -510,23 +502,18 @@ const CATALOG = {
     "My day": "Mein Tag",
     "Badges": "Abzeichen",
     "Review": "Prüfen",
-    "My garden": "Mein Konto",
     "Sign out": "Abmelden",
     "Main": "Hauptnavigation",
-    "Garden for": "Kind",
     "Let’s plant the first seed": "Lass uns den ersten Samen pflanzen",
     "Add a child account to start planning their day.": "Füge ein Kinderkonto hinzu, um den Tag zu planen.",
     "Add your family": "Deine Familie hinzufügen",
     "A little more rhythm. A little more room to grow.": "Mehr Rhythmus. Mehr Raum zum Wachsen.",
-    "Local family garden": "Wusel · Wild & Weich",
     "Archive this routine? Past progress will be kept.": "Diese Routine archivieren? Bisherige Fortschritte bleiben erhalten.",
     "Remove this earned badge? You can restore it later.": "Dieses Abzeichen entfernen? Du kannst es später wiederherstellen.",
     "Step undone.": "Schritt rückgängig gemacht.",
     "One more little step. Well done! +10 points": "Noch ein kleiner Schritt. Gut gemacht! +10 Punkte",
     "Welcome back.": "Willkommen zurück.",
     "Password reset. Existing sessions for that account were signed out.": "Passwort zurückgesetzt. Bestehende Sitzungen dieses Kontos wurden abgemeldet.",
-    "Saved. Your garden is up to date.": "Gespeichert.",
-    "Could not open your garden": "Wusel konnte nicht geöffnet werden",
     "Reload the page to try again.": "Lade die Seite neu, um es noch einmal zu versuchen.",
     "Could not save. Please try again.": "Speichern fehlgeschlagen. Bitte versuche es erneut.",
     "Language": "Sprache",
@@ -634,7 +621,6 @@ const CATALOG = {
     "Revoked badge {badge} for child {child}": "Abzeichen {badge} für Kind {child} entfernt",
     "Restored badge {badge} for child {child}": "Abzeichen {badge} für Kind {child} wiederhergestellt",
     "From Home Assistant": "Aus Home Assistant",
-    "Opening your garden…": "Wusel wird geöffnet…",
     "Example weather for preview only": "Beispielwetter nur für die Vorschau",
     "{done} of {total} done": "{done} von {total} geschafft",
     "Hi, {name}": "Hallo, {name}",
@@ -807,11 +793,19 @@ const CATALOG = {
     "Keep points and badges; use a simple acknowledgement instead of animations and celebrations.": "Punkte und Abzeichen bleiben erhalten. Statt Animationen und Jubelmeldungen erscheint eine einfache Bestätigung.",
     "Kept for later. Let’s try another step.": "Für später aufgehoben. Versuchen wir einen anderen Schritt.",
     "Changed support settings for child {child}": "Unterstützungseinstellungen für Kind {child} geändert",
-    "When off, series are hidden from the child’s collection and next goal. Earned badges are kept.": "Wenn ausgeschaltet, erscheinen Serien weder in der Kindersammlung noch als nächstes Ziel. Verdiente Abzeichen bleiben gespeichert."
+    "When off, series are hidden from the child’s collection and next goal. Earned badges are kept.": "Wenn ausgeschaltet, erscheinen Serien weder in der Kindersammlung noch als nächstes Ziel. Verdiente Abzeichen bleiben gespeichert.",
+    "Your family. Your pace. Wusel.": "Deine Familie. Dein Tempo. Wusel.",
+    "Sign in to Wusel": "Bei Wusel anmelden",
+    "YOUR PROGRESS": "DEIN FORTSCHRITT",
+    "All parents in this family can manage every child.": "Alle Eltern dieser Familie können alle Kinder verwalten.",
+    "My account": "Mein Konto",
+    "Wusel · Wild & Weich": "Wusel · Wild & Weich",
+    "Could not open Wusel": "Wusel konnte nicht geöffnet werden",
+    "Opening Wusel…": "Wusel wird geöffnet…"
   }
 };
 'use strict';
-let language = (()=>{try {const saved=localStorage.getItem('garden-language');if(['en','de'].includes(saved))return saved;}catch{}return navigator.language.toLowerCase().startsWith('de')?'de':'en';})();
+let language = (()=>{try {const saved=localStorage.getItem('wusel-language');if(['en','de'].includes(saved))return saved;}catch{}return navigator.language.toLowerCase().startsWith('de')?'de':'en';})();
 // Regional formats follow the device, independently of the interface language.
 function locale(){return navigator.languages?.[0]||navigator.language||undefined;}
 function dayNames(){return Array.from({length:7},(_,i)=>new Intl.DateTimeFormat(locale(),{weekday:'long',timeZone:'UTC'}).format(new Date(Date.UTC(2026,0,5+i))));}
@@ -828,7 +822,7 @@ function restoreDrafts(saved){for(const d of saved){const form=document.querySel
 async function setLanguage(value){
  if(!['en','de'].includes(value)||busy)return;
  const accountOpen=!!document.querySelector('.parent-account[open]');
- const saved=drafts();language=value;try{localStorage.setItem('garden-language',value);}catch{}
+ const saved=drafts();language=value;try{localStorage.setItem('wusel-language',value);}catch{}
  const notice=document.querySelector('#notice');notice.textContent='';
  render();restoreDrafts(saved);if(accountOpen)document.querySelector('.parent-account').open=true;document.querySelector('#language-picker')?.focus();
  if(state.user){busy=true;try{await api('preferences',{language:value});state.user.language=value;}catch(e){notify(e.message);}finally{busy=false;}}
@@ -857,7 +851,7 @@ function auditText(detail){
  ];for(const [pattern,format]of patterns){const m=detail.match(pattern);if(m)return format(m);}return detail;
 }
 
-if(document.querySelector('.loading'))document.querySelector('.loading').textContent=t('Opening your garden…');
+if(document.querySelector('.loading'))document.querySelector('.loading').textContent=t('Opening Wusel…');
 
 function greetingKey(timeZone,now=new Date()){
  const hour=Number(new Intl.DateTimeFormat('en-GB',{timeZone,hour:'numeric',hourCycle:'h23'}).format(now));
