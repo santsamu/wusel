@@ -1,0 +1,64 @@
+"""Regression checks for CI metadata, packaging and the container smoke runner."""
+import contextlib
+import io
+from pathlib import Path
+import sys
+import tempfile
+import threading
+import unittest
+from zipfile import ZipFile
+from wsgiref.simple_server import WSGIRequestHandler, make_server
+
+ROOT=Path(__file__).resolve().parents[1]
+sys.path[:0]=[str(ROOT),str(ROOT/'wusel')]
+from app import Application
+from tools.package import build
+from tools.smoke import smoke
+from tools.validate import load_yaml, validate, validate_archive
+
+class CIValidationTests(unittest.TestCase):
+    def setUp(self):
+        scratch=ROOT/'work'/'test-data';scratch.mkdir(parents=True,exist_ok=True)
+        self.temp=tempfile.TemporaryDirectory(dir=scratch);self.path=Path(self.temp.name)
+    def tearDown(self):self.temp.cleanup()
+    def archive(self,extra=None,omit=None):
+        with contextlib.redirect_stdout(io.StringIO()):source=build(self.path/'source.zip')
+        target=self.path/'test.zip'
+        with ZipFile(source) as original,ZipFile(target,'w') as output:
+            for name in original.namelist():
+                if name!=omit:output.writestr(name,original.read(name))
+            if extra:
+                for name,data in extra.items():output.writestr(name,data)
+        return target
+    def test_source_and_complete_archive_validate(self):
+        version=validate();validate_archive(self.archive(),version)
+    def test_duplicate_yaml_keys_are_rejected(self):
+        with self.assertRaises(ValueError):load_yaml('version: 1\nversion: 2\n')
+    def test_private_runtime_and_traversal_members_are_rejected(self):
+        version=validate()
+        for name in ['wusel/data/garden.sqlite3','wusel/work/accounts.json','wusel/.env','wusel/setup-code','../outside','/absolute']:
+            with self.subTest(name=name),self.assertRaises(ValueError):validate_archive(self.archive({name:b'test'}),version)
+    def test_missing_runtime_file_and_wrong_version_are_rejected(self):
+        with self.assertRaises(ValueError):validate_archive(self.archive(omit='wusel/wusel/server.py'),validate())
+        with self.assertRaises(ValueError):validate_archive(self.archive(),'0.0.0')
+
+class QuietHandler(WSGIRequestHandler):
+    def log_message(self,*args):pass
+
+class SmokeRunnerTests(unittest.TestCase):
+    def test_smoke_checks_real_fresh_application(self):
+        scratch=ROOT/'work'/'test-data';scratch.mkdir(parents=True,exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=scratch) as folder:
+            app=Application(folder)
+            server=make_server('127.0.0.1',0,app,handler_class=QuietHandler)
+            thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+            try:
+                output=io.StringIO()
+                with contextlib.redirect_stdout(output):smoke(f'http://127.0.0.1:{server.server_port}',timeout=5)
+                self.assertIn('Container smoke passed',output.getvalue())
+                with app.connect() as db:db.execute("INSERT INTO users(name,username,password,role) VALUES('Demo','demo','unused','parent')")
+                with self.assertRaises(RuntimeError):smoke(f'http://127.0.0.1:{server.server_port}',timeout=5)
+            finally:
+                server.shutdown();server.server_close();thread.join(timeout=3)
+
+if __name__=='__main__':unittest.main()

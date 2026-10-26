@@ -140,11 +140,19 @@ Open `http://127.0.0.1:8099` and use the setup code printed in the terminal. The
 From the outer project folder:
 
 ```powershell
+python -m pip install -r requirements-dev.txt
+python tools/validate.py
 python -m unittest discover -s tests -v
 node tests/test_i18n.cjs
+node tests/test_badge_view.cjs
 python tools/package.py
+python tools/validate.py --archive dist/wusel-0.11.0.zip
 ```
 
 The package command writes `wusel-0.11.0.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
 
 See [VALIDATION.md](../VALIDATION.md) for checks and test boundaries. The production server has been tested over IPv4 and IPv6 locally. The updated container network mode, hostname access, live weather, and backup/restore still need verification after updating the Pi.
+
+## GitHub CI
+
+The [pipeline](https://github.com/santsamu/wusel/actions/workflows/ci.yml) runs on pull requests, pushes to main, and manual dispatch. It checks Python/JavaScript tests, YAML/JSON, versions, translations and source-package integrity, then builds and starts AMD64 and ARM64 images (ARM64 via QEMU) with disposable empty data. HTTP checks cover health, the frontend, static assets and first-run API. The validated source ZIP is available as an Actions artifact for 14 days. Images are not published to a registry and the installed Pi is not modified. Actions are pinned to commit SHAs with read-only repository permissions.

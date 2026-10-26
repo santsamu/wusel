@@ -10,11 +10,11 @@ SKIP = {'__pycache__', '.venv', 'node_modules', '.git', 'work'}
 LEGACY_NAMES = ('routine' + '-garden', 'routine' + '_garden')
 
 def files():
-    for name in ('wusel', 'tests', 'tools'):
+    for name in ('wusel', 'tests', 'tools', '.github'):
         for path in (PROJECT / name).rglob('*'):
             if path.is_file() and not any(part in SKIP for part in path.relative_to(PROJECT).parts) and path.suffix not in {'.pyc','.sqlite3','.db'}:
                 yield path
-    for name in ('README.md','README.de.md','VALIDATION.md','themes-settings.png'):
+    for name in ('README.md','README.de.md','VALIDATION.md','requirements-dev.txt','themes-settings.png'):
         path = PROJECT / name
         if path.exists():
             yield path

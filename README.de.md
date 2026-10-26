@@ -1,5 +1,7 @@
 # Wusel
 
+[![Build, test and validate](https://github.com/santsamu/wusel/actions/workflows/ci.yml/badge.svg)](https://github.com/santsamu/wusel/actions/workflows/ci.yml)
+
 **von Wild & Weich · Version 0.11.0**
 
 Eltern erhalten im Aufgabenformular Hinweise für kurze, konkrete Schritte und können eine optionale erste kleine Handlung ergänzen. Die Kinderansicht zeigt diese direkt unter dem Titel. „Ich brauche Hilfe“ öffnet die vorhandene Anleitung; „Erwachsenen fragen“ fordert dazu auf, einen Erwachsenen vor Ort zu holen. Es wird keine Nachricht versendet. „Später wiederkommen“ verschiebt den Schritt hinter andere offene Schritte desselben Tages, ohne ihn abzuhaken oder Punkte zu verändern. Gibt es keinen anderen verfügbaren Schritt, bleibt diese Option mit Erklärung deaktiviert. Unter Familie → Unterstützung für Kinder können Eltern pro Kind Serien-Abzeichen ausblenden und ruhige Belohnungen aktivieren. Verdiente Abzeichen und Punkte bleiben erhalten; ruhige Belohnungen unterdrücken Punkteanimationen, Level-Jubel und Abzeichenmeldungen unabhängig von der Geräteeinstellung. Korrekturen verwenden neutrale Formulierungen; Eltern behalten ihre bisherigen Kontrollen. Die neuen Einstellungen bleiben beim Upgrade standardmäßig auf Serien sichtbar/ruhige Belohnungen aus. Beim Zurücksetzen werden sie und die Zurückstellungen gelöscht, Aufgaben samt Anleitung bleiben erhalten.
@@ -140,11 +142,19 @@ $env:GARDEN_DEV = "1"
 Im äußeren Projektordner:
 
 ```powershell
+python -m pip install -r requirements-dev.txt
+python tools/validate.py
 python -m unittest discover -s tests -v
 node tests/test_i18n.cjs
+node tests/test_badge_view.cjs
 python tools/package.py
+python tools/validate.py --archive dist/wusel-0.11.0.zip
 ```
 
 Das Paketwerkzeug schreibt `wusel-0.11.0.zip` in den Unterordner `dist` des Projekts. Im ZIP liegt die App-Konfiguration unter `wusel/wusel/config.yaml`. Lokale Daten, virtuelle Umgebungen und Bytecode werden nicht eingepackt.
 
 Prüfungen und Grenzen stehen in [VALIDATION.md](VALIDATION.md). Der Produktionsserver wurde lokal über IPv4 und IPv6 geprüft. Der neue Container-Netzwerkmodus, der Zugriff über den Hostnamen, Live-Wetter und Backup/Wiederherstellung müssen nach dem Update auf dem Pi überprüft werden.
+
+## GitHub CI
+
+Die [Pipeline](https://github.com/santsamu/wusel/actions/workflows/ci.yml) läuft bei Pull Requests, Pushes auf main und manuell. Sie prüft Python-/JavaScript-Tests, YAML/JSON, Versionen, Übersetzungen und die Integrität des Quellpakets. Danach baut und startet sie Container für AMD64 und ARM64 (ARM64 per QEMU), jeweils mit leeren temporären Daten. HTTP-Prüfungen decken Health-Endpunkt, Oberfläche, statische Dateien und Erststart-API ab. Das geprüfte ZIP steht 14 Tage als Actions-Artefakt bereit. Container werden nicht in eine Registry hochgeladen; am installierten Pi wird nichts geändert. Aktionen sind auf Commit-SHAs fixiert und verwenden nur Lesezugriff auf das Repository.

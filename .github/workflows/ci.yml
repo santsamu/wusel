@@ -1,0 +1,118 @@
+name: Build, test and validate
+
+'on':
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+  PYTHONUTF8: '1'
+
+jobs:
+  quality:
+    name: Tests and source validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.validate.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            requirements-dev.txt
+            wusel/requirements.txt
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+      - name: Install test dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Validate manifests, versions, translations and workflow
+        id: validate
+        run: python tools/validate.py --github-output
+      - name: Run Python tests including production HTTP
+        run: python -m unittest discover -s tests -v
+      - name: Check JavaScript and run browser-logic regressions
+        shell: bash
+        run: |
+          node --check wusel/static/app.js
+          node --check wusel/static/i18n.js
+          for test in tests/test_*.cjs; do
+            node "$test"
+          done
+      - name: Build source package
+        run: python tools/package.py
+      - name: Validate packaged source
+        run: python tools/validate.py --archive dist/wusel-${{ steps.validate.outputs.version }}.zip
+      - name: Upload validated source package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: wusel-${{ steps.validate.outputs.version }}-${{ github.sha }}
+          path: dist/wusel-${{ steps.validate.outputs.version }}.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  container:
+    name: Container build and smoke (${{ matrix.arch }})
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+          - arch: aarch64
+            platform: linux/arm64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.12'
+      - name: Enable ARM64 emulation
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
+        with:
+          platforms: arm64
+      - name: Set up image builder
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+      - name: Build and load the image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: ./wusel
+          file: ./wusel/Dockerfile
+          platforms: ${{ matrix.platform }}
+          load: true
+          push: false
+          tags: wusel-ci:${{ matrix.arch }}
+          build-args: |
+            BUILD_VERSION=${{ needs.quality.outputs.version }}
+            BUILD_ARCH=${{ matrix.arch }}
+          cache-from: type=gha,scope=wusel-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=wusel-${{ matrix.arch }}
+      - name: Start the image with disposable data
+        run: docker run --detach --name wusel-ci --platform ${{ matrix.platform }} --publish 127.0.0.1:8099:8099 --tmpfs /data wusel-ci:${{ matrix.arch }}
+      - name: Check health, frontend assets and API
+        run: python tools/smoke.py http://127.0.0.1:8099
+      - name: Show startup diagnostics on failure
+        if: failure()
+        shell: bash
+        run: docker logs wusel-ci 2>&1 | sed -E 's/(Wusel first-run setup code:).*/\1 [redacted]/' || true
+      - name: Remove disposable container
+        if: always()
+        run: docker rm --force wusel-ci > /dev/null 2>&1 || true

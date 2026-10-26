@@ -1,5 +1,13 @@
 # Validation — version 0.5.2, 25 October 2026
 
+## CI pipeline validation
+
+- Added read-only, commit-pinned GitHub Actions for pull requests, main pushes and manual runs, with gated AMD64/ARM64 image builds and fresh-container HTTP checks.
+- Local metadata/version/YAML/JSON/Python-syntax checks and packaged-source validation passed. Five CI-tool regressions passed, including duplicate YAML rejection, missing/private/traversal archive rejection and real HTTP smoke checks against both fresh and initialized local application data.
+- Existing 93 backend tests and JavaScript regressions passed for 0.11.0. The CI run installs development dependencies and runs all 98 Python tests plus Node checks.
+- Both image builds and boot checks execute on GitHub-hosted Linux; ARM64 uses QEMU rather than physical Pi hardware. Current results and downloadable source packages: https://github.com/santsamu/wusel/actions/workflows/ci.yml . The pipeline does not publish images or modify the installed Pi.
+
+
 ## 0.11.0 validation
 
 - All 93 Python tests passed, including eight new support tests for first-action validation and scheduled/restarted edits, deferral ordering without points/completion, restart/day boundaries, child isolation/CSRF/stale-day/completed/locked/last-step rejection, atomic parent-only preferences, retained hidden-series awards and eligible goals, reset cleanup and migration with retained progress.
