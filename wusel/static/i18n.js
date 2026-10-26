@@ -375,7 +375,34 @@ const CATALOG = {
     "Play": "Play",
     "Tidying": "Tidying",
     "Quiet time": "Quiet time",
-    "Medicine": "Medicine"
+    "Medicine": "Medicine",
+    "This step is open again. Let’s check it together.": "This step is open again. Let’s check it together.",
+    "This step is already completed.": "This step is already completed.",
+    "There are no other steps to switch to.": "There are no other steps to switch to.",
+    "Choose a valid support setting.": "Choose a valid support setting.",
+    "Choose a setting to change.": "Choose a setting to change.",
+    "For example: Put your lunchbox in your bag": "For example: Put your lunchbox in your bag",
+    "Use one short, concrete action, such as “Put your lunchbox in your bag” instead of “Get ready”. Doing a step with help still counts.": "Use one short, concrete action, such as “Put your lunchbox in your bag” instead of “Get ready”. Doing a step with help still counts.",
+    "First small action (optional)": "First small action (optional)",
+    "Not currently awarded": "Not currently awarded",
+    "Reopened for review": "Reopened for review",
+    "Reopen step": "Reopen step",
+    "I need help": "I need help",
+    "Ask an adult nearby to help you get started.": "Ask an adult nearby to help you get started.",
+    "Ask an adult": "Ask an adult",
+    "Come back later": "Come back later",
+    "There are no other steps to switch to. You can ask an adult or take a break.": "There are no other steps to switch to. You can ask an adult or take a break.",
+    "Please ask an adult to join you. You can do this step together.": "Please ask an adult to join you. You can do this step together.",
+    "For later today": "For later today",
+    "Child support settings": "Child support settings",
+    "Home screen": "Home screen",
+    "Show series badges": "Show series badges",
+    "Hide series from the child’s collection and next goal without deleting earned badges.": "Hide series from the child’s collection and next goal without deleting earned badges.",
+    "Quiet rewards": "Quiet rewards",
+    "Keep points and badges; use a simple acknowledgement instead of animations and celebrations.": "Keep points and badges; use a simple acknowledgement instead of animations and celebrations.",
+    "Kept for later. Let’s try another step.": "Kept for later. Let’s try another step.",
+    "Changed support settings for child {child}": "Changed support settings for child {child}",
+    "When off, series are hidden from the child’s collection and next goal. Earned badges are kept.": "When off, series are hidden from the child’s collection and next goal. Earned badges are kept."
   },
   "de": {
     "SMALL STEPS. BRIGHTER DAYS.": "KLEINE SCHRITTE. GUTE TAGE.",
@@ -753,7 +780,34 @@ const CATALOG = {
     "Play": "Spielen",
     "Tidying": "Aufräumen",
     "Quiet time": "Ruhezeit",
-    "Medicine": "Medikament"
+    "Medicine": "Medikament",
+    "This step is open again. Let’s check it together.": "Dieser Schritt ist wieder offen. Lass ihn uns gemeinsam anschauen.",
+    "This step is already completed.": "Dieser Schritt ist bereits erledigt.",
+    "There are no other steps to switch to.": "Es gibt keine anderen Schritte, zu denen du wechseln kannst.",
+    "Choose a valid support setting.": "Wähle eine gültige Unterstützungseinstellung.",
+    "Choose a setting to change.": "Wähle eine Einstellung zum Ändern.",
+    "For example: Put your lunchbox in your bag": "Zum Beispiel: Lege deine Brotdose in den Schulranzen",
+    "Use one short, concrete action, such as “Put your lunchbox in your bag” instead of “Get ready”. Doing a step with help still counts.": "Wähle eine kurze, konkrete Handlung, zum Beispiel „Lege deine Brotdose in den Schulranzen“ statt „Mach dich fertig“. Mit Hilfe erledigt zählt auch.",
+    "First small action (optional)": "Erste kleine Handlung (optional)",
+    "Not currently awarded": "Aktuell nicht vergeben",
+    "Reopened for review": "Zur gemeinsamen Prüfung geöffnet",
+    "Reopen step": "Schritt wieder öffnen",
+    "I need help": "Ich brauche Hilfe",
+    "Ask an adult nearby to help you get started.": "Bitte einen Erwachsenen in deiner Nähe, dir beim Anfangen zu helfen.",
+    "Ask an adult": "Erwachsenen fragen",
+    "Come back later": "Später wiederkommen",
+    "There are no other steps to switch to. You can ask an adult or take a break.": "Es gibt keine anderen Schritte zum Wechseln. Du kannst einen Erwachsenen fragen oder eine Pause machen.",
+    "Please ask an adult to join you. You can do this step together.": "Bitte einen Erwachsenen, zu dir zu kommen. Ihr könnt diesen Schritt zusammen machen.",
+    "For later today": "Für später heute",
+    "Child support settings": "Unterstützung für Kinder",
+    "Home screen": "Startansicht",
+    "Show series badges": "Serien-Abzeichen anzeigen",
+    "Hide series from the child’s collection and next goal without deleting earned badges.": "Serien lassen sich in der Kindersammlung und beim nächsten Ziel ausblenden. Verdiente Abzeichen bleiben gespeichert.",
+    "Quiet rewards": "Ruhige Belohnungen",
+    "Keep points and badges; use a simple acknowledgement instead of animations and celebrations.": "Punkte und Abzeichen bleiben erhalten. Statt Animationen und Jubelmeldungen erscheint eine einfache Bestätigung.",
+    "Kept for later. Let’s try another step.": "Für später aufgehoben. Versuchen wir einen anderen Schritt.",
+    "Changed support settings for child {child}": "Unterstützungseinstellungen für Kind {child} geändert",
+    "When off, series are hidden from the child’s collection and next goal. Earned badges are kept.": "Wenn ausgeschaltet, erscheinen Serien weder in der Kindersammlung noch als nächstes Ziel. Verdiente Abzeichen bleiben gespeichert."
   }
 };
 'use strict';
@@ -782,13 +836,14 @@ async function setLanguage(value){
 function errorText(message){
  if(CATALOG.en[message])return t(message);
  let m=message.match(/^(.+) must be (\d+)–(\d+) characters\.$/);
- if(m){const labels={Name:'Name',Username:'Username',Password:'Password',Title:'What is the step?',Description:'A little guidance (optional)',Time:'Time',Code:'Setup code'};return t('{field} must be {min}–{max} characters.',{field:t(labels[m[1]]||m[1]),min:m[2],max:m[3]});}
+ if(m){const labels={'First action':'First small action (optional)',Name:'Name',Username:'Username',Password:'Password',Title:'What is the step?',Description:'A little guidance (optional)',Time:'Time',Code:'Setup code'};return t('{field} must be {min}–{max} characters.',{field:t(labels[m[1]]||m[1]),min:m[2],max:m[3]});}
  m=message.match(/^Choose a valid (user|routine|completion|child)\.$/);
  if(m)return t('Choose a valid entry.');
  return t('Something went wrong. Please try again.');
 }
 function auditText(detail){
  const patterns=[
+ [/^Changed support settings for child (\d+)$/,m=>t('Changed support settings for child {child}',{child:m[1]})],
  [/^Changed rest days for child (\d+)$/,m=>t('Changed rest days for child {child}',{child:m[1]})],
  [/^Reset child account: (.+)$/,m=>t('Reset child account: {username}',{username:m[1]})],
  [/^Changed day view for child (\d+): (focus|checklist)$/,m=>t('Changed day view for child {child}: {mode}',{child:m[1],mode:t(m[2]==='focus'?'One task at a time':'Full checklist')})],

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.0
+
+- Add parent task-writing guidance and an optional first small action.
+- Add progressive child help with ask-an-adult guidance and persistent day-only deferral behind other unfinished steps.
+- Add parent-controlled series visibility and quiet rewards per child; retain earned progress and normal defaults on upgrade.
+- Use neutral correction wording while preserving parent reopen/restore controls.
+- Reset support preferences and deferrals with child progress while keeping task guidance.
+
 ## 0.10.0
 
 - Add 13 optional task icons, including medicine, with English/German labels and no icon by default.

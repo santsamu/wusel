@@ -1,5 +1,13 @@
 # Validation — version 0.5.2, 25 October 2026
 
+## 0.11.0 validation
+
+- All 93 Python tests passed, including eight new support tests for first-action validation and scheduled/restarted edits, deferral ordering without points/completion, restart/day boundaries, child isolation/CSRF/stale-day/completed/locked/last-step rejection, atomic parent-only preferences, retained hidden-series awards and eligible goals, reset cleanup and migration with retained progress.
+- Node catalog and badge-view regressions passed, including child-hidden/parent-visible series.
+- Chrome at 390 × 844 with the actual WSGI backend passed first-action display, progressive guidance, ask-an-adult instruction, persistent deferral across reloads, optional series visibility with retained parent records, quiet reward acknowledgement and a level-up without point/celebration markers while device reduced motion was off, last-step explanation, neutral locked correction and parental restoration. Help, quiet feedback and neutral correction screens were visually inspected. No overflow or JavaScript errors; local demo data only.
+- Built wusel-0.11.0.zip. No live Pi accounts or configuration modified.
+
+
 ## 0.10.0 validation
 
 - All 85 backend checks passed across the full suite and focused rerun. Six icon regressions cover default/allowed choices including medicine, frontend/backend choice parity, invalid-value atomicity, child authorization, today/tomorrow behavior, restart, legacy edits, reset preservation, explicit removal and migration with retained points/old pending edits. The final focused icon/catalog run passed all nine checks after fixing a missing test import.

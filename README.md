@@ -1,6 +1,8 @@
 # Wusel
 
-**von Wild & Weich · Version 0.10.0**
+**von Wild & Weich · Version 0.11.0**
+
+The task editor suggests brief, concrete steps and offers an optional first small action, shown beneath the child’s task title. I need help reveals existing guidance; Ask an adult asks the child to seek a nearby adult and does not send a message. Come back later moves the step behind other unfinished steps for that day without completion or points; it is disabled with an explanation when no other available step exists. Under Family → Child support settings, parents can hide series badges and enable quiet rewards per child. Earned badges and points are retained; quiet rewards suppress point animations, level celebrations and badge messages independently of device motion settings. Corrections use neutral wording while retaining parental controls. Upgrade defaults preserve visible series and normal rewards. Child reset clears these preferences and deferrals, retaining tasks and guidance.
 
 Tasks can have an optional icon, including a toothbrush, clothes, meal, schoolbag, bed or medicine. Parents choose it when creating or editing a task; No icon is the default. Icons accompany the task text in focus view, checklist and weekly plan. Apply today/From tomorrow also controls icon edits. The medicine icon is a visual reminder, not confirmation that a dose was taken.
 
@@ -70,7 +72,7 @@ From version 0.5.2, Wusel uses the Pi's host network and listens on IPv4 and IPv
 
 After updating, test `http://homeassistant.local:8099/health` and the Pi's IPv4 address, for example `http://YOUR_PI_IP:8099/health`. Both should return `{"ok":true}`. Wusel logs the bound addresses (`0.0.0.0:8099` and `[::]:8099` when IPv6 is enabled), followed by `Wusel ready: HTTP port 8099`.
 
-Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.10.0** before starting it; restarting an older container alone does not switch its network mode. The installation ID and persistent data remain unchanged.
+Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.11.0** before starting it; restarting an older container alone does not switch its network mode. The installation ID and persistent data remain unchanged.
 
 Host networking shares the Pi's network interfaces with the app. It does not require protection mode to be disabled or router port forwarding to be enabled. The existing family authentication and HTTP/HTTPS guidance still apply.
 
@@ -143,6 +145,6 @@ node tests/test_i18n.cjs
 python tools/package.py
 ```
 
-The package command writes `wusel-0.10.0.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
+The package command writes `wusel-0.11.0.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
 
 See [VALIDATION.md](VALIDATION.md) for checks and test boundaries. The production server has been tested over IPv4 and IPv6 locally. The updated container network mode, hostname access, live weather, and backup/restore still need verification after updating the Pi.

@@ -65,3 +65,9 @@
 .child-checklist .task-time{max-width:90px}.task-timing{display:block;font-size:12px;font-weight:400;line-height:1.4;margin-top:5px;color:var(--muted)}
 
 .task-icon{display:inline-block;vertical-align:middle;font-size:24px;line-height:1.2;margin-right:10px}.task-icon-small{font-size:18px;margin-right:6px}.focus-title{display:flex;align-items:center;gap:12px}.focus-title h2{min-width:0;flex:1}.focus-title .task-icon{font-size:30px;margin:0;flex-shrink:0}
+
+.first-action{margin-top:16px;font-size:16px;line-height:1.6;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}.child-checklist .first-action{font-size:14px;margin-top:8px}
+.task-help{margin-top:16px}.task-help summary{cursor:pointer;color:var(--muted);font-size:14px;min-height:44px;padding:10px 0}.task-help>p{font-size:14px;line-height:1.6;margin:12px 0;white-space:pre-wrap;overflow-wrap:anywhere}.task-help [data-help-response]:empty{display:none}.help-actions{display:flex;flex-wrap:wrap;gap:8px}.help-actions button{flex:1;min-width:130px;font-size:14px;font-weight:500}
+.child-view-settings>summary{font-size:20px;font-weight:600;cursor:pointer}.child-view-settings .child-support-form{display:block;padding:20px 0}.child-support-form h3{margin:0 0 14px}.child-support-form>label:not(.support-toggle){max-width:340px}.child-support-form .support-toggle{display:flex;align-items:flex-start;gap:12px;margin:18px 0}.support-toggle input[type=checkbox]{width:20px;min-height:20px;height:20px;margin:3px 0 0;flex-shrink:0}.support-toggle span{font-size:15px}.support-toggle small{display:block;font-size:13px;line-height:1.6;font-weight:400;color:var(--muted);margin-top:4px}.quiet-rewards .point-gain,.quiet-rewards .level-celebrating{animation:none!important}
+
+.child-checklist .task-content p{font-size:14px;line-height:1.6}

@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS badges(child INTEGER REFERENCES users(id),badge TEXT,
 CREATE TABLE IF NOT EXISTS daily_plans(child INTEGER REFERENCES users(id),day TEXT,routines TEXT NOT NULL,PRIMARY KEY(child,day));
 CREATE TABLE IF NOT EXISTS pending_routines(routine INTEGER PRIMARY KEY REFERENCES routines(id),effective_on TEXT NOT NULL,payload TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS rest_days(child INTEGER REFERENCES users(id),day TEXT,PRIMARY KEY(child,day));
+CREATE TABLE IF NOT EXISTS deferred_steps(routine INTEGER REFERENCES routines(id),child INTEGER REFERENCES users(id),day TEXT,position INTEGER NOT NULL,PRIMARY KEY(routine,day));
+CREATE INDEX IF NOT EXISTS deferred_child_day ON deferred_steps(child,day);
 CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,user INTEGER REFERENCES users(id),csrf TEXT,expires REAL);
 CREATE TABLE IF NOT EXISTS attempts(key TEXT,at REAL);
 CREATE INDEX IF NOT EXISTS attempts_key ON attempts(key,at);
@@ -77,6 +79,11 @@ class Application:
         with self.connect() as db:
             db.execute('PRAGMA journal_mode=WAL')
             db.executescript(SCHEMA)
+            for column,definition in [('show_series','INTEGER NOT NULL DEFAULT 1'),('reduced_rewards','INTEGER NOT NULL DEFAULT 0')]:
+                if column not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
+                    db.execute('ALTER TABLE users ADD COLUMN '+column+' '+definition)
+            if 'first_action' not in {row[1] for row in db.execute('PRAGMA table_info(routines)')}:
+                db.execute("ALTER TABLE routines ADD COLUMN first_action TEXT NOT NULL DEFAULT ''")
             if 'icon' not in {row[1] for row in db.execute('PRAGMA table_info(routines)')}:
                 db.execute("ALTER TABLE routines ADD COLUMN icon TEXT NOT NULL DEFAULT ''")
             if 'badge_goal' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
@@ -216,7 +223,8 @@ class Application:
                    'earned':records.get(k,{}).get('earned'),'revoked':bool(records.get(k,{}).get('revoked',0)),
                    'value':{'steps':count,'days':stats['full_days'],'streak':stats['current_streak']}[kind]}
                   for (k,n,threshold,icon),kind in ALL_BADGES]
-        eligible = [badge for badge in badges if not badge['earned']]
+        show_series = db.execute('SELECT show_series FROM users WHERE id=?',(child,)).fetchone()['show_series']
+        eligible = [badge for badge in badges if not badge['earned'] and (show_series or badge['kind']!='streak')]
         goal = db.execute('SELECT badge_goal FROM users WHERE id=?',(child,)).fetchone()['badge_goal']
         if goal not in {badge['id'] for badge in eligible}:
             goal = max(eligible,key=lambda badge:badge['value']/badge['threshold'])['id'] if eligible else ''
@@ -229,18 +237,21 @@ class Application:
         if user is None:
             return result
         result.update(user={k:user[k] for k in ('id','name','username','role','language','theme')},csrf=user['csrf'])
-        children = db.execute("SELECT id,name,username,day_view FROM users WHERE role='child' ORDER BY name").fetchall() if user['role']=='parent' else [user]
+        children = db.execute("SELECT id,name,username,day_view,show_series,reduced_rewards FROM users WHERE role='child' ORDER BY name").fetchall() if user['role']=='parent' else [user]
         profiles = []
         for c in children:
             child = {k:c[k] for k in ('id','name','username','day_view')}
+            child.update(show_series=bool(c['show_series']),reduced_rewards=bool(c['reduced_rewards']))
+            deferred = {row['routine']:row['position'] for row in db.execute('SELECT routine,position FROM deferred_steps WHERE child=? AND day=?',(c['id'],today.isoformat()))}
             routines = []
             for r in db.execute('SELECT * FROM routines WHERE child=? AND archived=0 ORDER BY time,id', (c['id'],)):
                 item = dict(r)
                 item['days'] = json.loads(item['days'])
                 item['scheduled'] = self.scheduled(r,today)
                 done = db.execute('SELECT voided,locked FROM completions WHERE routine=? AND day=?', (r['id'],today.isoformat())).fetchone()
-                item.update(done=bool(done and not done['voided']),locked=bool(done and done['locked']))
+                item.update(done=bool(done and not done['voided']),locked=bool(done and done['locked']),defer_order=deferred.get(r['id'],0))
                 routines.append(item)
+            routines.sort(key=lambda r:(r['defer_order']>0,r['defer_order'],r['time'],r['id']))
             child.update(routines=routines,progress=self.progress(db,c['id']))
             child['rest_days'] = [r['day'] for r in db.execute('SELECT day FROM rest_days WHERE child=? AND day>=? ORDER BY day',(c['id'],today.isoformat()))]
             child['rest_day'] = today.isoformat() in child['rest_days']
@@ -338,13 +349,35 @@ class Application:
                 raise Problem('Choose completed or not completed.')
             old = db.execute('SELECT * FROM completions WHERE routine=? AND day=?',(rid,today.isoformat())).fetchone()
             if old and old['locked']:
-                raise Problem('A parent corrected this task. Ask them to review it.',403)
+                raise Problem('This step is open again. Let’s check it together.',403)
             if old:
                 db.execute('UPDATE completions SET voided=? WHERE id=?',(int(not done),old['id']))
             elif done:
                 db.execute('INSERT INTO completions(routine,child,day,title) VALUES(?,?,?,?)',(rid,r['child'],today.isoformat(),r['title']))
             self.award(db,r['child'])
             return {'ok':True,'earned_points':10 if done and old is None else 0},None
+        if path=='/api/defer':
+            rid = self.integer(body,'routine')
+            db.execute('BEGIN IMMEDIATE')
+            r = db.execute('SELECT * FROM routines WHERE id=? AND archived=0',(rid,)).fetchone()
+            if not r or (user['role']!='parent' and r['child']!=user['id']):
+                raise Problem('Routine not found.',404)
+            today = self.today()
+            if body.get('day') != today.isoformat():
+                raise Problem('The day has changed. Refresh your day before checking this step.',409)
+            if not self.scheduled(r,today):
+                raise Problem('This routine is not scheduled for today.')
+            completion = db.execute('SELECT voided,locked FROM completions WHERE routine=? AND day=?',(rid,today.isoformat())).fetchone()
+            if completion and completion['locked']:
+                raise Problem('This step is open again. Let’s check it together.',403)
+            if completion and not completion['voided']:
+                raise Problem('This step is already completed.',409)
+            others = db.execute('SELECT r.* FROM routines r WHERE r.child=? AND r.archived=0 AND r.id!=? AND NOT EXISTS(SELECT 1 FROM completions c WHERE c.routine=r.id AND c.day=? AND (c.voided=0 OR c.locked=1))',(r['child'],rid,today.isoformat())).fetchall()
+            if not any(self.scheduled(other,today) for other in others):
+                raise Problem('There are no other steps to switch to.',409)
+            position = db.execute('SELECT COALESCE(MAX(position),0)+1 FROM deferred_steps WHERE child=? AND day=?',(r['child'],today.isoformat())).fetchone()[0]
+            db.execute('INSERT OR REPLACE INTO deferred_steps VALUES(?,?,?,?)',(rid,r['child'],today.isoformat(),position))
+            return {'ok':True},None
         if user['role']!='parent':
             raise Problem('Only a parent can do this.',403)
         if path=='/api/reset-child':
@@ -360,8 +393,9 @@ class Application:
             db.execute('DELETE FROM badges WHERE child=?',(child,))
             db.execute('DELETE FROM daily_plans WHERE child=?',(child,))
             db.execute('DELETE FROM rest_days WHERE child=?',(child,))
+            db.execute('DELETE FROM deferred_steps WHERE child=?',(child,))
             db.execute('DELETE FROM sessions WHERE user=?',(child,))
-            db.execute("UPDATE users SET language='',theme='forest',day_view='focus',badge_goal='' WHERE id=?",(child,))
+            db.execute("UPDATE users SET language='',theme='forest',day_view='focus',badge_goal='',show_series=1,reduced_rewards=0 WHERE id=?",(child,))
             self.audit(db,user['id'],'reset',f'Reset child account: {account["username"]}')
             return {'ok':True},None
         if path=='/api/rest-days':
@@ -386,11 +420,20 @@ class Application:
         if path=='/api/child-settings':
             child = self.integer(body,'child')
             self.child(db,child)
-            mode = body.get('day_view')
-            if mode not in ('focus','checklist'):
-                raise Problem('Choose a valid day view.')
-            db.execute('UPDATE users SET day_view=? WHERE id=?',(mode,child))
-            self.audit(db,user['id'],'day_view',f'Changed day view for child {child}: {mode}')
+            changes = {}
+            if 'day_view' in body:
+                if body['day_view'] not in ('focus','checklist'):
+                    raise Problem('Choose a valid day view.')
+                changes['day_view'] = body['day_view']
+            for key in ('show_series','reduced_rewards'):
+                if key in body:
+                    if type(body[key]) is not bool:
+                        raise Problem('Choose a valid support setting.')
+                    changes[key] = int(body[key])
+            if not changes:
+                raise Problem('Choose a setting to change.')
+            db.execute('UPDATE users SET '+','.join(key+'=?' for key in changes)+' WHERE id=?',(*changes.values(),child))
+            self.audit(db,user['id'],'support',f'Changed support settings for child {child}')
         elif path=='/api/users':
             role = body.get('role')
             if role not in ('parent','child'):
@@ -431,27 +474,30 @@ class Application:
                     raise Problem('Choose a valid date.')
             elif not days:
                 raise Problem('Choose at least one weekday or a specific date.')
+            first_action = self.text(body,'first_action',0,160) if 'first_action' in body else ''
             icon = body.get('icon','')
             if icon not in TASK_ICONS:
                 raise Problem('Choose a valid task icon.')
             effective = self.change_date(body)
             db.execute('BEGIN IMMEDIATE')
             self.record_plan(db,child)
-            data = dict(title=title,description=description,time=at,days=json.dumps(sorted(set(days))),specific_date=special,archived=0,icon=icon)
+            data = dict(title=title,description=description,time=at,days=json.dumps(sorted(set(days))),specific_date=special,archived=0,icon=icon,first_action=first_action)
             if body.get('id'):
                 rid = self.integer(body,'id')
-                old = db.execute('SELECT icon FROM routines WHERE child=? AND id=? AND archived=0',(child,rid)).fetchone()
+                old = db.execute('SELECT icon,first_action FROM routines WHERE child=? AND id=? AND archived=0',(child,rid)).fetchone()
                 if not old:
                     raise Problem('Routine not found.',404)
                 if 'icon' not in body:
                     data['icon'] = old['icon']
+                if 'first_action' not in body:
+                    data['first_action'] = old['first_action']
                 if effective > self.today():
                     db.execute('INSERT OR REPLACE INTO pending_routines VALUES(?,?,?)',(rid,effective.isoformat(),json.dumps(data)))
                 else:
-                    db.execute('UPDATE routines SET title=?,description=?,time=?,days=?,specific_date=?,archived=?,icon=?,starts_on=? WHERE id=?',(*data.values(),'',rid))
+                    db.execute('UPDATE routines SET title=?,description=?,time=?,days=?,specific_date=?,archived=?,icon=?,first_action=?,starts_on=? WHERE id=?',(*data.values(),'',rid))
                     db.execute('DELETE FROM pending_routines WHERE routine=?',(rid,))
             else:
-                db.execute('INSERT INTO routines(title,description,time,days,specific_date,archived,icon,child,starts_on) VALUES(?,?,?,?,?,?,?,?,?)',(*data.values(),child,effective.isoformat()))
+                db.execute('INSERT INTO routines(title,description,time,days,specific_date,archived,icon,first_action,child,starts_on) VALUES(?,?,?,?,?,?,?,?,?,?)',(*data.values(),child,effective.isoformat()))
             if effective == self.today():
                 self.record_plan(db,child,replace=True)
             self.audit(db,user['id'],'routine',f'Saved routine for child {child}: {title}')

@@ -26,6 +26,10 @@ if(html.includes('1 of 1'))throw Error('Revoked badge cannot become a new goal')
 isParent=false;child.progress.badges=[{...step,value:0},{...streak,value:0}];html=rewards(child);
 if(!html.includes('Your first badge is waiting.'))throw Error('Empty earned state');
 if(!html.includes('0 of 5'))throw Error('Zero progress');
+child.show_series=false;child.progress.badges=[step,{...streak,earned:'2026-10-25'}];html=rewards(child);
+if(html.includes('Finding a rhythm')||html.includes('3 full days in a row'))throw Error('Hidden series must not appear in child collection');
+isParent=true;html=rewards(child);if(!html.includes('Finding a rhythm'))throw Error('Parents retain hidden-series controls');isParent=false;
+child.show_series=true;
 child.progress.badges=[{...first,revoked:false}];html=rewards(child);
 if(html.includes('class="badge-goal"'))throw Error('All earned should have no next goal');
 language='de';html=rewards(child);
