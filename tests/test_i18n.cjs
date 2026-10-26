@@ -63,7 +63,9 @@ vm.runInContext(`
 const at=new Date('2026-10-26T11:00:00Z');
 if(taskTimingKey('12:01','Europe/Zurich',at)!=='Later today')throw Error('Future step timing');
 if(taskTimingKey('12:00','Europe/Zurich',at)!=='Now it’s time')throw Error('Due step timing');
-if(taskTimingKey('07:00','Europe/Zurich',at)!=='Now it’s time')throw Error('Earlier step timing');
+if(taskTimingKey('07:00','Europe/Zurich',at)!=='Still open')throw Error('Earlier step timing');
+if(taskTimingKey('11:30','Europe/Zurich',at)!=='Now it’s time')throw Error('30 minute boundary');
+if(taskTimingKey('11:29','Europe/Zurich',at)!=='Still open')throw Error('31 minute boundary');
 if(taskTimingKey('08:00','America/New_York',at)!=='Later today')throw Error('Step timezone');
 `,sandbox);
 console.log('Task due/future boundaries and configured timezone passed.');

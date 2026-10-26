@@ -1,5 +1,12 @@
 const CATALOG = {
   "en": {
+    "From earlier · {count} step": "From earlier · {count} step",
+    "Still open": "Still open",
+    "From earlier · {count} steps": "From earlier · {count} steps",
+    "Do next": "Do next",
+    "Do next: {task}": "Do next: {task}",
+    "Nothing due right now": "Nothing due right now",
+
     "Check together": "Check together",
     "Confirm done": "Confirm done",
     "Mark done": "Mark done",
@@ -407,6 +414,13 @@ const CATALOG = {
     "Opening Wusel…": "Opening Wusel…"
   },
   "de": {
+    "From earlier · {count} step": "Von vorhin · {count} Schritt",
+    "Still open": "Noch offen",
+    "From earlier · {count} steps": "Von vorhin · {count} Schritte",
+    "Do next": "Als Nächstes machen",
+    "Do next: {task}": "Als Nächstes machen: {task}",
+    "Nothing due right now": "Gerade ist nichts dran",
+
     "Check together": "Gemeinsam anschauen",
     "Confirm done": "Erledigung bestätigen",
     "Mark done": "Als erledigt markieren",
@@ -874,5 +888,6 @@ function taskTimingKey(value,timeZone,now=new Date()){
  const parts=new Intl.DateTimeFormat('en-GB',{timeZone,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(now);
  const minutes=Number(parts.find(p=>p.type==='hour').value)*60+Number(parts.find(p=>p.type==='minute').value);
  const [hour,minute]=value.split(':').map(Number);
- return hour*60+minute<=minutes?'Now it’s time':'Later today';
+ const elapsed=minutes-(hour*60+minute);
+ return elapsed<0?'Later today':elapsed<=30?'Now it’s time':'Still open';
 }

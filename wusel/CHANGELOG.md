@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.3
+
+- Label steps as Later today, Now (up to 30 minutes after their scheduled time) or Still open, without overdue warnings.
+- Prioritize current tasks on the child home screen and keep older unfinished tasks in a collapsed From earlier section with a Do next action.
+- Refresh time-based selection without reloading the page; retain manual choice for the current child/day until completion or deferral.
+
 ## 0.12.2
 
 - Keep corrected task titles, icons, times and instructions visible on the child home screen while awaiting parental confirmation, including when other tasks remain.

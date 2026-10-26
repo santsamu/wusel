@@ -5,6 +5,7 @@ vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(root+'/i18n.js','utf8'),sandbox);
 vm.runInContext(`
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let focusChoice=null;
 const state={today:'2026-10-26',timezone:'Europe/Zurich'};
 const dayCount=c=>({tasks:c.routines.filter(r=>r.scheduled),done:c.routines.filter(r=>r.scheduled&&r.done).length});
 const childHeading=()=>'',restNote=()=>'',undoFeedback=()=>'',weatherSummary=()=>'',childTools=()=>'',taskHelp=()=>'';

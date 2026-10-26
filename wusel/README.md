@@ -1,6 +1,6 @@
 # Wusel
 
-**von Wild & Weich · Version 0.12.2**
+**von Wild & Weich · Version 0.12.3**
 
 Version 0.12.0 uses the app identity `wusel` (`local_wusel` for local installations). This is a clean-install release with a new `/data/wusel.sqlite3` database, `WUSEL_*` environment variables and new session identifiers. Previous installation identities and data are not migrated. Copy the current inner app folder to `/local_apps/wusel` (or `/addons/wusel`), reload the store and install Wusel fresh. Create the first parent account using the setup code from the app logs.
 
@@ -8,7 +8,7 @@ The task editor suggests brief, concrete steps and offers an optional first smal
 
 Tasks can have an optional icon, including a toothbrush, clothes, meal, schoolbag, bed or medicine. Parents choose it when creating or editing a task; No icon is the default. Icons accompany the task text in focus view, checklist and weekly plan. Apply today/From tomorrow also controls icon edits. The medicine icon is a visual reminder, not confirmation that a dose was taken.
 
-Child screens distinguish due and later-today steps without locking them. A saved completion can be undone directly for 15 seconds, extended while the action has keyboard focus. Save/connection status is visible; uncertain saves are checked without automatic resubmission. The next badge goal stays stable until earned, with readable award dates available on demand. Parent confirmations name the child and effective timing. Weekly plan → Manage rest days lets parents plan or remove today/future date ranges. Rest days neither increase nor break a series; steps remain optional and completing them still earns points. Past rest days cannot be changed.
+Child screens use Later today before a scheduled time, Now for the following 30 minutes, and Still open afterward. The home screen prioritizes current steps, then upcoming ones. Older unfinished steps stay in a collapsed From earlier section; Do next brings one into focus without completing it. This explicit choice lasts for the current page session and child/day until completion or deferral. Time labels and selection update during the regular refresh, without reloading. No task is automatically skipped or completed. A saved completion can be undone directly for 15 seconds, extended while the action has keyboard focus. Save/connection status is visible; uncertain saves are checked without automatic resubmission. The next badge goal stays stable until earned, with readable award dates available on demand. Parent confirmations name the child and effective timing. Weekly plan → Manage rest days lets parents plan or remove today/future date ranges. Rest days neither increase nor break a series; steps remain optional and completing them still earns points. Past rest days cannot be changed.
 
 Parents can permanently reset a child account’s progress under Family. This removes completions, points, badges, day/streak history, planned rest days and personal settings, returning the child to level 1 and signing them out everywhere. Name, username, password and all created tasks (including archived tasks and pending changes) are kept. Confirmation requires the child username and the current parent password. The reset is recorded in the parent activity log.
 
@@ -74,7 +74,7 @@ From version 0.5.2, Wusel uses the Pi's host network and listens on IPv4 and IPv
 
 After updating, test `http://homeassistant.local:8099/health` and the Pi's IPv4 address, for example `http://YOUR_PI_IP:8099/health`. Both should return `{"ok":true}`. Wusel logs the bound addresses (`0.0.0.0:8099` and `[::]:8099` when IPv6 is enabled), followed by `Wusel ready: HTTP port 8099`.
 
-Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.12.2** before starting it; restarting an older container alone does not switch its network mode. For subsequent updates, keep the app slug set to `wusel`.
+Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.12.3** before starting it; restarting an older container alone does not switch its network mode. For subsequent updates, keep the app slug set to `wusel`.
 
 Host networking shares the Pi's network interfaces with the app. It does not require protection mode to be disabled or router port forwarding to be enabled. The existing family authentication and HTTP/HTTPS guidance still apply.
 
@@ -148,10 +148,10 @@ python -m unittest discover -s tests -v
 node tests/test_i18n.cjs
 node tests/test_badge_view.cjs
 python tools/package.py
-python tools/validate.py --archive dist/wusel-0.12.2.zip
+python tools/validate.py --archive dist/wusel-0.12.3.zip
 ```
 
-The package command writes `wusel-0.12.2.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
+The package command writes `wusel-0.12.3.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
 
 See [VALIDATION.md](../VALIDATION.md) for checks and test boundaries. The production server has been tested over IPv4 and IPv6 locally. The updated container network mode, hostname access, live weather, and backup/restore still need verification after updating the Pi.
 

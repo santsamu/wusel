@@ -75,3 +75,5 @@
 .review-note{margin-top:18px;line-height:1.6;overflow-wrap:anywhere}.review-pending .focus-label{flex-wrap:wrap}
 
 .parent-step-control{max-width:150px;white-space:normal;font-size:13px;flex-shrink:0}@media(max-width:600px){.task:has(.parent-step-control){display:grid;grid-template-columns:60px minmax(0,1fr)}.parent-step-control{grid-column:2;justify-self:start;max-width:100%}}
+
+.earlier-steps{border:1px solid var(--line);border-radius:16px;padding:16px;margin:0 0 20px}.earlier-steps summary{cursor:pointer;font-size:15px}.earlier-steps article{display:flex;align-items:center;gap:12px;padding-top:16px}.earlier-steps article>div{flex:1;min-width:0;overflow-wrap:anywhere}.earlier-steps h3{font-size:16px}.earlier-steps button{font-size:13px;max-width:130px;white-space:normal;flex-shrink:0}

@@ -4,7 +4,7 @@ const app = document.querySelector('#app');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const parent = () => state.user?.role === 'parent';
 const current = () => state.children?.find(c => c.id === selected) || state.children?.[0];
-let noticeTimer;
+let noticeTimer, focusChoice=null;
 function notify(message,duration=6500) { document.querySelector('#notice').classList.remove('level-up'); clearTimeout(noticeTimer); document.querySelector('#notice').textContent = message; noticeTimer=setTimeout(()=>document.querySelector('#notice').textContent='',duration); }
 let syncKind='idle',syncKey='',syncTimer,undoTimer,lastCompletion=null;
 function paintSyncStatus(){
@@ -46,7 +46,7 @@ function undoFeedback(){
  return `<div class="completion-feedback" role="status"><span>${tx('Completed: {task}',{task:lastCompletion.title})}</span><button data-action="undo-last">${tx('Undo')}</button></div>`;
 }
 function restNote(c){return c.rest_day?`<p class="rest-note">${tx('Today is a rest day. Your series is safe; steps are optional.')}</p>`:'';}
-async function refresh(quiet=false) { const fresh=await api('state'); if(quiet && JSON.stringify(fresh)===JSON.stringify(state)){updateChildGreeting();updateTaskTiming();loadWeather();return;} state=fresh; if(state.user && !state.user.language){try{await api('preferences',{language},false);}catch{}state.user.language=language;} if(state.user?.language) language=state.user.language; if (!state.user) {clearUndo();view='today'; selected=null;weatherData=null;weatherFetched=0;} render(); if(state.user)loadWeather(); }
+async function refresh(quiet=false) { const fresh=await api('state'); if(quiet && JSON.stringify(fresh)===JSON.stringify(state)){updateChildGreeting();updateTaskTiming();loadWeather();return;} state=fresh; if(state.user && !state.user.language){try{await api('preferences',{language},false);}catch{}state.user.language=language;} if(state.user?.language) language=state.user.language; if (!state.user) {clearUndo();focusChoice=null;view='today'; selected=null;weatherData=null;weatherFetched=0;} render(); if(state.user)loadWeather(); }
 const field = (label,name,type='text',extra='') => `<label>${esc(t(label))}<input name="${name}" type="${type}" ${extra} required></label>`;
 function auth() {
   const setup = state.needs_setup;
@@ -68,7 +68,7 @@ function parentStepControl(r){
  return `<button class="parent-step-control" data-action="complete" data-id="${r.id}" aria-label="${tx(label)}: ${esc(r.title)}">${tx(label)}</button>`;
 }
 function today(c) {
-  const tasks=c.routines.filter(r=>r.scheduled), done=tasks.filter(r=>r.done).length, next=tasks.find(r=>!r.done&&!r.locked);
+  const tasks=c.routines.filter(r=>r.scheduled), done=tasks.filter(r=>r.done).length, next=childTaskModel(c).next;
   return `<div class="heading"><div><p class="eyebrow">${esc(dateLabel(state.today))}</p><h1>${tx(parent()?"{name}’s day":"Hello, {name} ☀️",{name:c.name})}</h1><p>${tx("One thing at a time. You’ve got this.")}</p></div><div class="daily-count"><strong>${done}<span> / ${tasks.length}</span></strong><span>${tx("steps completed")}</span></div></div>
   ${restNote(c)}${parentWeather()}<p class="small muted">${tx("Reopening a step removes its points and waits for your confirmation. Confirm done after checking it together.")}</p>
   <section class="today-layout"><div><div class="section-heading"><h2>${tx("Today’s little steps")}</h2><span class="muted small">${tx("10 points per step")}</span></div>
@@ -154,6 +154,7 @@ function updateChildGreeting(now=new Date()){
 }
 function updateTaskTiming(now=new Date()){
  document.querySelectorAll('[data-task-timing]').forEach(el=>{el.textContent=t(current()?.rest_day?'Optional today':taskTimingKey(el.dataset.time,state.timezone,now));});
+ updateChildFocus(now);
 }
 function childHeading(c,title,greeting=false){const {tasks,done}=dayCount(c);return `<div class="child-heading"><p class="small muted">${esc(dateLabel(state.today))}</p><h1 ${greeting?'data-child-greeting':''}>${title}</h1>${tasks.length&&!c.rest_day?`<p class="day-tally">${tx('{done} of {total} done',{done,total:tasks.length})}</p>`:''}${childLevel(c)}</div>`;}
 function childTools(){return `<div class="child-tools"><button data-action="view" data-view="daylist">${tx('See my day')}</button><button class="text-button" data-action="view" data-view="badges">${tx('My badges')}</button></div>`;}
@@ -161,20 +162,48 @@ function taskHelp(r,canDefer){return `<details class="task-help"><summary>${tx('
 function pendingReview(tasks){
  return tasks.filter(r=>r.locked&&!r.done).map(r=>`<article class="focus-card review-pending"><p class="focus-label">${tx('Check together')} <time>${esc(timeLabel(r.time))}</time></p><div class="focus-title">${taskIcon(r)}<h2>${esc(r.title)}</h2></div>${r.first_action?`<p class="first-action">${esc(r.first_action)}</p>`:''}${r.description?`<p class="focus-instruction">${esc(r.description)}</p>`:''}<p class="review-note">${tx('This step is open again. Let’s check it together.')}</p></article>`).join('');
 }
-function childToday(c){
- const {tasks,done}=dayCount(c),next=tasks.find(r=>!r.done&&!r.locked);
+function childTaskModel(c,now=new Date()){
+ const {tasks,done}=dayCount(c),available=tasks.filter(r=>!r.done&&!r.locked);
+ const chosen=focusChoice&&focusChoice.child===c.id&&focusChoice.day===state.today?available.find(r=>r.id===focusChoice.routine):null;
+ const next=chosen||available.find(r=>taskTimingKey(r.time,state.timezone,now)==='Now it’s time')||available.find(r=>taskTimingKey(r.time,state.timezone,now)==='Later today');
+ const earlier=available.filter(r=>r.id!==next?.id&&taskTimingKey(r.time,state.timezone,now)==='Still open');
+ const signature=JSON.stringify([next?.id,tasks.map(r=>[r.id,r.done,r.locked,taskTimingKey(r.time,state.timezone,now)]),c.rest_day]);
+ return {tasks,done,next,earlier,signature};
+}
+function earlierSteps(steps){
+ return steps.length?`<details class="earlier-steps"><summary>${tx(steps.length===1?'From earlier · {count} step':'From earlier · {count} steps',{count:steps.length})}</summary>${steps.map(r=>`<article><div><h3>${taskIcon(r)}${esc(r.title)}</h3><p class="small muted"><time>${esc(timeLabel(r.time))}</time> · ${tx('Still open')}</p></div><button data-action="do-next" data-id="${r.id}" aria-label="${tx('Do next: {task}',{task:r.title})}">${tx('Do next')}</button></article>`).join('')}</details>`:'';
+}
+function childTaskContent(c,now=new Date()){
+ const {tasks,done,next,earlier}=childTaskModel(c,now);
  let card;
  if(next){
   const instruction=next.first_action?`<p class="first-action">${esc(next.first_action)}</p>`:'';
   const canDefer=tasks.filter(r=>!r.done&&!r.locked).length>1;
-  card=`<article class="focus-card"><p class="focus-label"><span data-task-timing data-time="${esc(next.time)}">${tx(c.rest_day?'Optional today':taskTimingKey(next.time,state.timezone))}</span> <time>${esc(timeLabel(next.time))}</time></p><div class="focus-title">${taskIcon(next)}<h2 id="next-step-title" tabindex="-1">${esc(next.title)}</h2></div>${instruction}<button class="primary focus-done" data-action="complete" data-id="${next.id}" aria-label="${tx('Done: {task}',{task:next.title})}">${tx('Done')} <span aria-hidden="true">✓</span></button><p id="step-feedback" class="step-feedback" role="status" aria-live="polite"></p>${taskHelp(next,canDefer)}</article>`;
- }else if(tasks.some(r=>r.locked&&!r.done)){
+  card=`<article class="focus-card"><p class="focus-label"><span data-task-timing data-time="${esc(next.time)}">${tx(c.rest_day?'Optional today':taskTimingKey(next.time,state.timezone,now))}</span> <time>${esc(timeLabel(next.time))}</time></p><div class="focus-title">${taskIcon(next)}<h2 id="next-step-title" tabindex="-1">${esc(next.title)}</h2></div>${instruction}<button class="primary focus-done" data-action="complete" data-id="${next.id}" aria-label="${tx('Done: {task}',{task:next.title})}">${tx('Done')} <span aria-hidden="true">✓</span></button><p id="step-feedback" class="step-feedback" role="status" aria-live="polite"></p>${taskHelp(next,canDefer)}</article>`;
+ }else if(tasks.some(r=>r.locked&&!r.done)&&!earlier.length){
   card='';
  }else{
-  const key=c.rest_day?'Rest day':!tasks.length?'Nothing planned today':done===tasks.length?'All done for today':'This step is open again. Let’s check it together.';
+  const key=earlier.length?'Nothing due right now':c.rest_day?'Rest day':!tasks.length?'Nothing planned today':done===tasks.length?'All done for today':'This step is open again. Let’s check it together.';
   card=`<section class="focus-card focus-finished"><span aria-hidden="true">${tasks.length&&done===tasks.length?'✓':'☁️'}</span><h2 id="next-step-title" tabindex="-1">${tx(key)}</h2></section>`;
  }
- return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}${restNote(c)}${card}${pendingReview(tasks)}${undoFeedback()}${weatherSummary()}${childTools()}`;
+ return `${card}${earlierSteps(earlier)}${pendingReview(tasks)}`;
+}
+function updateChildFocus(now=new Date()){
+ const region=document.querySelector('[data-child-tasks]'),c=current();
+ if(!region||!c)return;
+ const signature=childTaskModel(c,now).signature;
+ if(region.dataset.signature===signature)return;
+ const active=region.contains(document.activeElement)?document.activeElement:null;
+ const action=active?.dataset.action,id=active?.dataset.id;
+ const earlierOpen=!!region.querySelector('.earlier-steps[open]'),helpOpen=!!region.querySelector('.task-help[open]');
+ region.innerHTML=childTaskContent(c,now);region.dataset.signature=signature;
+ if(earlierOpen&&region.querySelector('.earlier-steps'))region.querySelector('.earlier-steps').open=true;
+ if(helpOpen&&region.querySelector('.task-help'))region.querySelector('.task-help').open=true;
+ if(active){const target=Array.from(region.querySelectorAll('[data-action]')).find(el=>el.dataset.action===action&&el.dataset.id===id);(target||region.querySelector('summary,button,h2'))?.focus({preventScroll:true});}
+}
+function childToday(c){
+ const now=new Date();
+ return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}${restNote(c)}<section data-child-tasks data-signature="${esc(childTaskModel(c,now).signature)}">${childTaskContent(c,now)}</section>${undoFeedback()}${weatherSummary()}${childTools()}`;
 }
 function childChecklist(c){
  const {tasks}=dayCount(c);
@@ -235,6 +264,7 @@ app.addEventListener('click',async e=>{
   const saved=lastCompletion;busy=true;b.disabled=true;
   try{await api('complete',{routine:saved.routine,done:false,day:saved.day});const r=current()?.routines.find(r=>r.id===saved.routine);if(r)r.done=false;clearUndo();await refresh();if(syncKind==='saved')syncStatus('idle');notify(t('Step undone.'),1600);}catch(error){notify(error.message);b.disabled=false;}finally{busy=false;}return;
  }
+ if(action==='do-next'){const r=c?.routines.find(r=>r.id===id&&r.scheduled&&!r.done&&!r.locked);if(!r)return;focusChoice={child:c.id,day:state.today,routine:id};render();document.querySelector('#next-step-title')?.focus({preventScroll:true});window.scrollTo(0,0);return;}
  if(action==='ask-adult'){b.closest('.task-help').querySelector('[data-help-response]').textContent=t('Please ask an adult to join you. You can do this step together.');return;}
  if(action==='theme'){await setTheme(b.dataset.theme);return;}
  if(action==='view'){view=b.dataset.view;editing=null;render();document.querySelector('main h1,main h2')?.focus({preventScroll:true});window.scrollTo(0,0);return;}
@@ -260,10 +290,11 @@ app.addEventListener('click',async e=>{
  const progressBefore=c?{...c.progress}:null;
  try {
   if(action==='logout')await api('logout',{});
-  if(action==='defer'){await api('defer',{routine:id,day:state.today});}
+  if(action==='defer'){await api('defer',{routine:id,day:state.today});const others={...c,routines:c.routines.filter(r=>r.id!==id)},model=childTaskModel(others),next=model.next||model.earlier[0];focusChoice=next?{child:c.id,day:state.today,routine:next.id}:null;}
   if(action==='remove-rest')await api('rest-days',{child:c.id,start:b.dataset.start,end:b.dataset.end,remove:true});
   if(action==='complete'){
    const r=c.routines.find(r=>r.id===id);const result=await api('complete',{routine:id,done:!r.done,day:state.today});earnedPoints=result.earned_points||0;
+   if(focusChoice?.routine===id)focusChoice=null;
    childCompleted=!parent()&&!r.done;
    if(childCompleted)rememberCompletion(r);
    r.done=!r.done;

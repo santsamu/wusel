@@ -1,5 +1,12 @@
 # Validation history
 
+## 0.12.3 validation
+
+- Added neutral time windows and time-aware focus selection. Earlier unfinished steps stay available in a collapsed section, with explicit Do next selection scoped to the current child/day and page session. No backend completion or reward changes.
+- Node tests passed for 30/31-minute boundaries, configured timezones, current-before-future priority, older-only and mixed tasks, manual choice, child/day isolation, completed/locked exclusions, deferral ordering, rest days, escaping, English/German rendering and existing correction/badge regressions.
+- Chrome at 390 x 844 with the real WSGI backend and a controlled browser clock passed collapsed earlier tasks, manual selection without points, completion, transition to Still open via unchanged-state refresh, live future-to-current transition while preserving an open disclosure, deferral, earlier-only state and no horizontal overflow or JavaScript errors. Screenshots were visually inspected. All data was local demo data.
+- Source metadata, focused manifest/package regressions and the 0.12.3 source ZIP passed validation. GitHub Actions runs the full backend suite plus AMD64 and ARM64 container build/startup checks.
+
 ## 0.12.2 validation
 
 - Unified parent Overview and Review corrections through the same backend helper. New lifecycle coverage checks reopening/restoring across both routes, child lock enforcement, points and audit records.
