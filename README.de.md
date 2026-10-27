@@ -1,5 +1,7 @@
 # Wusel
 
+[Entwicklungs- und Agentenleitfaden](agent.md)
+
 [![Build, test and validate](https://github.com/santsamu/wusel/actions/workflows/ci.yml/badge.svg)](https://github.com/santsamu/wusel/actions/workflows/ci.yml)
 
 **von Wild & Weich · Version 0.12.7**

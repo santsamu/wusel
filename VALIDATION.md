@@ -1,5 +1,10 @@
 # Validation history
 
+## Repository guide validation
+
+- Added agent.md with current product behavior, architecture, setup, security, tests and deployment rules, plus an AGENTS.md discovery pointer. Linked the guide from both root READMEs.
+- Source packaging includes both guide files and archive validation requires them. Six focused CI/packaging tests passed, and the 0.12.7 source ZIP passed metadata and archive validation. Documentation/tooling only; no new runtime version.
+
 ## 0.12.7 validation
 
 - Added a persisted undo deadline per completion, with a 15-second server-enforced window for child-created completions. Duplicate checks preserve the deadline, valid undo/recheck does not duplicate points, and parental actions clear child undo eligibility. Migration preserves existing completion and reward data without reopening an undo window.
