@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.1
+
+- Remove the parent Overview reminder panel so today's tasks use the full available width.
+- Document the proposed child live-update design separately; the existing 60-second refresh remains in this release.
+
 ## 0.13.0
 
 - Replace platform-dependent emoji with original bundled SVG artwork for task icons, badges, weather, navigation, branding, status and empty states. No external icon service or font is required.

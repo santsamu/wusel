@@ -1,5 +1,12 @@
 # Validation history
 
+## 0.13.1 validation
+
+- Removed the parent Overview reminder panel and its obsolete sidebar styling so tasks fill the available width. No child refresh behavior was changed.
+- Chrome at 390, 960 and 1280 pixel widths confirmed the panel is absent, task cards fill the overview layout and there is no horizontal overflow or JavaScript error. Screenshot visually inspected; only local demo data was used.
+- All Node regressions and six focused metadata/packaging tests passed. The 0.13.1 source ZIP passed metadata/archive validation and includes LIVE_UPDATES_PLAN.md.
+- The separate plan proposes authenticated per-child revision polling and incremental updates; it is not implemented in this release. Existing refresh remains every 60 seconds plus visibility/connectivity recovery.
+
 ## 0.13.0 validation
 
 - Replaced runtime emoji/icon glyphs with original bundled SVG artwork for all task choices, 17 badges, weather conditions, navigation, branding, avatars, checks and empty states. Existing task/badge IDs and saved progress are preserved; no database migration is required.

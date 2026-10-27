@@ -13,7 +13,7 @@ def files():
         for path in (PROJECT / name).rglob('*'):
             if path.is_file() and not any(part in SKIP for part in path.relative_to(PROJECT).parts) and path.suffix not in {'.pyc','.sqlite3','.db'}:
                 yield path
-    for name in ('README.md','README.de.md','VALIDATION.md','agent.md','AGENTS.md','requirements-dev.txt','themes-settings.png'):
+    for name in ('README.md','README.de.md','VALIDATION.md','agent.md','AGENTS.md','LIVE_UPDATES_PLAN.md','requirements-dev.txt','themes-settings.png'):
         path = PROJECT / name
         if path.exists():
             yield path

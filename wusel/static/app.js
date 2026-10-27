@@ -107,7 +107,7 @@ function today(c) {
   <section class="today-layout"><div><div class="section-heading"><h2>${tx("Today’s little steps")}</h2><span class="muted small">${tx("10 points per step")}</span></div>
   ${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''} ${next?.id===r.id?'next':''}"><div class="task-time">${esc(timeLabel(r.time))}${next?.id===r.id?`<span class="next-label">${tx("UP NEXT")}</span>`:''}</div><div class="task-content"><h3>${taskIcon(r)}${esc(r.title)}</h3>${r.description?`<p>${esc(r.description)}</p>`:''}${r.locked?`<p class="small">${tx("This step is open again. Let’s check it together.")}</p>`:''}</div>${parentStepControl(r)}</article>`).join(''):`<div class="panel empty"><span aria-hidden="true">${svgIcon('cloud')}</span><h3>${tx("A little breathing room")}</h3><p>${parent()?t("Add a routine in Weekly plan to get started."):t("No steps planned for today. Enjoy your day!")}</p></div>`}
   ${tasks.length&&done===tasks.length?`<div class="celebrate" role="status">${tx("All your steps are done. Look at you grow!")}</div>`:''}</div>
-  <aside class="panel encouragement"><span class="sun" aria-hidden="true">${svgIcon('sun')}</span><p class="eyebrow">${tx("A LITTLE REMINDER")}</p><h2>${tx("Progress grows")}<br>${tx("one step at a time.")}</h2><p>${tx("You don’t have to do everything at once. Just start with your next little step.")}</p><div class="divider"></div><p class="small muted">${tx("Every new day is a fresh start.")}</p></aside></section>${progress(c)}`;
+  </section>${progress(c)}`;
 }
 function scheduleLabel(r) {return r.specific_date?dateLabel(r.specific_date):r.days.map(d=>dayNames()[d]).join(' · ');}
 function changeTiming(defaultValue='tomorrow'){

@@ -176,6 +176,10 @@ All mutations are POST. See `Application.dispatch` for exact body fields, author
 
 Keep authorization in the backend. Hiding a control is not access control. Preserve child isolation, atomic writes, idempotency, request-size limits and parameterized SQL.
 
+## Planned live updates
+
+See [LIVE_UPDATES_PLAN.md](LIVE_UPDATES_PLAN.md) for the proposed revision-based child refresh design. It is a plan, not current behavior: the existing automatic refresh remains 60 seconds plus visibility/connectivity recovery until that work is implemented.
+
 ## Testing and verification
 
 With the virtual environment activated (or replace `python` below with its interpreter path):
