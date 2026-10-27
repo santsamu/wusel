@@ -83,6 +83,10 @@ Open `http://127.0.0.1:8099/`. The terminal prints the first-run setup code whil
 
 The selected hedgehog is Wusel's fixed brand artwork. `wusel/static/wusel-logo.png` is the unchanged original; header images, favicons, Apple touch icon and Home Assistant `icon.png`/`logo.png` are exports from it. See [BRANDING.md](BRANDING.md) for filenames, regeneration and provenance. Do not silently redesign the hedgehog or replace it with a different generated concept. Functional task/weather/badge icons remain SVG; brand colors are independent of themes and plain task-icon mode. The optional Sharp exporter is development-only; generated assets are committed and require no image-processing dependency in production or CI.
 
+## Tablet Home Screen support
+
+`static/manifest.webmanifest` is public and explicitly allowlisted as `application/manifest+json`. It uses relative URLs resolving to the app root and existing 192/512 icons, and requests fullscreen with browser-defined fallback. The entry HTML includes Apple standalone/title/status-bar metadata. Keep local HTTP usable; Home Screen installation and fullscreen depend on browser/OS, with trusted HTTPS normally needed for standard PWA promotion. No service worker, offline cache, device locking or wake lock is implemented. Installed sessions retain the normal 12-hour expiry. Keep bilingual tablet setup guidance accurate.
+
 ## Identity, storage and authentication
 
 - Home Assistant slug: `wusel`; local installation ID: `local_wusel`.

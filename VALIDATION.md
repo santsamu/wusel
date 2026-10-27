@@ -1,5 +1,12 @@
 # Validation history
 
+## 0.14.2 validation
+
+- Added public Home Screen manifest serving, fullscreen launch preference, existing hedgehog icons and Apple standalone metadata. Direct local HTTP remains usable; no service worker or offline cache is added. English/German setup documentation explains installation, HTTPS and kiosk limitations.
+- All 122 Python tests passed with local networking access, including the new anonymous HTTP manifest/scope/start URL/icon integration check, package omission regression, and real HTTP smoke/IPv4/IPv6 tests. The initial default-interpreter run lacked tzdata/PyYAML; existing local dependencies were supplied through PYTHONPATH. A restricted-network run was interrupted after socket restrictions blocked HTTP checks.
+- All Node regressions and JavaScript syntax checks passed. Chrome parsed the manifest with no manifest errors, checked launch layout at 390/768/1024 widths without overflow or JavaScript errors, and loaded English/German launch screens using disposable local data. The launch screenshot was visually inspected. Browser checks required loopback networking access; one optional German check initially used an incorrect text locator, then passed with the document language assertion.
+- Source and 0.14.2 ZIP metadata/archive validation passed. Physical iPad/Android Home Screen installation, actual system-bar behavior, HTTPS installation and Home Assistant deployment remain device/installation checks. No push or deployment was performed.
+
 ## 0.14.1 validation
 
 - Integrated the explicitly selected first hedgehog artwork as the sign-in, parent and child header mark. The original generated PNG is copied unchanged into the repository; deterministic exports provide a cropped header mark, cream-backed favicons/Apple touch icon and Home Assistant icon/logo files. Brand colors remain fixed across themes and plain task-icon mode.

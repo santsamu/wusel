@@ -1,0 +1,14 @@
+{
+  "id": "../",
+  "name": "Wusel — Wild & Weich",
+  "short_name": "Wusel",
+  "start_url": "../",
+  "scope": "../",
+  "display": "fullscreen",
+  "background_color": "#fff8e8",
+  "theme_color": "#246b55",
+  "icons": [
+    {"src": "favicon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "favicon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}

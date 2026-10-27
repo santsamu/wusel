@@ -13,6 +13,7 @@ from zoneinfo import ZoneInfo
 from weather import Weather
 
 STATIC_TYPES = {
+    'manifest.webmanifest':'application/manifest+json; charset=utf-8',
     'app.js':'text/javascript; charset=utf-8','icons.js':'text/javascript; charset=utf-8',
     'i18n.js':'text/javascript; charset=utf-8','style.css':'text/css; charset=utf-8',
     'themes.css':'text/css; charset=utf-8','favicon.ico':'image/x-icon',

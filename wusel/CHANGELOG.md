@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.2
+
+- Add a public web app manifest requesting fullscreen with existing hedgehog icons, plus Apple Home Screen metadata. Preserve direct local HTTP access.
+- Document iPad/Android Home Screen setup, browser and HTTPS limitations, and the distinction from offline and kiosk modes in English and German.
+
 ## 0.14.1
 
 - Use the selected petrol, cream and ochre hedgehog artwork as Wusel's brand mark on sign-in, child and parent screens. Preserve the original artwork in the source package.
