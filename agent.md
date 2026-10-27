@@ -103,6 +103,7 @@ Schema migrations live in `Application.__init__` and must retain existing accoun
 | `badges` | Earned milestones and parental revocation state |
 | `rest_days` | Planned neutral days for streak calculations |
 | `deferred_steps` | Per-child/day saved task deferral ordering |
+| `live_revisions` | Persistent family/per-account change counters, maintained by transactional triggers |
 | `sessions`, `attempts`, `audit` | Sessions, rate limiting and parent activity |
 
 ## Behavior to preserve
@@ -166,6 +167,7 @@ All mutations are POST. See `Application.dispatch` for exact body fields, author
 | --- | --- |
 | `GET /health` | Public health check |
 | `GET /api/state` | First-run state or authenticated profile/day data |
+| `GET /api/updates` | Authenticated own-child or family revision/day/timezone; cheap read-only polling |
 | `GET /api/weather` | Authenticated weather |
 | `/api/setup`, `/api/login` | First parent setup and sign-in, with throttling |
 | `/api/logout`, `/api/preferences` | Authenticated session and own preferences |
@@ -176,9 +178,13 @@ All mutations are POST. See `Application.dispatch` for exact body fields, author
 
 Keep authorization in the backend. Hiding a control is not access control. Preserve child isolation, atomic writes, idempotency, request-size limits and parameterized SQL.
 
-## Planned live updates
+## Live updates
 
-See [LIVE_UPDATES_PLAN.md](LIVE_UPDATES_PLAN.md) for the proposed revision-based child refresh design. It is a plan, not current behavior: the existing automatic refresh remains 60 seconds plus visibility/connectivity recovery until that work is implemented.
+See [LIVE_UPDATES_PLAN.md](LIVE_UPDATES_PLAN.md) for the implemented contract. Both roles poll authenticated `GET /api/updates` every 10 seconds while visible. Parent markers use the family scope; child markers expose only their own account. The endpoint reads revision/day/timezone without activating pending changes, calculating state or loading weather. Full state reads activate due changes and return a consistent revision under a transaction.
+
+`live_revisions` is maintained by SQLite triggers on profile/planning/progress/audit tables, in the same transaction as the change. Rollbacks cannot publish revisions; session/rate-limit writes do not cause state churn. Avoid unconditional updates during state construction (especially an already-empty badge goal), or polling will continually fetch full state.
+
+The client serializes state reads and uses a mutation epoch to discard superseded snapshots. It never automatically replays POSTs. Busy actions queue checks, hidden tabs pause, visibility/online events recheck immediately, and failures back off to 20/30 seconds. Weather keeps its existing independent cache cadence. Changed state is patched into the DOM, preserving keyed tasks/badges, form drafts and radio values, caret, disclosures, focused help and scroll. Open confirmation dialogs defer remote application until closed. Expired sessions return to sign-in. Preserve server-derived remaining undo time and never celebrate remote completions.
 
 ## Testing and verification
 

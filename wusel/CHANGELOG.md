@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.0
+
+- Automatically check for changes every 10 seconds on visible parent and child screens; fetch full state only after a revision, day or timezone change, or connection recovery.
+- Persist transactional family/per-account revision counters with SQLite triggers, keeping child change markers private and the polling endpoint read-only and inexpensive.
+- Reconcile changed screens while preserving form drafts, radio choices, caret, open help/disclosures, focus and scroll. Queue changes behind local actions and keep confirmation dialogs intact.
+- Pause background polling, recheck immediately on return/online, back off on failures, serialize state reads and reject snapshots overtaken by a local mutation.
+- Preserve strict child undo deadlines, existing task timing/deferrals and neutral parent corrections; remote updates do not trigger reward celebrations.
+
 ## 0.13.1
 
 - Remove the parent Overview reminder panel so today's tasks use the full available width.

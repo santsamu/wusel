@@ -5,6 +5,8 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const parent = () => state.user?.role === 'parent';
 const current = () => state.children?.find(c => c.id === selected) || state.children?.[0];
 let noticeTimer, focusChoice=null;
+let mutationEpoch=0,activeWrites=0,refreshRequests=0,refreshChain=Promise.resolve();
+let liveTimer,liveInFlight=false,liveAgain=false,liveDelay=10000;
 function notify(message,duration=6500) { document.querySelector('#notice').classList.remove('level-up'); clearTimeout(noticeTimer); document.querySelector('#notice').textContent = message; noticeTimer=setTimeout(()=>document.querySelector('#notice').textContent='',duration); }
 let syncKind='idle',syncKey='',syncTimer,undoTimer,lastCompletion=null;
 const undoDeadlines=new Map();
@@ -20,6 +22,7 @@ function syncStatus(kind,key=''){
 }
 async function api(path,body,track=true){
  const started=performance.now(),tracked=track&&path!=='weather',writing=body!==undefined;
+ if(writing){mutationEpoch++;activeWrites++;}
  if(tracked&&writing)syncStatus('saving','Saving…');
  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
  let response,data;
@@ -29,8 +32,8 @@ async function api(path,body,track=true){
  }catch{
   if(tracked)syncStatus(writing?'uncertain':'offline',writing?'Save status unknown. Check your connection.':'Connection lost. Your list may be out of date.');
   throw new Error(t(writing?'Could not confirm the save. Check the connection before trying again.':'Connection lost. Your list may be out of date.'));
- }finally{clearTimeout(timeout);}
- if(!response.ok){if(tracked&&writing)syncStatus('error','Not saved.');throw new Error(errorText(data.error||'Could not save. Please try again.'));}
+ }finally{clearTimeout(timeout);if(writing)activeWrites--;}
+ if(!response.ok){if(tracked&&writing)syncStatus('error','Not saved.');const error=new Error(errorText(data.error||'Could not save. Please try again.'));error.status=response.status;throw error;}
  if(tracked&&writing)syncStatus('saved','Saved.');
  else if(path==='state'&&syncKind==='uncertain')syncStatus('review','Connected again. Please check your last change.');
  else if(path==='state'&&syncKind==='offline')syncStatus('saved','Connected again.');
@@ -79,7 +82,112 @@ function undoFeedback(){
  return `<div class="completion-feedback" role="status"><span>${tx('Completed: {task}',{task:lastCompletion.title})}</span><button data-action="undo-last">${tx('Undo')}</button></div>`;
 }
 function restNote(c){return c.rest_day?`<p class="rest-note">${tx('Today is a rest day. Your series is safe; steps are optional.')}</p>`:'';}
-async function refresh(quiet=false) { const fresh=await api('state'); syncChildUndo(fresh); if(quiet && JSON.stringify(fresh)===JSON.stringify(state)){updateChildGreeting();updateTaskTiming();updateUndoControls();loadWeather();return;} state=fresh; if(state.user && !state.user.language){try{await api('preferences',{language},false);}catch{}state.user.language=language;} if(state.user?.language) language=state.user.language; if (!state.user) {clearUndo();focusChoice=null;view='today'; selected=null;weatherData=null;weatherFetched=0;} render(); if(state.user)loadWeather(); }
+function liveIdentity(){return state?.user?state.user.role+':'+state.user.id:'';}
+function refresh(quiet=false){
+ refreshRequests++;
+ const run=async()=>{
+  const epoch=mutationEpoch,fresh=await api('state');
+  if(epoch!==mutationEpoch||activeWrites||(quiet&&busy)){liveAgain=true;return;}
+  syncChildUndo(fresh);
+  if(quiet&&JSON.stringify(fresh)===JSON.stringify(state)){updateChildGreeting();updateTaskTiming();updateUndoControls();loadWeather();return;}
+  state=fresh;
+  if(state.user&&!state.user.language){try{await api('preferences',{language},false);}catch{}state.user.language=language;}
+  if(state.user?.language)language=state.user.language;
+  if(!state.user){clearUndo();focusChoice=null;view='today';selected=null;weatherData=null;weatherFetched=0;}
+  render(quiet);if(state.user)loadWeather();
+ };
+ const task=refreshChain.then(run,run).finally(()=>{refreshRequests--;if(!liveInFlight)scheduleLive();});
+ refreshChain=task.catch(()=>{});return task;
+}
+function nodeKey(node){
+ if(node.nodeType!==1)return '';
+ if(node.id)return 'id:'+node.id;
+ if(node.hasAttribute('data-help-response'))return 'help-response';
+ for(const name of ['data-task','data-badge'])if(node.hasAttribute(name))return name+':'+node.getAttribute(name);
+ if(node.dataset.form)return 'form:'+node.dataset.form+':'+(node.dataset.child||'');
+ if(node.dataset.action)return 'action:'+node.dataset.action+':'+(node.dataset.id||'')+':'+(node.dataset.view||'')+':'+(node.dataset.theme||'')+':'+(node.dataset.days||'')+':'+(node.dataset.start||'')+':'+(node.dataset.end||'');
+ if(node.name)return 'field:'+node.name+':'+(node.type==='radio'||node.type==='checkbox'?node.value:'');
+ if(node.tagName==='DETAILS')return 'details:'+node.className;
+ return '';
+}
+function formHasDraft(form){
+ return form.contains(document.activeElement)||Array.from(form.elements).some(field=>{
+  if(field.tagName==='SELECT')return field.value!==(Array.from(field.options).find(option=>option.defaultSelected)||field.options[0])?.value;
+  if(field.tagName!=='INPUT'&&field.tagName!=='TEXTAREA')return false;
+  return ['checkbox','radio'].includes(field.type)?field.checked!==field.defaultChecked:field.value!==field.defaultValue;
+ });
+}
+function patchNode(old,fresh,protectedForms=new Set()){
+ if(old.nodeType!==fresh.nodeType||old.nodeName!==fresh.nodeName){const replacement=fresh.cloneNode(true);old.replaceWith(replacement);return replacement;}
+ if(old.nodeType===3){if(old.nodeValue!==fresh.nodeValue)old.nodeValue=fresh.nodeValue;return old;}
+ if(old.nodeType!==1)return old;
+ const keepHelp=old.hasAttribute('data-help-response')&&!!old.textContent;
+ const protectedField=protectedForms.has(old.closest('form'))||old===document.activeElement;
+ const savedValue=old.tagName==='SELECT'&&protectedField?old.value:null;
+ const preserve=name=>(name==='open'&&old.tagName==='DETAILS')||(protectedField&&['value','checked','selected'].includes(name));
+ for(const attr of Array.from(old.attributes))if(!fresh.hasAttribute(attr.name)&&!preserve(attr.name))old.removeAttribute(attr.name);
+ for(const attr of Array.from(fresh.attributes))if(!preserve(attr.name)&&old.getAttribute(attr.name)!==attr.value)old.setAttribute(attr.name,attr.value);
+ if((old.tagName==='TEXTAREA'&&protectedField)||keepHelp)return old;
+ const keys=new Map(Array.from(old.childNodes).filter(n=>nodeKey(n)).map(n=>[nodeKey(n),n]));
+ let cursor=old.firstChild;
+ for(const wanted of Array.from(fresh.childNodes)){
+  const key=nodeKey(wanted);
+  let found=key?keys.get(key):cursor&&!nodeKey(cursor)&&cursor.nodeName===wanted.nodeName?cursor:null;
+  if(found&&found.parentNode!==old)found=null;
+  if(!found){found=wanted.cloneNode(true);old.insertBefore(found,cursor);}
+  else{if(found!==cursor)old.insertBefore(found,cursor);found=patchNode(found,wanted,protectedForms);}
+  cursor=found.nextSibling;
+ }
+ while(cursor){const next=cursor.nextSibling;cursor.remove();cursor=next;}
+ if(savedValue!==null&&Array.from(old.options).some(option=>option.value===savedValue))old.value=savedValue;
+ if(!protectedField&&['INPUT','TEXTAREA','SELECT'].includes(old.tagName)){old.value=fresh.value;if(['checkbox','radio'].includes(old.type))old.checked=fresh.checked;}
+ return old;
+}
+function paintApp(html,quiet){if(quiet)patchRegion(app,html);else app.innerHTML=html;}
+function patchRegion(region,html){
+ const template=document.createElement(region.tagName);template.innerHTML=html;
+ const active=document.activeElement,scroll=[window.scrollX,window.scrollY];
+ const focused=region.contains(active),key=nodeKey(active),name=active?.name,form=active?.closest('form');
+ let selection;try{selection=[active.selectionStart,active.selectionEnd];}catch{}
+ // Patch children without copying the temporary wrapper's attributes onto the app root.
+ for(const attr of Array.from(region.attributes))template.setAttribute(attr.name,attr.value);patchNode(region,template,new Set(Array.from(region.querySelectorAll('form')).filter(formHasDraft)));
+ if(focused){
+  let target=active.isConnected&&!active.disabled?active:null;
+  if(!target&&key)target=Array.from(region.querySelectorAll('button,input,textarea,select,[tabindex]')).find(el=>!el.disabled&&nodeKey(el)===key&&(!name||el.name===name)&&(!form||el.closest('form')?.dataset.form===form.dataset.form&&el.closest('form')?.dataset.child===form.dataset.child));
+  if(!target){target=region.querySelector('#next-step-title,main h1,main h2');if(target)target.tabIndex=-1;}
+  if(target&&document.activeElement!==target)target.focus({preventScroll:true});
+  if(target&&selection&&selection[0]!==null)try{target.setSelectionRange(...selection);}catch{}
+ }
+ if(window.scrollX!==scroll[0]||window.scrollY!==scroll[1])window.scrollTo(...scroll);
+}
+function scheduleLive(delay=liveDelay){
+ clearTimeout(liveTimer);
+ if(!state?.user||document.hidden)return;
+ liveTimer=setTimeout(checkLiveUpdates,delay);
+}
+function wakeLive(){
+ liveDelay=10000;
+ if(liveInFlight){liveAgain=true;return;}
+ scheduleLive(0);
+}
+async function checkLiveUpdates(){
+ clearTimeout(liveTimer);
+ if(!state?.user||document.hidden||liveInFlight)return;
+ if(busy||activeWrites||refreshRequests){scheduleLive(10000);return;}
+ liveInFlight=true;liveAgain=false;
+ const identity=liveIdentity(),epoch=mutationEpoch;
+ try{
+  const marker=await api('updates',undefined,false);
+  if(identity!==liveIdentity()||epoch!==mutationEpoch||busy||activeWrites){liveAgain=true;return;}
+  if(marker.revision!==state.revision||marker.day!==state.today||marker.timezone!==state.timezone||['offline','uncertain'].includes(syncKind)){if(document.querySelector('dialog[open]'))return;await refresh(true);}
+  else{updateChildGreeting();updateTaskTiming();updateUndoControls();loadWeather();}
+  liveDelay=10000;
+ }catch(error){
+  if(identity!==liveIdentity()||epoch!==mutationEpoch||busy){liveAgain=true;return;}
+  if(error.status===401){try{await refresh(true);}catch{if(syncKind!=='uncertain')syncStatus('offline','Connection lost. Your list may be out of date.');liveDelay=Math.min(30000,liveDelay*2);}}
+  else{if(syncKind!=='uncertain')syncStatus('offline','Connection lost. Your list may be out of date.');liveDelay=Math.min(30000,liveDelay*2);}
+ }finally{liveInFlight=false;scheduleLive(liveAgain?0:liveDelay);}
+}
 const field = (label,name,type='text',extra='') => `<label>${esc(t(label))}<input name="${name}" type="${type}" ${extra} required></label>`;
 function auth() {
   const setup = state.needs_setup;
@@ -105,7 +213,7 @@ function today(c) {
   return `<div class="heading"><div><p class="eyebrow">${esc(dateLabel(state.today))}</p><h1>${tx(parent()?"{name}’s day":"Hello, {name}",{name:c.name})}</h1><p>${tx("One thing at a time. You’ve got this.")}</p></div><div class="daily-count"><strong>${done}<span> / ${tasks.length}</span></strong><span>${tx("steps completed")}</span></div></div>
   ${restNote(c)}${parentWeather()}<p class="small muted">${tx("Reopening a step removes its points and waits for your confirmation. Confirm done after checking it together.")}</p>
   <section class="today-layout"><div><div class="section-heading"><h2>${tx("Today’s little steps")}</h2><span class="muted small">${tx("10 points per step")}</span></div>
-  ${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''} ${next?.id===r.id?'next':''}"><div class="task-time">${esc(timeLabel(r.time))}${next?.id===r.id?`<span class="next-label">${tx("UP NEXT")}</span>`:''}</div><div class="task-content"><h3>${taskIcon(r)}${esc(r.title)}</h3>${r.description?`<p>${esc(r.description)}</p>`:''}${r.locked?`<p class="small">${tx("This step is open again. Let’s check it together.")}</p>`:''}</div>${parentStepControl(r)}</article>`).join(''):`<div class="panel empty"><span aria-hidden="true">${svgIcon('cloud')}</span><h3>${tx("A little breathing room")}</h3><p>${parent()?t("Add a routine in Weekly plan to get started."):t("No steps planned for today. Enjoy your day!")}</p></div>`}
+  ${tasks.length?tasks.map(r=>`<article data-task="${r.id}" class="task ${r.done?'done':''} ${next?.id===r.id?'next':''}"><div class="task-time">${esc(timeLabel(r.time))}${next?.id===r.id?`<span class="next-label">${tx("UP NEXT")}</span>`:''}</div><div class="task-content"><h3>${taskIcon(r)}${esc(r.title)}</h3>${r.description?`<p>${esc(r.description)}</p>`:''}${r.locked?`<p class="small">${tx("This step is open again. Let’s check it together.")}</p>`:''}</div>${parentStepControl(r)}</article>`).join(''):`<div class="panel empty"><span aria-hidden="true">${svgIcon('cloud')}</span><h3>${tx("A little breathing room")}</h3><p>${parent()?t("Add a routine in Weekly plan to get started."):t("No steps planned for today. Enjoy your day!")}</p></div>`}
   ${tasks.length&&done===tasks.length?`<div class="celebrate" role="status">${tx("All your steps are done. Look at you grow!")}</div>`:''}</div>
   </section>${progress(c)}`;
 }
@@ -149,7 +257,7 @@ function planner(c) {
 function badgeCard(b,{goal=false}={}){
  const value=Math.min(b.threshold,b.value||0);
  const requirement=b.kind==='streak'?'{count} full days in a row':b.kind==='days'?(b.threshold===1?'{count} fully completed day':'{count} fully completed days'):(b.threshold===1?'{count} completed step':'{count} completed steps');
- return `<article class="panel badge ${b.earned&&!b.revoked?'earned':'unearned'} ${goal?'next-badge':''}"><span class="badge-icon" aria-hidden="true">${svgIcon('badge-'+b.id)}</span><h3>${esc(t(b.name))}</h3><p>${tx(requirement,{count:b.threshold})}</p>${goal?`<progress max="${b.threshold}" value="${value}" aria-label="${tx('Badge progress')}"></progress><p class="badge-count">${tx('{value} of {total}',{value,total:b.threshold})}</p>`:`<div class="badge-state">${b.earned?(b.revoked?`<span class="pill">${tx(parent()?'Removed by a parent':'Not currently awarded')}</span>`:`<details class="badge-date"><summary>${tx('Earned')}</summary><time datetime="${esc(b.earned)}">${esc(dateLabel(b.earned))}</time></details>`):`<span class="pill">${tx('Still growing')}</span>`}</div>`}${parent()&&b.earned?`<button class="text-button ${b.revoked?'':'danger'}" data-action="badge" data-id="${b.id}" data-revoked="${!b.revoked}">${b.revoked?t('Restore badge'):t('Remove badge')}</button>`:''}</article>`;
+ return `<article data-badge="${b.id}" class="panel badge ${b.earned&&!b.revoked?'earned':'unearned'} ${goal?'next-badge':''}"><span class="badge-icon" aria-hidden="true">${svgIcon('badge-'+b.id)}</span><h3>${esc(t(b.name))}</h3><p>${tx(requirement,{count:b.threshold})}</p>${goal?`<progress max="${b.threshold}" value="${value}" aria-label="${tx('Badge progress')}"></progress><p class="badge-count">${tx('{value} of {total}',{value,total:b.threshold})}</p>`:`<div class="badge-state">${b.earned?(b.revoked?`<span class="pill">${tx(parent()?'Removed by a parent':'Not currently awarded')}</span>`:`<details class="badge-date"><summary>${tx('Earned')}</summary><time datetime="${esc(b.earned)}">${esc(dateLabel(b.earned))}</time></details>`):`<span class="pill">${tx('Still growing')}</span>`}</div>`}${parent()&&b.earned?`<button class="text-button ${b.revoked?'':'danger'}" data-action="badge" data-id="${b.id}" data-revoked="${!b.revoked}">${b.revoked?t('Restore badge'):t('Remove badge')}</button>`:''}</article>`;
 }
 function rewards(c) {
  const badges=c.progress.badges.filter(b=>parent()||c.show_series!==false||b.kind!=='streak'),earned=badges.filter(b=>b.earned&&!b.revoked);
@@ -195,13 +303,22 @@ function updateChildGreeting(now=new Date()){
 }
 function updateTaskTiming(now=new Date()){
  document.querySelectorAll('[data-task-timing]').forEach(el=>{el.textContent=t(current()?.rest_day?'Optional today':taskTimingKey(el.dataset.time,state.timezone,now));});
+ if(parent()&&view==='today'&&current()){
+  const next=childTaskModel(current(),now).next?.id;
+  document.querySelectorAll('.today-layout [data-task]').forEach(row=>{
+   const wanted=Number(row.dataset.task)===next;row.classList.toggle('next',wanted);
+   const label=row.querySelector('.next-label');
+   if(wanted&&!label){const span=document.createElement('span');span.className='next-label';span.textContent=t('UP NEXT');row.querySelector('.task-time').append(span);}
+   else if(!wanted&&label)label.remove();
+  });
+ }
  updateChildFocus(now);
 }
 function childHeading(c,title,greeting=false){const {tasks,done}=dayCount(c);return `<div class="child-heading"><p class="small muted">${esc(dateLabel(state.today))}</p><h1 ${greeting?'data-child-greeting':''}>${title}</h1>${tasks.length&&!c.rest_day?`<p class="day-tally">${tx('{done} of {total} done',{done,total:tasks.length})}</p>`:''}${childLevel(c)}</div>`;}
 function childTools(){return `<div class="child-tools"><button data-action="view" data-view="daylist">${tx('See my day')}</button><button class="text-button" data-action="view" data-view="badges">${tx('My badges')}</button></div>`;}
 function taskHelp(r,canDefer){return `<details class="task-help"><summary>${tx('I need help')}</summary><p>${esc(r.description||t('Ask an adult nearby to help you get started.'))}</p><div class="help-actions"><button data-action="ask-adult">${tx('Ask an adult')}</button><button data-action="defer" data-id="${r.id}" ${canDefer?'':'disabled'}>${tx('Come back later')}</button></div>${!canDefer?`<p class="small muted">${tx('There are no other steps to switch to. You can ask an adult or take a break.')}</p>`:''}<p data-help-response role="status"></p></details>`;}
 function pendingReview(tasks){
- return tasks.filter(r=>r.locked&&!r.done).map(r=>`<article class="focus-card review-pending"><p class="focus-label">${tx('Check together')} <time>${esc(timeLabel(r.time))}</time></p><div class="focus-title">${taskIcon(r)}<h2>${esc(r.title)}</h2></div>${r.first_action?`<p class="first-action">${esc(r.first_action)}</p>`:''}${r.description?`<p class="focus-instruction">${esc(r.description)}</p>`:''}<p class="review-note">${tx('This step is open again. Let’s check it together.')}</p></article>`).join('');
+ return tasks.filter(r=>r.locked&&!r.done).map(r=>`<article data-task="${r.id}" class="focus-card review-pending"><p class="focus-label">${tx('Check together')} <time>${esc(timeLabel(r.time))}</time></p><div class="focus-title">${taskIcon(r)}<h2>${esc(r.title)}</h2></div>${r.first_action?`<p class="first-action">${esc(r.first_action)}</p>`:''}${r.description?`<p class="focus-instruction">${esc(r.description)}</p>`:''}<p class="review-note">${tx('This step is open again. Let’s check it together.')}</p></article>`).join('');
 }
 function childTaskModel(c,now=new Date()){
  const {tasks,done}=dayCount(c),available=tasks.filter(r=>!r.done&&!r.locked);
@@ -222,7 +339,7 @@ function childTaskContent(c,now=new Date()){
  if(next){
   const instruction=next.first_action?`<p class="first-action">${esc(next.first_action)}</p>`:'';
   const canDefer=tasks.filter(r=>!r.done&&!r.locked).length>1;
-  card=`<article class="focus-card"><p class="focus-label"><span data-task-timing data-time="${esc(next.time)}">${tx(c.rest_day?'Optional today':taskTimingKey(next.time,state.timezone,now))}</span> <time>${esc(timeLabel(next.time))}</time></p><div class="focus-title">${taskIcon(next)}<h2 id="next-step-title" tabindex="-1">${esc(next.title)}</h2></div>${instruction}<button class="primary focus-done" data-action="complete" data-id="${next.id}" aria-label="${tx('Done: {task}',{task:next.title})}">${tx('Done')} <span aria-hidden="true">${svgIcon('check')}</span></button><p id="step-feedback" class="step-feedback" role="status" aria-live="polite"></p>${taskHelp(next,canDefer)}</article>`;
+  card=`<article data-task="${next.id}" class="focus-card"><p class="focus-label"><span data-task-timing data-time="${esc(next.time)}">${tx(c.rest_day?'Optional today':taskTimingKey(next.time,state.timezone,now))}</span> <time>${esc(timeLabel(next.time))}</time></p><div class="focus-title">${taskIcon(next)}<h2 id="next-step-title" tabindex="-1">${esc(next.title)}</h2></div>${instruction}<button class="primary focus-done" data-action="complete" data-id="${next.id}" aria-label="${tx('Done: {task}',{task:next.title})}">${tx('Done')} <span aria-hidden="true">${svgIcon('check')}</span></button><p id="step-feedback" class="step-feedback" role="status" aria-live="polite"></p>${taskHelp(next,canDefer)}</article>`;
  }else if(tasks.some(r=>r.locked&&!r.done)&&!earlier.length){
   card='';
  }else{
@@ -232,17 +349,9 @@ function childTaskContent(c,now=new Date()){
  return `${card}${earlierSteps(earlier,now)}${pendingReview(tasks)}`;
 }
 function updateChildFocus(now=new Date()){
- const region=document.querySelector('[data-child-tasks]'),c=current();
- if(!region||!c)return;
- const signature=childTaskModel(c,now).signature;
- if(region.dataset.signature===signature)return;
- const active=region.contains(document.activeElement)?document.activeElement:null;
- const action=active?.dataset.action,id=active?.dataset.id;
- const earlierOpen=!!region.querySelector('.earlier-steps[open]'),helpOpen=!!region.querySelector('.task-help[open]');
- region.innerHTML=childTaskContent(c,now);region.dataset.signature=signature;
- if(earlierOpen&&region.querySelector('.earlier-steps'))region.querySelector('.earlier-steps').open=true;
- if(helpOpen&&region.querySelector('.task-help'))region.querySelector('.task-help').open=true;
- if(active){const target=Array.from(region.querySelectorAll('[data-action]')).find(el=>el.dataset.action===action&&el.dataset.id===id);(target||region.querySelector('summary,button,h2'))?.focus({preventScroll:true});}
+ const region=document.querySelector('[data-child-tasks]'),c=current();if(!region||!c)return;
+ const signature=childTaskModel(c,now).signature;if(region.dataset.signature===signature)return;
+ patchRegion(region,childTaskContent(c,now));region.dataset.signature=signature;
 }
 function childToday(c){
  const now=new Date();
@@ -250,7 +359,7 @@ function childToday(c){
 }
 function childChecklist(c){
  const {tasks}=dayCount(c);
- return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}${restNote(c)}${undoFeedback()}${tasks.some(r=>r.done)?`<p class="small muted">${tx('Completed steps can be undone for 15 seconds. Afterward, ask a parent to reopen them.')}</p>`:''}<section class="child-checklist">${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''}"><div class="task-time"><time>${esc(timeLabel(r.time))}</time>${!r.done?`<span class="task-timing" data-task-timing data-time="${esc(r.time)}">${tx(c.rest_day?'Optional today':taskTimingKey(r.time,state.timezone))}</span>`:''}</div><div class="task-content"><h2>${taskIcon(r)}${esc(r.title)}</h2>${r.first_action&&!r.done?`<p class="first-action">${esc(r.first_action)}</p>`:''}${r.defer_order&&!r.done?`<p class="small muted">${tx('For later today')}</p>`:''}${r.locked?`<p>${tx('This step is open again. Let’s check it together.')}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t(canChildUndo(r)?'Undo':'Completed'):t('Complete')} ${esc(r.title)}" ${r.locked||(r.done&&!canChildUndo(r))?'disabled':''}>${svgIcon(r.done?'check':'circle')}</button></article>`).join(''):`<p>${tx('Nothing planned today')}</p>`}</section><div class="child-tools"><button data-action="view" data-view="focus">${tx('One task at a time')}</button><button class="text-button" data-action="view" data-view="plan">${tx('Weekly plan')}</button></div>`;
+ return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}${restNote(c)}${undoFeedback()}${tasks.some(r=>r.done)?`<p class="small muted">${tx('Completed steps can be undone for 15 seconds. Afterward, ask a parent to reopen them.')}</p>`:''}<section class="child-checklist">${tasks.length?tasks.map(r=>`<article data-task="${r.id}" class="task ${r.done?'done':''}"><div class="task-time"><time>${esc(timeLabel(r.time))}</time>${!r.done?`<span class="task-timing" data-task-timing data-time="${esc(r.time)}">${tx(c.rest_day?'Optional today':taskTimingKey(r.time,state.timezone))}</span>`:''}</div><div class="task-content"><h2>${taskIcon(r)}${esc(r.title)}</h2>${r.first_action&&!r.done?`<p class="first-action">${esc(r.first_action)}</p>`:''}${r.defer_order&&!r.done?`<p class="small muted">${tx('For later today')}</p>`:''}${r.locked?`<p>${tx('This step is open again. Let’s check it together.')}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t(canChildUndo(r)?'Undo':'Completed'):t('Complete')} ${esc(r.title)}" ${r.locked||(r.done&&!canChildUndo(r))?'disabled':''}>${svgIcon(r.done?'check':'circle')}</button></article>`).join(''):`<p>${tx('Nothing planned today')}</p>`}</section><div class="child-tools"><button data-action="view" data-view="focus">${tx('One task at a time')}</button><button class="text-button" data-action="view" data-view="plan">${tx('Weekly plan')}</button></div>`;
 }
 const themes=[['forest','Forest','#246b55'],['ocean','Ocean','#22658b'],['berry','Berry','#954369'],['lavender','Lavender','#6d4b91'],['sunshine','Sunshine','#825518'],['petrol','Lagoon','#146471']];
 function applyTheme(value){const theme=themes.find(([id])=>id===value)||themes[0];document.documentElement.dataset.theme=theme[0];document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme[2]);}
@@ -259,7 +368,7 @@ async function setTheme(value){
  if(busy||!state.user||!themes.some(([id])=>id===value)||state.user.theme===value)return;
  const saved=drafts();busy=true;
  try{await api('preferences',{theme:value});state.user.theme=value;render();restoreDrafts(saved);document.querySelector(`[data-action="theme"][data-theme="${value}"]`)?.focus({preventScroll:true});}
- catch(error){notify(error.message);}finally{busy=false;}
+ catch(error){notify(error.message);}finally{busy=false;wakeLive();}
 }
 function parentSettings(){return `<section class="panel personal-settings"><h1>${tx('Settings')}</h1>${languagePicker()}${themePicker()}<button class="text-button" data-action="logout">${tx('Sign out')}</button></section>`;}
 function childSettings(){return `<section class="panel child-settings"><h1>${tx('Settings')}</h1>${languagePicker()}${themePicker()}<button class="text-button" data-action="logout">${tx('Sign out')}</button></section>`;}
@@ -283,21 +392,21 @@ function weatherSummary(){
  return `<div id="weather-panel" class="weather-summary"><button data-action="view" data-view="weather" aria-label="${tx('Weather for your day')}"><span aria-hidden="true">${icon}</span><span>${esc(message)}</span><span aria-hidden="true">${svgIcon('arrow-right')}</span></button>${w?.demo?`<p class="preview-caption">${tx('Example weather for preview only')}</p>`:''}</div>`;
 }
 
-function render() {
+function render(quiet=false) {
  paintSyncStatus();
  document.documentElement.lang=language;
  applyTheme(state.user?.theme||'forest');
  app.classList.toggle('child-app',state.user?.role==='child');
  app.classList.toggle('quiet-rewards',state.user?.role==='child'&&!!current()?.reduced_rewards);
  app.classList.toggle('plain-icons',state.user?.role==='child'&&!!current()?.plain_icons);
- if (!state.user) { app.innerHTML=auth(); return; }
+ if (!state.user) { paintApp(auth(),quiet); return; }
  const c=current(); if(c)selected=c.id;
- if(!parent()){app.innerHTML=renderChild(c);return;}
+ if(!parent()){paintApp(renderChild(c),quiet);return;}
  const tabs=[['today','sun',t('Overview')],['plan','calendar',t('Weekly plan')],['badges','star',t('Badges')],['review','check',t('Review')]];
  const navButton=([id,icon,label])=>`<button data-action="view" data-view="${id}" class="nav-button ${view===id?'active':''}" ${view===id?'aria-current="page"':''}><span aria-hidden="true">${svgIcon(icon)}</span> ${esc(label)}</button>`;
- app.innerHTML=`<header><div class="header-inner parent-header"><a class="brand" href="./"><span class="brand-icon">${svgIcon('sprout')}</span> <span class="brand-name">Wusel<small>${tx('by Wild & Weich')}</small></span></a><div class="parent-header-actions"><span class="parent-account-name">${esc(state.user.name)}</span><button data-action="view" data-view="family" class="text-button icon-button" aria-label="${tx('Family')}" title="${tx('Family')}" ${view==='family'?'aria-current="page"':''}><span aria-hidden="true">${svgIcon('family')}</span></button><button data-action="view" data-view="settings" class="text-button icon-button" aria-label="${tx('Settings')}" title="${tx('Settings')}" ${view==='settings'?'aria-current="page"':''}>${svgIcon('settings')}</button></div></div></header>
+ paintApp(`<header><div class="header-inner parent-header"><a class="brand" href="./"><span class="brand-icon">${svgIcon('sprout')}</span> <span class="brand-name">Wusel<small>${tx('by Wild & Weich')}</small></span></a><div class="parent-header-actions"><span class="parent-account-name">${esc(state.user.name)}</span><button data-action="view" data-view="family" class="text-button icon-button" aria-label="${tx('Family')}" title="${tx('Family')}" ${view==='family'?'aria-current="page"':''}><span aria-hidden="true">${svgIcon('family')}</span></button><button data-action="view" data-view="settings" class="text-button icon-button" aria-label="${tx('Settings')}" title="${tx('Settings')}" ${view==='settings'?'aria-current="page"':''}>${svgIcon('settings')}</button></div></div></header>
  <div class="shell">${c?`<nav class="parent-navigation" aria-label="${tx('Main')}"><label class="child-picker"><select id="child-picker" aria-label="${tx('Child')}">${state.children.map(c=>`<option value="${c.id}" ${c.id===selected?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label><div class="child-tabs" role="group" aria-label="${tx('For {name}',{name:c.name})}">${tabs.map(navButton).join('')}</div></nav>`:''}
- <main>${view==='settings'?parentSettings():view==='family'?family():!c?`<section class="panel empty"><span aria-hidden="true">${svgIcon('sprout')}</span><h1>${tx("Let’s plant the first seed")}</h1><p>${tx("Add a child account to start planning their day.")}</p><button class="primary" data-action="view" data-view="family">${tx("Add your family")}</button></section>`:({today,plan:planner,badges:rewards,review}[view]||today)(c)}</main><footer>${tx("A little more rhythm. A little more room to grow.")} <span>${tx("Wusel · Wild & Weich")} · ${esc(state.timezone)}</span></footer></div>`;
+ <main>${view==='settings'?parentSettings():view==='family'?family():!c?`<section class="panel empty"><span aria-hidden="true">${svgIcon('sprout')}</span><h1>${tx("Let’s plant the first seed")}</h1><p>${tx("Add a child account to start planning their day.")}</p><button class="primary" data-action="view" data-view="family">${tx("Add your family")}</button></section>`:({today,plan:planner,badges:rewards,review}[view]||today)(c)}</main><footer>${tx("A little more rhythm. A little more room to grow.")} <span>${tx("Wusel · Wild & Weich")} · ${esc(state.timezone)}</span></footer></div>`,quiet);
 }
 app.addEventListener('change', async e=>{if(e.target.name==='icon'){updateIconPicker();return;}if(e.target.id==='language-picker'){await setLanguage(e.target.value);return;}if(e.target.id==='child-picker'){selected=Number(e.target.value);editing=null;render();}});
 app.addEventListener('click',async e=>{
@@ -306,7 +415,7 @@ app.addEventListener('click',async e=>{
  if(action==='undo-last'){
   if(!lastCompletion||lastCompletion.day!==state.today||!canChildUndo(c?.routines.find(r=>r.id===lastCompletion.routine)||{})){updateUndoControls();return;}
   const saved=lastCompletion;busy=true;b.disabled=true;
-  try{await api('complete',{routine:saved.routine,done:false,day:saved.day});const r=current()?.routines.find(r=>r.id===saved.routine);if(r)r.done=false;clearUndo();await refresh();if(syncKind==='saved')syncStatus('idle');notify(t('Step undone.'),1600);}catch(error){notify(error.message);b.disabled=false;}finally{busy=false;}return;
+  try{await api('complete',{routine:saved.routine,done:false,day:saved.day});const r=current()?.routines.find(r=>r.id===saved.routine);if(r)r.done=false;clearUndo();await refresh();if(syncKind==='saved')syncStatus('idle');notify(t('Step undone.'),1600);}catch(error){notify(error.message);b.disabled=false;}finally{busy=false;wakeLive();}return;
  }
  if(action==='complete'&&!parent()){const r=c?.routines.find(r=>r.id===id);if(r?.done&&!canChildUndo(r)){updateUndoControls();notify(t('Undo time has ended. Ask a parent to reopen this step.'));return;}}
  if(action==='do-next'){const r=c?.routines.find(r=>r.id===id&&r.scheduled&&!r.done&&!r.locked);if(!r)return;focusChoice={child:c.id,day:state.today,routine:id};render();document.querySelector('#next-step-title')?.focus({preventScroll:true});window.scrollTo(0,0);return;}
@@ -327,7 +436,7 @@ app.addEventListener('click',async e=>{
   dialog.innerHTML=`<h2>${tx('Archive routine')}</h2><p>${tx('Archive this routine? Past progress will be kept.')}</p><form data-form="archive"><input type="hidden" name="routine" value="${id}">${changeTiming()}<div class="actions"><button class="primary" type="submit">${tx('Archive')}</button><button type="button" data-action="close-dialog">${tx('Cancel')}</button></div></form>`;
   app.append(dialog);dialog.addEventListener('close',()=>dialog.remove());dialog.showModal();return;
  }
- if(action==='close-dialog'){b.closest('dialog').close();return;}
+ if(action==='close-dialog'){b.closest('dialog').close();wakeLive();return;}
  if(action==='badge'&&b.dataset.revoked==='true'&&!confirm(t("Remove this earned badge? You can restore it later.")))return;
  busy=true;b.disabled=true;
  const earnedBefore=new Set(c?.progress.badges.filter(b=>b.earned).map(b=>b.id)||[]);
@@ -363,7 +472,7 @@ app.addEventListener('click',async e=>{
   }else if(action==='defer'){if(syncKind==='saved')syncStatus('idle');notify(t('Kept for later. Let’s try another step.'),2200);document.querySelector('#next-step-title')?.focus({preventScroll:true});}
   else if(['badge','correct','remove-rest'].includes(action))notify(t('Saved for {name}.',{name:c.name}));
   else if(action==='complete')document.querySelector(`[data-action="complete"][data-id="${id}"]`)?.focus();
- }catch(err){if(childCompleted)render();notify(err.message);b.disabled=false;}finally{busy=false;}
+ }catch(err){if(childCompleted)render();notify(err.message);b.disabled=false;}finally{busy=false;wakeLive();}
 });
 app.addEventListener('submit',async e=>{
  e.preventDefault();if(busy)return;const f=e.target,d=Object.fromEntries(new FormData(f)),kind=f.dataset.form,b=f.querySelector('button[type=submit],button.primary,button:not([type])');
@@ -388,7 +497,7 @@ app.addEventListener('submit',async e=>{
   else if(kind==='password'){const account=[...(state.parents||[]),...(state.children||[])].find(a=>a.id===Number(d.user));message=t('Password reset for {name}.',{name:account?.name||''});}
   if(kind!=='login')notify(message);await refresh();
   if(kind==='rest-days'){const editor=document.querySelector('.pause-editor');if(editor){editor.open=true;editor.querySelector('[name=start]').value=d.start;editor.querySelector('[name=end]').value=d.end;editor.querySelector('button[type=submit]').focus({preventScroll:true});}}
- }catch(err){const error=document.createElement('p');error.dataset.formError='';error.className='form-error';error.setAttribute('role','alert');error.textContent=err.message;f.insertBefore(error,f.querySelector('.actions')||f.firstChild);if(!f.closest('dialog'))notify(err.message);if(b)b.disabled=false;}finally{busy=false;}
+ }catch(err){const error=document.createElement('p');error.dataset.formError='';error.className='form-error';error.setAttribute('role','alert');error.textContent=err.message;f.insertBefore(error,f.querySelector('.actions')||f.firstChild);if(!f.closest('dialog'))notify(err.message);if(b)b.disabled=false;}finally{busy=false;wakeLive();}
 });
 // Weather is fetched separately, so a slow provider never delays the daily checklist.
 let weatherData=null, weatherBusy=false, weatherFetched=0;
@@ -451,7 +560,7 @@ app.addEventListener('input',event=>{if(event.target.setCustomValidity)event.tar
 document.addEventListener('click',async event=>{
  if(event.target.closest('[data-dismiss-sync]'))syncStatus('idle');
  const button=event.target.closest('[data-reconnect]');
- if(button&&!busy){busy=true;button.disabled=true;try{await refresh(true);const target=document.querySelector('[data-dismiss-sync],.focus-done,.nav-button.active');target?.focus({preventScroll:true});}catch{document.querySelector('[data-reconnect]')?.focus({preventScroll:true});}finally{busy=false;button.disabled=false;}}
+ if(button&&!busy){busy=true;button.disabled=true;try{await refresh();const target=document.querySelector('[data-dismiss-sync],.focus-done,.nav-button.active');target?.focus({preventScroll:true});}catch{document.querySelector('[data-reconnect]')?.focus({preventScroll:true});}finally{busy=false;wakeLive();button.disabled=false;}}
 });
 window.addEventListener('offline',()=>syncStatus('offline','Connection lost. Your list may be out of date.'));
-window.addEventListener('online',()=>{if(!busy)refresh(true).catch(()=>{});});
+window.addEventListener('online',wakeLive);

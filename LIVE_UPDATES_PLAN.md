@@ -1,108 +1,53 @@
-# Child screen live updates: implementation plan
+# Parent and child live updates
 
-Status: proposed, not implemented. The parent Overview reminder removal ships in 0.13.1; that release still uses the existing 60-second refresh.
+Status: implemented in **0.14.0**, following the original plan with the requested **10-second** interval and support for **both parent and child screens**.
 
-## Goal
+## User behavior
 
-Reflect a parent's changes on an already-open child screen within approximately 3–5 seconds on a healthy local connection, without a manual reload, unnecessary visual changes or accidental completion/reward actions.
+- While visible, either role checks for changes every 10 seconds. Healthy local connections normally show remote changes by the next check, plus request time.
+- Children receive their own profile's changes; parents receive changes anywhere in their local family installation.
+- Tasks, completions, parent corrections, badge changes, rest days, settings, new accounts and resets update without a page reload. Tomorrow changes retain their effective date.
+- Hidden tabs pause future checks. Returning to the page or coming online triggers an immediate check. Browsers may suspend background pages; this is not background notification delivery.
+- Remote changes do not replay completion animations, duplicate points, reopen expired undo windows, switch the selected screen or expand every disclosure.
 
-Cover parent completion/reopening/confirmation, new routines, routine edits/archiving, rest days, badge corrections, support settings and progress reset. Preserve Apply today versus From tomorrow semantics: a task starting tomorrow must not appear in today's checklist early.
+## Backend contract
 
-## Existing behavior and constraints
-
-- `wusel/static/app.js` currently polls `/api/state` every 60 seconds when signed in, not busy and no form is open. It also refreshes after visibility returns and connectivity returns.
-- `refresh(true)` compares full state; changed data currently rerenders the screen. This can discard an expanded disclosure or keyboard focus.
-- Child undo is server-enforced for 15 seconds. State refreshes must use the remaining server-provided time and never reopen the window.
-- The backend is synchronous Python WSGI with a four-thread Waitress listener, SQLite and direct Home Assistant host networking. The app has no message broker or asynchronous event service.
-- Time labels and the day boundary must still update when no parent has written new data.
-
-## Recommendation: revision-based polling
-
-Use a lightweight authenticated change check every **3 seconds while the child page is visible**. Fetch full state only when the revision or day changes. This avoids repeatedly loading routines, history and reward calculations when there is no change.
-
-Do not add WebSockets or server-sent events in the first implementation. Long-lived streams on the current four-thread WSGI server would occupy workers needed for ordinary requests. Revisit push transport only if measured polling load or the desired latency justifies a different server design.
-
-### 1. Persist a per-child revision
-
-Add an idempotently migrated SQLite table, conceptually:
-
-```sql
-CREATE TABLE child_revisions (
-    child INTEGER PRIMARY KEY REFERENCES users(id),
-    revision INTEGER NOT NULL DEFAULT 0
-);
-```
-
-- Initialize existing child profiles without changing their progress.
-- Use a single helper to increment the affected child's revision **inside the same transaction as a successful change**. Rollbacks must not publish a revision for a failed operation.
-- Cover both parent correction paths through `correct_completion`, task create/edit/archive, rest-day changes, badge removal/restoration, support settings, child reset and relevant child preferences/completions/deferrals. This also keeps multiple devices using the same child account coherent.
-- Increment the affected child's revision when due pending edits activate. Include a day token in change responses so midnight is detectable even without a write.
-- Reset is a normal revision increase, not a counter reset. Keep the audit and existing account/reset behavior.
-- A revision is a change marker, not a completion token or authorization grant. SQLite serializes concurrent increments; do not use coarse wall-clock timestamps as revisions.
-
-### 2. Add a small authenticated read endpoint
-
-Proposed endpoint: `GET /api/updates`.
-
-For an authenticated child, return only their own marker, for example:
+`GET /api/updates` requires a valid Wusel session. It derives its scope from that session, ignoring caller-supplied child IDs. It returns only:
 
 ```json
-{"revision": 42, "day": "2026-10-27"}
+{"revision": 42, "day": "2026-10-27", "timezone": "Europe/Zurich"}
 ```
 
-- Derive the child from the session, not a caller-supplied child ID. Preserve authorization and session expiry.
-- Keep it a cheap indexed read: no weather fetch, full state calculation or repeated daily-plan snapshots.
-- Review the common request preprocessing in `Application.__call__`: the lightweight path should not unintentionally run heavy pending-plan/state work. A day change can trigger a full state request, which activates due changes through the existing transaction path.
-- Include the current revision in `/api/state`, read consistently with that state, so clients know which snapshot they applied.
-- Preserve private/no-store response behavior. No passwords, setup codes, tokens, task titles or other family data are needed in the change marker.
+Parents use the family counter. Children use only their own account counter. The endpoint is a cheap read: no weather access, reward calculation, daily-plan writes or pending-change activation.
 
-### 3. Add a single child refresh coordinator
+SQLite `live_revisions(scope, revision)` stores durable counters. Transactional triggers cover users, routines, completions, badges, daily plans, pending routines, rest days, deferrals and audit activity. Each relevant write updates the family counter and affected account counter; audit affects the family counter. Sessions and throttling attempts do not affect revisions. Counters are monotonic and resets do not reset them. Trigger writes roll back with the originating transaction. This replaces the original proposed explicit revision helper so existing/future write paths cannot silently omit notification.
 
-Use a rescheduled timer rather than overlapping `setInterval` requests.
+The state endpoint activates due pending edits and returns the revision matching its snapshot under a transaction. Day/timezone markers detect midnight and configuration changes without requiring a write. Avoid no-op database updates during state construction; an already-empty badge goal must not continually publish revisions.
 
-- Poll every 3 seconds while visible and signed in as a child; keep the existing parent behavior for this scope.
-- Allow only one change request and one state refresh in flight. If a parent change arrives during a child completion or preference save, queue one refresh and run it after the operation settles.
-- Coalesce repeated revisions. Ignore stale responses and never apply an older state over a newer one or across a changed session/day.
-- On unchanged revision, do not rerender or show a toast. Update time labels and task selection locally on their existing cadence, and check for midnight.
-- Pause polling in hidden tabs. Immediately recheck when the page becomes visible or the browser comes online. Browsers may suspend background pages; do not promise background delivery.
-- On network failure, retain the displayed list and existing connection status. Back off, for example 3, 6, 12, then 30 seconds, and recover immediately after an online/visibility event. Do not retry completion POSTs automatically.
-- On expired session, stop polling and return through the existing sign-in flow. Never leak another child's marker.
-- Weather retains its own cached refresh cadence; a task revision should not force a weather fetch.
+## Frontend contract
 
-### 4. Apply changes without disrupting the child
+- One rescheduled poller serves both roles. Only one marker check runs at once, and full state reads are serialized.
+- On an unchanged revision/day/timezone, update local time labels and undo controls without replacing the screen. Weather retains its separate cache cadence.
+- On a change or connection recovery, load the full state. A local mutation epoch rejects a snapshot overtaken by a local POST. A queued foreground refresh fetches the committed result afterward.
+- Busy saves/check-offs defer checks; normal local actions still refresh immediately. Form presence alone does not disable background checks.
+- Reconcile changed DOM using stable keys for tasks, badges, controls and forms. Preserve form input/radio values, textarea drafts, selection/caret, open details, focused help messages, valid manual task selection and scroll position. If a focused control disappears or becomes disabled, move focus to a relevant heading without scrolling.
+- An open confirmation dialog keeps its draft and defers remote state application until closed. Marker checks can continue while it is open.
+- Use the server-provided remaining undo seconds and monotonic browser time. Never give an old completion another 15 seconds after a refresh.
+- On connectivity failure, retain the displayed state, use existing connection feedback and back off to 20 then 30 seconds. Do not replay mutation requests. Online/visibility events reset the delay.
+- A rejected/expired session returns through the existing sign-in state and stops polling until signed in again.
 
-Refactor the child render path into small update regions rather than replacing the entire app on every remote change.
+## Why polling
 
-- Update task content/status, daily count, level/progress, badges and support settings from the new state.
-- Keep the active page, scroll position, expanded help/earlier-task disclosures and valid manual Do next choice. Do not switch away from badges or settings to force the home page open.
-- Preserve keyboard focus where the control still exists. If a focused task control disappears or becomes unavailable, move focus to the relevant task heading without scrolling unexpectedly.
-- If a parent reopens a completed step, show its details and neutral correction message. If a parent confirms it, update the checkmark and counts without playing a child completion celebration.
-- If an ordinary current task is removed, completed or locked remotely, choose the next available task using the existing time/deferral rules. Keep older and deferred tasks in the collapsed list.
-- Do not automatically expand every disclosure or interrupt with popups for new tasks. The updated count/task list should be enough.
-- Reconcile undo from server deadlines. A parent confirmation removes child undo eligibility immediately; repeated polling never extends an existing window.
-- Preserve draft edits in settings. Apply remote preferences after any local save settles; do not overwrite a control while the child is using it.
+The existing deployment uses a four-thread synchronous Waitress server. Small indexed change checks fit this architecture without dedicating workers to long-lived streams or adding a broker/WebSocket service. The network port, Home Assistant slug and account model remain unchanged.
 
-## Implementation order
+## Verification and limits
 
-1. Backend migration, revision helper and transaction/authorization tests.
-2. Lightweight endpoint plus consistent revision in state, with query-cost checks.
-3. Child polling coordinator, visibility/network lifecycle and stale-response handling.
-4. Incremental rendering and focus/disclosure/undo reconciliation.
-5. Two-browser integration tests and realistic Pi/network testing, then release.
+Backend tests cover authenticated/scoped markers, cheap read-only checks, transaction rollback, completion/correction updates, midnight and pending activation, preferences/rest/badges/reset, session expiry, persistence across restart and no revision churn when all badges are earned.
 
-Likely files: `wusel/app.py`, `wusel/static/app.js`, relevant translations, backend/Node/browser tests, `tools/smoke.py` if startup checks change, and the usual release documentation. Update `agent.md` with the implemented contract. No Home Assistant network/slug change or new external service is needed.
+Node tests cover both roles' 10-second cadence, unchanged markers, busy/hidden/modal guards, backoff, in-flight checks and serialized rejection of stale snapshots. Real Chrome sessions verify automatic parent-to-child and child-to-parent updates, parent draft/caret retention, new tasks, open help/focus/scroll retention, an older held response racing a completion, confirmation-dialog preservation and remote reset/sign-out.
 
-## Acceptance tests
-
-- Parent completes, reopens and confirms a task in Overview and Review: an open child home/checklist reflects each action within 3–5 seconds on a healthy visible connection.
-- A new task for today appears without reload; a tomorrow task appears in the plan but not today's checklist. Pending edits activate correctly at midnight and across restart.
-- Badges, rest days, support preferences and reset update correctly, including multiple parent/child browser sessions.
-- Simultaneous parent correction and child completion cannot bypass a lock, duplicate points or restore expired undo. A queued update wins over an older in-flight response.
-- Hidden tabs stop polling and reconcile on return; offline/slow responses back off without parallel requests or replaying mutations. Session expiry returns to sign-in.
-- Unchanged revisions cause no DOM replacement or announcement. Help/list disclosures, scroll, manual selection and keyboard focus survive relevant updates.
-- English/German, quiet rewards, plain icons and focus/checklist modes remain correct. No automatic celebration for a parent-generated update.
-- Lightweight requests avoid weather/full-state work. Measure request rate and latency on a Pi 5 with several visible clients; monitor check-off responsiveness rather than relying only on desktop timing.
+Tests use local demo data. Physical Pi latency/load and mobile background behavior still need deployment verification; there is no guaranteed delivery time while offline or suspended.
 
 ## Out of scope
 
-Background phone notifications, email, Home Assistant notifications, cross-household syncing, a new message broker and live parent dashboards. These need separate product decisions.
+Push/email notifications, background phone alerts, cross-household synchronization and a new message broker. The update mechanism stays local to the existing Wusel installation.

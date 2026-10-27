@@ -1,5 +1,13 @@
 # Validation history
 
+## 0.14.0 validation
+
+- Implemented authenticated 10-second visible-page change checks for both roles. SQLite triggers maintain transactional family/per-account revisions; the lightweight endpoint does no state/weather/pending work. Full state snapshots return their revision under a transaction.
+- The full 118-test Python suite passed. Nine focused live-update tests then passed, including an added migration test preserving existing progress (119 total backend tests for CI). Coverage includes child isolation, parent family changes, cheap read-only polling, rollback, corrections, midnight/pending activation, settings/rest/badges/reset, session invalidation, restart persistence and no empty-goal revision churn.
+- All Node regressions passed, including both-role 10-second cadence, unchanged revisions, busy/hidden/modal guards, one in-flight check, offline backoff, expired-session recovery and serialized stale-state rejection.
+- Chrome with real WSGI demo data and two/three authenticated sessions verified automatic changes in both directions on the normal timer, retained parent draft/input node/caret, retained child help/disclosure/focus/scroll, today-task additions, neutral correction, a held older snapshot racing a completion, confirmation-dialog protection, clean parent-setting updates and remote reset/sign-in. Help messages remained correct when the no-other-task paragraph disappeared. Screenshots were visually inspected. No JavaScript errors; only local demo data was used.
+- Source metadata and the 0.14.0 ZIP passed validation. The real-HTTP startup smoke check also verifies that the update marker rejects anonymous reads. GitHub Actions runs the full suite and AMD64/ARM64 container startup checks; physical Pi latency and mobile background behavior remain deployment checks.
+
 ## 0.13.1 validation
 
 - Removed the parent Overview reminder panel and its obsolete sidebar styling so tasks fill the available width. No child refresh behavior was changed.

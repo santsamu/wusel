@@ -867,7 +867,7 @@ async function setLanguage(value){
  const saved=drafts();language=value;try{localStorage.setItem('wusel-language',value);}catch{}
  const notice=document.querySelector('#notice');notice.textContent='';
  render();restoreDrafts(saved);if(accountOpen)document.querySelector('.parent-account').open=true;document.querySelector('#language-picker')?.focus();
- if(state.user){busy=true;try{await api('preferences',{language:value});state.user.language=value;}catch(e){notify(e.message);}finally{busy=false;}}
+ if(state.user){busy=true;try{await api('preferences',{language:value});state.user.language=value;}catch(e){notify(e.message);}finally{busy=false;if(typeof wakeLive==='function')wakeLive();}}
 }
 function errorText(message){
  if(CATALOG.en[message])return t(message);

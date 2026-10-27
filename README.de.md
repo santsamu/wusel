@@ -4,11 +4,13 @@
 
 [![Build, test and validate](https://github.com/santsamu/wusel/actions/workflows/ci.yml/badge.svg)](https://github.com/santsamu/wusel/actions/workflows/ci.yml)
 
-**von Wild & Weich · Version 0.13.1**
+**von Wild & Weich · Version 0.14.0**
 
 Ab Version 0.12.0 lautet die Installationskennung `wusel` (lokal: `local_wusel`). Diese Version ist eine saubere Neuinstallation mit neuer Datenbank `/data/wusel.sqlite3`, `WUSEL_*`-Umgebungsvariablen und neuen Sitzungskennungen. Frühere Installationskennungen und Daten werden nicht übernommen. Kopiere die aktuelle innere App-Struktur nach `/local_apps/wusel` (beziehungsweise `/addons/wusel`), lade den Store neu und installiere Wusel neu. Richte danach das erste Elternkonto mit dem Einrichtungscode aus den Logs ein.
 
 Eltern erhalten im Aufgabenformular Hinweise für kurze, konkrete Schritte und können eine optionale erste kleine Handlung ergänzen. Die Kinderansicht zeigt diese direkt unter dem Titel. „Ich brauche Hilfe“ öffnet die vorhandene Anleitung; „Erwachsenen fragen“ fordert dazu auf, einen Erwachsenen vor Ort zu holen. Es wird keine Nachricht versendet. „Später wiederkommen“ verschiebt den Schritt hinter andere offene Schritte desselben Tages, ohne ihn abzuhaken oder Punkte zu verändern. Gibt es keinen anderen verfügbaren Schritt, bleibt diese Option mit Erklärung deaktiviert. Unter Familie → Unterstützung für Kinder können Eltern pro Kind Serien-Abzeichen ausblenden und ruhige Belohnungen aktivieren. Verdiente Abzeichen und Punkte bleiben erhalten; ruhige Belohnungen unterdrücken Punkteanimationen, Level-Jubel und Abzeichenmeldungen unabhängig von der Geräteeinstellung. Korrekturen verwenden neutrale Formulierungen; Eltern behalten ihre bisherigen Kontrollen. Die neuen Einstellungen bleiben beim Upgrade standardmäßig auf Serien sichtbar/ruhige Belohnungen aus. Beim Zurücksetzen werden sie und die Zurückstellungen gelöscht, Aufgaben samt Anleitung bleiben erhalten.
+
+Sichtbare Eltern- und Kinderansichten prüfen alle 10 Sekunden mit einer kleinen authentifizierten Anfrage auf Änderungen. Der vollständige Stand wird nur bei Bedarf geladen. Änderungen erscheinen ohne Neuladen; Formularentwürfe, offene Hilfe, Fokus, Scrollposition und verbleibende Rückgängig-Zeit bleiben erhalten. Hintergrund-Tabs pausieren und gleichen sich beim Zurückkehren sofort ab. Bei Verbindungsfehlern werden Abstände vergrößert, ohne gespeicherte Aktionen erneut zu senden. Änderungen ab morgen gelten weiterhin erst morgen.
 
 Alle App-Symbole verwenden eigene, mitgelieferte SVG-Grafiken: Aufgaben, Abzeichen, Wetter, Navigation, Marke und Statusanzeigen. Formen und Farben hängen nicht mehr von der Emoji-Schrift des Betriebssystems ab. Ein externer Symboldienst ist nicht erforderlich. Der Aufgabeneditor bietet eine beschriftete, per Tastatur bedienbare SVG-Auswahl. Schlichte Aufgabensymbole verwenden dieselben Formen mit neutralen Farben. Gespeicherte Aufgabenkennungen, Abzeichen und Fortschritte bleiben erhalten.
 
@@ -80,7 +82,7 @@ Ab Version 0.5.2 nutzt Wusel direkt das Netzwerk des Pi und lauscht über IPv4 u
 
 Prüfe nach dem Update `http://homeassistant.local:8099/health` und die IPv4-Adresse des Pi, zum Beispiel `http://YOUR_PI_IP:8099/health`. Beide sollen `{"ok":true}` liefern. Im Protokoll erscheinen die Listener-Adressen (`0.0.0.0:8099` sowie `[::]:8099` bei aktiviertem IPv6) und anschließend `Wusel ready: HTTP port 8099`.
 
-Übernimm alle neuen App-Dateien, einschließlich `server.py`, `Dockerfile` und `config.yaml`. Aktualisiere beziehungsweise baue die installierte App neu und prüfe Version **0.13.1**. Ein bloßer Neustart des alten Containers ändert den Netzwerkmodus noch nicht. Bei späteren Updates bleibt der Slug `wusel` unverändert.
+Übernimm alle neuen App-Dateien, einschließlich `server.py`, `Dockerfile` und `config.yaml`. Aktualisiere beziehungsweise baue die installierte App neu und prüfe Version **0.14.0**. Ein bloßer Neustart des alten Containers ändert den Netzwerkmodus noch nicht. Bei späteren Updates bleibt der Slug `wusel` unverändert.
 
 Wusel teilt damit die Netzwerkschnittstellen des Pi. Dafür sind weder das Abschalten des Schutzmodus noch eine Portfreigabe am Router nötig. Die vorhandene Anmeldung und die Hinweise zu HTTP/HTTPS gelten weiterhin.
 
@@ -154,10 +156,10 @@ python -m unittest discover -s tests -v
 node tests/test_i18n.cjs
 node tests/test_badge_view.cjs
 python tools/package.py
-python tools/validate.py --archive dist/wusel-0.13.1.zip
+python tools/validate.py --archive dist/wusel-0.14.0.zip
 ```
 
-Das Paketwerkzeug schreibt `wusel-0.13.1.zip` in den Unterordner `dist` des Projekts. Im ZIP liegt die App-Konfiguration unter `wusel/wusel/config.yaml`. Lokale Daten, virtuelle Umgebungen und Bytecode werden nicht eingepackt.
+Das Paketwerkzeug schreibt `wusel-0.14.0.zip` in den Unterordner `dist` des Projekts. Im ZIP liegt die App-Konfiguration unter `wusel/wusel/config.yaml`. Lokale Daten, virtuelle Umgebungen und Bytecode werden nicht eingepackt.
 
 Prüfungen und Grenzen stehen in [VALIDATION.md](VALIDATION.md). Der Produktionsserver wurde lokal über IPv4 und IPv6 geprüft. Der neue Container-Netzwerkmodus, der Zugriff über den Hostnamen, Live-Wetter und Backup/Wiederherstellung müssen nach dem Update auf dem Pi überprüft werden.
 

@@ -100,6 +100,7 @@ class Application:
                 db.execute("ALTER TABLE users ADD COLUMN theme TEXT NOT NULL DEFAULT 'forest'")
             if 'plain_icons' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
                 db.execute("ALTER TABLE users ADD COLUMN plain_icons INTEGER NOT NULL DEFAULT 0")
+            self.install_live_revisions(db)
         code = self.data_dir / 'setup-code'
         if not code.exists():
             code.write_text(secrets.token_urlsafe(18), encoding='utf-8')
@@ -113,6 +114,25 @@ class Application:
         return datetime.now(self.zone).date()
     def now(self):
         return datetime.now(timezone.utc).timestamp()
+    def install_live_revisions(self, db):
+        db.execute('CREATE TABLE IF NOT EXISTS live_revisions(scope TEXT PRIMARY KEY,revision INTEGER NOT NULL DEFAULT 0)')
+        db.execute("INSERT OR IGNORE INTO live_revisions VALUES('family',0)")
+        # Triggers cover every write path, including pending edits and rollback.
+        # Only stable identity columns are referenced so older-schema migrations remain possible.
+        for table in ('users','routines','completions','badges','daily_plans','pending_routines','rest_days','deferred_steps','audit'):
+            for event in ('INSERT','UPDATE','DELETE'):
+                refs = ('OLD','NEW') if event=='UPDATE' else ('OLD',) if event=='DELETE' else ('NEW',)
+                changes = ["INSERT INTO live_revisions VALUES('family',1) ON CONFLICT(scope) DO UPDATE SET revision=revision+1;"]
+                for ref in refs:
+                    if table=='audit':
+                        continue
+                    child = f'{ref}.id' if table=='users' else f'(SELECT child FROM routines WHERE id={ref}.routine)' if table=='pending_routines' else f'{ref}.child'
+                    changes.append(f"INSERT INTO live_revisions SELECT 'user:'||{child},1 WHERE {child} IS NOT NULL ON CONFLICT(scope) DO UPDATE SET revision=revision+1;")
+                db.execute(f'CREATE TRIGGER IF NOT EXISTS live_{table}_{event.lower()} AFTER {event} ON {table} BEGIN '+''.join(changes)+' END')
+    def live_marker(self, db, user):
+        scope = 'family' if user['role']=='parent' else f'user:{user["id"]}'
+        row = db.execute('SELECT revision FROM live_revisions WHERE scope=?',(scope,)).fetchone()
+        return {'revision':row['revision'] if row else 0,'day':self.today().isoformat(),'timezone':str(self.zone)}
     def audit(self, db, actor, action, detail):
         db.execute('INSERT INTO audit(at,actor,action,detail) VALUES(?,?,?,?)',
                    (datetime.now(timezone.utc).isoformat(), actor, action, detail))
@@ -239,8 +259,10 @@ class Application:
         eligible = [badge for badge in badges if not badge['earned'] and (show_series or badge['kind']!='streak')]
         goal = db.execute('SELECT badge_goal FROM users WHERE id=?',(child,)).fetchone()['badge_goal']
         if goal not in {badge['id'] for badge in eligible}:
-            goal = max(eligible,key=lambda badge:badge['value']/badge['threshold'])['id'] if eligible else ''
-            db.execute('UPDATE users SET badge_goal=? WHERE id=?',(goal,child))
+            next_goal = max(eligible,key=lambda badge:badge['value']/badge['threshold'])['id'] if eligible else ''
+            if next_goal != goal:
+                db.execute('UPDATE users SET badge_goal=? WHERE id=?',(next_goal,child))
+            goal = next_goal
         return {'count':count,'xp':xp,'level':xp//100+1,'level_progress':xp%100,**stats,'next_badge':goal,'badges':badges}
     def state(self, db, user):
         today = self.today()
@@ -287,8 +309,13 @@ class Application:
         if user['role']=='parent':
             result['parents'] = [dict(r) for r in db.execute("SELECT id,name,username,day_view FROM users WHERE role='parent' ORDER BY name")]
             result['audit'] = [dict(r) for r in db.execute('SELECT audit.*,users.name AS actor_name FROM audit JOIN users ON users.id=audit.actor ORDER BY audit.id DESC LIMIT 30')]
+        result['revision'] = self.live_marker(db,user)['revision']
         return result
     def dispatch(self, db, path, method, body, user, env):
+        if method=='GET' and path=='/api/updates':
+            if user is None:
+                raise Problem('Please sign in.',401)
+            return self.live_marker(db,user),None
         if method=='GET' and path=='/api/state':
             return self.state(db,user), None
         if method=='GET' and path=='/api/weather':
@@ -588,8 +615,11 @@ class Application:
                         raise Problem('Expected an object.')
                 db = self.connect()
                 try:
-                    self.activate_pending(db)
+                    if path!='/api/updates':
+                        self.activate_pending(db)
                     with db:
+                        if method=='GET' and path=='/api/state':
+                            db.execute('BEGIN IMMEDIATE')
                         result,cookie = self.dispatch(db,path,method,body,self.session(db,env),env)
                 finally:
                     db.close()

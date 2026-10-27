@@ -2,7 +2,7 @@
 import argparse
 import json
 import time
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 from urllib.request import ProxyHandler, build_opener
 
 
@@ -28,7 +28,15 @@ def smoke(base, timeout=45):
         state=json.load(response)
         if state.get('needs_setup') is not True or state.get('user') is not None:
             raise RuntimeError('Fresh disposable container must start at first-run setup')
-    print('Container smoke passed: health, frontend assets and first-run API')
+    try:
+        with http.open(base+'/api/updates',timeout=5):
+            raise RuntimeError('Live updates exposed an unauthenticated marker')
+    except HTTPError as error:
+        code=error.code
+        error.close()
+        if code!=401:
+            raise RuntimeError('Live updates must require authentication') from error
+    print('Container smoke passed: health, frontend assets, first-run API and private update marker')
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
