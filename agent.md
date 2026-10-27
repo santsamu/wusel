@@ -233,6 +233,8 @@ python tools/validate.py --archive dist/wusel-VERSION.zip
 
 ## CI and release workflow
 
+When changing user-visible behavior, setup, configuration or deployment, update the affected README and DOCS files in both English and German. Keep their descriptions aligned with implemented behavior; documentation-only changes do not require a version bump.
+
 1. Inspect `git status` and current instructions. Preserve unrelated changes. Use `codex/` for a new working branch unless the user specifies otherwise.
 2. Make the authorized change, update relevant tests and documentation, and inspect the diff. Keep current product semantics unless the user asks to change them.
 3. For an application release, advance the semantic version consistently in `wusel/config.yaml`, `wusel/Dockerfile` (`BUILD_VERSION`), the six English/German README/DOCS files and their current ZIP references. Add a changelog entry. Preserve historical changelog/validation versions.
