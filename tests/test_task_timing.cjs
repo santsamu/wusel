@@ -1,7 +1,7 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
 const root=path.join(__dirname,'../wusel/static');
 const sandbox={navigator:{language:'en-GB'},localStorage:{getItem:()=>null},document:{querySelector:()=>null},assert};
-vm.createContext(sandbox);
+vm.createContext(sandbox);vm.runInContext(fs.readFileSync(root+'/icons.js','utf8'),sandbox);
 vm.runInContext(fs.readFileSync(root+'/i18n.js','utf8'),sandbox);
 vm.runInContext(`
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));

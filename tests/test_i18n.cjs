@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const root=process.argv[2]||require('path').join(__dirname,'../wusel/static');
-const sandbox={navigator:{language:'en-GB'},localStorage:{getItem:()=>null},document:{querySelector:()=>null}};vm.createContext(sandbox);vm.runInContext(fs.readFileSync(root+'/i18n.js','utf8'),sandbox);
+const sandbox={navigator:{language:'en-GB'},localStorage:{getItem:()=>null},document:{querySelector:()=>null}};vm.createContext(sandbox);vm.runInContext(fs.readFileSync(root+'/icons.js','utf8'),sandbox);vm.runInContext(fs.readFileSync(root+'/i18n.js','utf8'),sandbox);
 vm.runInContext(`
 for(const [key,value] of Object.entries(CATALOG.en)){
  if(!CATALOG.de[key])throw Error('Missing German: '+key);
@@ -8,7 +8,7 @@ for(const [key,value] of Object.entries(CATALOG.en)){
  if(params(value)!==params(CATALOG.de[key]))throw Error('Placeholder mismatch: '+key);
 }
 language='de';
-if(t('Hello, {name} ☀️',{name:'Alex'})!=='Hallo, Alex ☀️')throw Error('Interpolation');
+if(t('Hello, {name}',{name:'Alex'})!=='Hallo, Alex')throw Error('Interpolation');
 if(errorText('Password must be 10–128 characters.')!=='Passwort muss 10–128 Zeichen lang sein.')throw Error('Validation');
 if(auditText('Created child account: alex')!=='Konto für Kind erstellt: alex')throw Error('Audit');
 `,sandbox);
@@ -82,7 +82,7 @@ vm.runInContext("function esc(value){return String(value??'');}",sandbox);
 vm.runInContext(source.slice(source.indexOf('const taskIcons='),source.indexOf('function scheduleEditor(')),sandbox);
 vm.runInContext(`
 if(taskIcon({icon:''})!==''||taskIcon({icon:'<script>'})!=='')throw Error('No unknown or empty icon rendering');
-if(!taskIcon({icon:'medicine'}).includes('💊')||!taskIcon({icon:'medicine'}).includes('aria-hidden="true"'))throw Error('Medicine icon with preserved accessible text');
+if(!taskIcon({icon:'medicine'}).includes('data-icon="medicine"')||!taskIcon({icon:'medicine'}).includes('aria-hidden="true"'))throw Error('Medicine icon with preserved accessible text');
 language='de';if(!taskIconPicker({icon:'medicine'}).includes('Medikament'))throw Error('German icon label');
 language='en';if(!taskIconPicker({icon:'medicine'}).includes('Medicine'))throw Error('English icon label');
 `,sandbox);

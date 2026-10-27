@@ -14,16 +14,16 @@ from weather import Weather
 
 TASK_ICONS = ('','tooth','clothes','food','bag','book','bed','wash','water','shoes','play','tidy','quiet','medicine')
 
-BADGES = [('first', 'First step', 1, '🌱'), ('five', 'Growing strong', 5, '🌿'),
-          ('twenty', 'Routine explorer', 20, '🌻'), ('fifty', 'Shining star', 50, '⭐'),
-          ('hundred', 'Routine champion', 100, '🏆'),
-          ('ten', 'Little adventurer', 10, '🧭'), ('onefifty', 'Soaring high', 150, '🪁'),
-          ('twofifty', 'Bright comet', 250, '☄️'), ('fivehundred', 'Super explorer', 500, '🚀'),
-          ('thousand', 'A thousand little wins', 1000, '🌌')]
-DAY_BADGES = [('day1', 'A whole day', 1, '☀️'), ('day10', 'Ten bright days', 10, '🌈'),
-              ('day30', 'Thirty bright days', 30, '💎')]
-STREAK_BADGES = [('streak3', 'Finding a rhythm', 3, '🎵'), ('streak7', 'A week of little wins', 7, '🔥'),
-                 ('streak14', 'Two weeks of rhythm', 14, '🎶'), ('streak30', 'A month of little wins', 30, '👑')]
+BADGES = [('first', 'First step', 1, 'badge-first'), ('five', 'Growing strong', 5, 'badge-five'),
+          ('twenty', 'Routine explorer', 20, 'badge-twenty'), ('fifty', 'Shining star', 50, 'badge-fifty'),
+          ('hundred', 'Routine champion', 100, 'badge-hundred'),
+          ('ten', 'Little adventurer', 10, 'badge-ten'), ('onefifty', 'Soaring high', 150, 'badge-onefifty'),
+          ('twofifty', 'Bright comet', 250, 'badge-twofifty'), ('fivehundred', 'Super explorer', 500, 'badge-fivehundred'),
+          ('thousand', 'A thousand little wins', 1000, 'badge-thousand')]
+DAY_BADGES = [('day1', 'A whole day', 1, 'badge-day1'), ('day10', 'Ten bright days', 10, 'badge-day10'),
+              ('day30', 'Thirty bright days', 30, 'badge-day30')]
+STREAK_BADGES = [('streak3', 'Finding a rhythm', 3, 'badge-streak3'), ('streak7', 'A week of little wins', 7, 'badge-streak7'),
+                 ('streak14', 'Two weeks of rhythm', 14, 'badge-streak14'), ('streak30', 'A month of little wins', 30, 'badge-streak30')]
 ALL_BADGES = [(b,kind) for kind,items in [('steps',BADGES),('days',DAY_BADGES),('streak',STREAK_BADGES)] for b in sorted(items,key=lambda b:b[2])]
 SCHEMA = '''
 CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY,username TEXT UNIQUE NOT NULL,
@@ -565,9 +565,9 @@ class Application:
         try:
             if path=='/health' and method=='GET':
                 payload = b'{"ok":true}'
-            elif path in ('/','/static/app.js','/static/i18n.js','/static/style.css','/static/themes.css') and method=='GET':
+            elif path in ('/','/static/app.js','/static/icons.js','/static/i18n.js','/static/style.css','/static/themes.css') and method=='GET':
                 name = 'index.html' if path=='/' else path.rsplit('/',1)[1]
-                ctype = {'index.html':'text/html; charset=utf-8','app.js':'text/javascript; charset=utf-8','i18n.js':'text/javascript; charset=utf-8','style.css':'text/css; charset=utf-8','themes.css':'text/css; charset=utf-8'}[name]
+                ctype = {'index.html':'text/html; charset=utf-8','icons.js':'text/javascript; charset=utf-8','app.js':'text/javascript; charset=utf-8','i18n.js':'text/javascript; charset=utf-8','style.css':'text/css; charset=utf-8','themes.css':'text/css; charset=utf-8'}[name]
                 payload = (self.static/name).read_bytes()
             elif path.startswith('/api/'):
                 body = {}

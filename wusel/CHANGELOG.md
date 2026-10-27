@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.0
+
+- Replace platform-dependent emoji with original bundled SVG artwork for task icons, badges, weather, navigation, branding, status and empty states. No external icon service or font is required.
+- Add an accessible SVG task-icon picker with labeled radio options and preview; preserve unsaved icon choices when changing language or theme.
+- Render plain task icons using the same geometry with a neutral palette instead of applying a grayscale filter to platform emoji.
+- Preserve task IDs, badge IDs, accounts and progress; SVG assets are included in static serving, packaging and CI startup checks.
+
 ## 0.12.7
 
 - Enforce a shared 15-second child undo window on the server and in both the checklist and quick Undo action. Reloads and duplicate completion requests do not extend the window.

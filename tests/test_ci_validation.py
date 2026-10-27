@@ -58,7 +58,8 @@ class CIValidationTests(unittest.TestCase):
         for name in ['wusel/data/wusel.sqlite3','wusel/work/accounts.json','wusel/.env','wusel/setup-code','../outside','/absolute']:
             with self.subTest(name=name),self.assertRaises(ValueError):validate_archive(self.archive({name:b'test'}),version)
     def test_missing_runtime_file_and_wrong_version_are_rejected(self):
-        with self.assertRaises(ValueError):validate_archive(self.archive(omit='wusel/wusel/server.py'),validate())
+        for name in ['wusel/wusel/server.py','wusel/wusel/static/icons.js']:
+            with self.subTest(name=name),self.assertRaises(ValueError):validate_archive(self.archive(omit=name),validate())
         with self.assertRaises(ValueError):validate_archive(self.archive(),'0.0.0')
 
 class QuietHandler(WSGIRequestHandler):

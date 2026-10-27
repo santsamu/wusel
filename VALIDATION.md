@@ -1,5 +1,13 @@
 # Validation history
 
+## 0.13.0 validation
+
+- Replaced runtime emoji/icon glyphs with original bundled SVG artwork for all task choices, 17 badges, weather conditions, navigation, branding, avatars, checks and empty states. Existing task/badge IDs and saved progress are preserved; no database migration is required.
+- All 110 Python tests passed. New checks verify task/badge asset coverage, unique badge artwork, valid SVG geometry without active/external content, local JavaScript serving and loading order. Focused metadata/archive tests also reject an archive missing icons.js.
+- All Node regressions passed, including whitelist fallback against untrusted identifiers, complete weather mappings, 14 accessible task choices (13 icons plus none), bilingual picker output and absence of runtime emoji. Existing correction, undo, timing and badge behavior remains covered.
+- Chrome at 390 x 844 with the real WSGI backend passed keyboard radio selection, medicine choice/save, unsaved icon/title retention through language and theme changes, neutral plain colors with unchanged SVG paths, weather rendering and all 17 badge graphics. Phone/tablet screenshots were visually inspected; layouts had no overflow or JavaScript errors. All six themes were checked. Only local demo accounts were used.
+- Source metadata and the 0.13.0 ZIP passed validation. Icons are included in the production static allowlist, source archive and CI container startup checks. Physical iOS/Android devices were not tested; artwork uses shared SVG geometry rather than OS emoji fonts.
+
 ## Repository guide validation
 
 - Added agent.md with current product behavior, architecture, setup, security, tests and deployment rules, plus an AGENTS.md discovery pointer. Linked the guide from both root READMEs.

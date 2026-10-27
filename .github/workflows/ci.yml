@@ -48,6 +48,7 @@ jobs:
       - name: Check JavaScript and run browser-logic regressions
         shell: bash
         run: |
+          node --check wusel/static/icons.js
           node --check wusel/static/app.js
           node --check wusel/static/i18n.js
           for test in tests/test_*.cjs; do

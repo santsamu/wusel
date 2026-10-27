@@ -20,7 +20,7 @@ def smoke(base, timeout=45):
         if time.monotonic()>=deadline:
             raise RuntimeError('Wusel did not become healthy within the startup timeout')
         time.sleep(1)
-    for path, marker in [('/','Wusel'),('/static/app.js','function render'),('/static/i18n.js','CATALOG'),('/static/style.css',':root'),('/static/themes.css','data-theme')]:
+    for path, marker in [('/','Wusel'),('/static/app.js','function render'),('/static/icons.js','WUSEL_ICONS'),('/static/i18n.js','CATALOG'),('/static/style.css',':root'),('/static/themes.css','data-theme')]:
         with http.open(base+path,timeout=5) as response:
             if response.status!=200 or marker not in response.read().decode('utf-8'):
                 raise RuntimeError('Frontend smoke check failed: '+path)

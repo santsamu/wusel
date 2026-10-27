@@ -1,5 +1,9 @@
 const CATALOG = {
   "en": {
+    "Choose a task icon": "Choose a task icon",
+    "All your steps are done. Look at you grow!": "All your steps are done. Look at you grow!",
+    "Add a little step": "Add a little step",
+
     "Undo time has ended. Ask a parent to reopen this step.": "Undo time has ended. Ask a parent to reopen this step.",
     "Completed steps can be undone for 15 seconds. Afterward, ask a parent to reopen them.": "Completed steps can be undone for 15 seconds. Afterward, ask a parent to reopen them.",
     "Completed": "Completed",
@@ -39,7 +43,6 @@ const CATALOG = {
     "{count} step taken": "{count} step taken",
     "{count} steps taken": "{count} steps taken",
     "{name}’s day": "{name}’s day",
-    "Hello, {name} ☀️": "Hello, {name} ☀️",
     "One thing at a time. You’ve got this.": "One thing at a time. You’ve got this.",
     "steps completed": "steps completed",
     "Today’s little steps": "Today’s little steps",
@@ -51,14 +54,12 @@ const CATALOG = {
     "A little breathing room": "A little breathing room",
     "Add a routine in Weekly plan to get started.": "Add a routine in Weekly plan to get started.",
     "No steps planned for today. Enjoy your day!": "No steps planned for today. Enjoy your day!",
-    "🌻 All your steps are done. Look at you grow!": "🌻 All your steps are done. Look at you grow!",
     "A LITTLE REMINDER": "A LITTLE REMINDER",
     "Progress grows": "Progress grows",
     "one step at a time.": "one step at a time.",
     "You don’t have to do everything at once. Just start with your next little step.": "You don’t have to do everything at once. Just start with your next little step.",
     "Every new day is a fresh start.": "Every new day is a fresh start.",
     "Edit routine": "Edit routine",
-    "＋ Add a little step": "＋ Add a little step",
     "What is the step?": "What is the step?",
     "Time": "Time",
     "A little guidance (optional)": "A little guidance (optional)",
@@ -422,6 +423,10 @@ const CATALOG = {
     "Opening Wusel…": "Opening Wusel…"
   },
   "de": {
+    "Choose a task icon": "Wähle ein Aufgabensymbol",
+    "All your steps are done. Look at you grow!": "Alle Schritte sind geschafft. Schau, wie du wächst!",
+    "Add a little step": "Einen Schritt hinzufügen",
+
     "Undo time has ended. Ask a parent to reopen this step.": "Die Zeit zum Rückgängigmachen ist vorbei. Bitte deine Eltern, diesen Schritt wieder zu öffnen.",
     "Completed steps can be undone for 15 seconds. Afterward, ask a parent to reopen them.": "Erledigte Schritte kannst du 15 Sekunden lang rückgängig machen. Danach können deine Eltern sie wieder öffnen.",
     "Completed": "Erledigt",
@@ -461,7 +466,6 @@ const CATALOG = {
     "{count} step taken": "{count} Schritt geschafft",
     "{count} steps taken": "{count} Schritte geschafft",
     "{name}’s day": "Der Tag von {name}",
-    "Hello, {name} ☀️": "Hallo, {name} ☀️",
     "One thing at a time. You’ve got this.": "Eins nach dem anderen. Du schaffst das.",
     "steps completed": "Schritte geschafft",
     "Today’s little steps": "Deine kleinen Schritte heute",
@@ -473,14 +477,12 @@ const CATALOG = {
     "A little breathing room": "Zeit zum Durchatmen",
     "Add a routine in Weekly plan to get started.": "Füge im Wochenplan eine Routine hinzu, um loszulegen.",
     "No steps planned for today. Enjoy your day!": "Heute sind keine Schritte geplant. Genieß deinen Tag!",
-    "🌻 All your steps are done. Look at you grow!": "🌻 Alle Schritte geschafft. Du wächst über dich hinaus!",
     "A LITTLE REMINDER": "EINE KLEINE ERINNERUNG",
     "Progress grows": "Fortschritt wächst",
     "one step at a time.": "Schritt für Schritt.",
     "You don’t have to do everything at once. Just start with your next little step.": "Du musst nicht alles auf einmal machen. Fang einfach mit deinem nächsten kleinen Schritt an.",
     "Every new day is a fresh start.": "Jeder neue Tag ist ein neuer Anfang.",
     "Edit routine": "Routine bearbeiten",
-    "＋ Add a little step": "＋ Einen kleinen Schritt hinzufügen",
     "What is the step?": "Was ist der Schritt?",
     "Time": "Uhrzeit",
     "A little guidance (optional)": "Eine kleine Hilfe (optional)",
@@ -857,8 +859,8 @@ function temperatureLabel(value,unit){return typeof value==='number'&&Number.isF
 function t(key,params={}) {const text=CATALOG[language]?.[key]??CATALOG.en[key]??key;return text.replace(/\{(\w+)\}/g,(_,k)=>String(params[k]??''));}
 function tx(key,params={}) {return esc(t(key,params));}
 function languagePicker(showLabel=true){return `<label class="language-picker">${showLabel?tx('Language'):''}<select id="language-picker" aria-label="${tx('Language')}"><option value="en" lang="en" ${language==='en'?'selected':''}>English</option><option value="de" lang="de" ${language==='de'?'selected':''}>Deutsch</option></select></label>`;}
-function drafts(){return [...document.querySelectorAll('form')].map(f=>({kind:f.dataset.form,child:f.dataset.child,open:f.closest('details')?.open,values:[...f.elements].filter(e=>e.name).map(e=>({name:e.name,value:e.value,checked:e.checked}))}));}
-function restoreDrafts(saved){for(const d of saved){const form=document.querySelector(`form[data-form="${d.kind}"]${d.child?'[data-child="'+d.child+'"]':''}`);if(!form)continue;const fields=[...form.elements];d.values.forEach((v,i)=>{const el=fields.filter(e=>e.name)[i];if(el){el.value=v.value;if(el.type==='checkbox')el.checked=v.checked;}});if(form.closest('details'))form.closest('details').open=!!d.open;}}
+function drafts(){return [...document.querySelectorAll('form')].map(f=>({kind:f.dataset.form,child:f.dataset.child,open:f.closest('details')?.open,iconsOpen:f.querySelector('.icon-picker')?.open,values:[...f.elements].filter(e=>e.name).map(e=>({name:e.name,value:e.value,checked:e.checked}))}));}
+function restoreDrafts(saved){for(const d of saved){const form=document.querySelector(`form[data-form="${d.kind}"]${d.child?'[data-child="'+d.child+'"]':''}`);if(!form)continue;const fields=[...form.elements];d.values.forEach((v,i)=>{const el=fields.filter(e=>e.name)[i];if(el){el.value=v.value;if(el.type==='checkbox'||el.type==='radio')el.checked=v.checked;}});if(form.closest('details'))form.closest('details').open=!!d.open;if(form.querySelector('.icon-picker'))form.querySelector('.icon-picker').open=!!d.iconsOpen;}if(typeof updateIconPicker==='function')updateIconPicker();}
 async function setLanguage(value){
  if(!['en','de'].includes(value)||busy)return;
  const accountOpen=!!document.querySelector('.parent-account[open]');

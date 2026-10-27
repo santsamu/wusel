@@ -61,7 +61,7 @@
 
 .child-checklist .task-time{max-width:90px}.task-timing{display:block;font-size:12px;font-weight:400;line-height:1.4;margin-top:5px;color:var(--muted)}
 
-.task-icon{display:inline-block;vertical-align:middle;font-size:24px;line-height:1.2;margin-right:10px}.task-icon-small{font-size:18px;margin-right:6px}.plain-icons .task-icon{filter:grayscale(1)}.focus-title{display:flex;align-items:center;gap:12px}.focus-title h2{min-width:0;flex:1}.focus-title .task-icon{font-size:30px;margin:0;flex-shrink:0}
+.task-icon{display:inline-block;vertical-align:middle;font-size:24px;line-height:1.2;margin-right:10px}.task-icon-small{font-size:18px;margin-right:6px}.focus-title{display:flex;align-items:center;gap:12px}.focus-title h2{min-width:0;flex:1}.focus-title .task-icon{font-size:30px;margin:0;flex-shrink:0}
 
 .first-action{margin-top:16px;font-size:16px;line-height:1.6;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}.child-checklist .first-action{font-size:14px;margin-top:8px}
 .task-help{margin-top:16px}.task-help summary{cursor:pointer;color:var(--muted);font-size:14px;min-height:44px;padding:10px 0}.task-help>p{font-size:14px;line-height:1.6;margin:12px 0;white-space:pre-wrap;overflow-wrap:anywhere}.task-help [data-help-response]:empty{display:none}.help-actions{display:flex;flex-wrap:wrap;gap:8px}.help-actions button{flex:1;min-width:130px;font-size:14px;font-weight:500}
@@ -74,3 +74,13 @@
 .parent-step-control{max-width:150px;white-space:normal;font-size:13px;flex-shrink:0}@media(max-width:600px){.task:has(.parent-step-control){display:grid;grid-template-columns:60px minmax(0,1fr)}.parent-step-control{grid-column:2;justify-self:start;max-width:100%}}
 
 .earlier-steps{border:1px solid var(--line);border-radius:16px;padding:16px;margin:0 0 20px}.earlier-steps summary{cursor:pointer;font-size:15px}.earlier-steps article{display:flex;align-items:center;gap:12px;padding-top:16px}.earlier-steps article>div{flex:1;min-width:0;overflow-wrap:anywhere}.earlier-steps h3{font-size:16px}.earlier-steps button{font-size:13px;max-width:130px;white-space:normal;flex-shrink:0}
+
+/* Bundled Wusel vectors use the same geometry on every platform. */
+.wusel-icon{display:inline-block;width:1em;height:1em;vertical-align:middle;flex-shrink:0;overflow:visible}
+.brand-icon .wusel-icon{width:28px;height:28px}.task-icon .wusel-icon{display:block}.badge-icon .wusel-icon{width:64px;height:64px}.next-badge .badge-icon .wusel-icon{width:72px;height:72px}
+.icon-button .wusel-icon{width:22px;height:22px}.nav-button .wusel-icon{width:18px;height:18px}.child-back .wusel-icon{width:18px;height:18px}.check>.wusel-icon{width:26px;height:26px}.theme-check .wusel-icon{width:16px;height:16px}
+.weather-summary button>span:last-child .wusel-icon{width:20px;height:20px}.weather-summary button>span:first-child .wusel-icon{width:28px;height:28px}.parent-weather summary .wusel-icon{width:25px;height:25px}.weather-symbol .wusel-icon{width:64px;height:64px}.forecast-icon .wusel-icon{width:36px;height:36px}.focus-finished>.wusel-icon{width:42px;height:42px}
+.plain-icons .task-icon{filter:none;--icon-accent:#9aa9ad;--icon-secondary:#c5ced0;--icon-paper:#f5f7f7;color:#40545a}
+.icon-picker{margin:18px 0}.icon-picker>summary{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:12px;cursor:pointer;min-height:48px}.icon-picker [data-icon-selection]{display:inline-flex;align-items:center;gap:10px;font-size:14px}.icon-picker [data-icon-selection] svg{width:30px;height:30px}.icon-picker fieldset{margin-top:16px}.icon-choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px}.icon-choices label{position:relative;margin:0}.icon-choices input{position:absolute;width:1px;height:1px;opacity:0}.icon-choices label>span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:96px;border:2px solid var(--line);border-radius:12px;padding:10px;text-align:center;font-size:13px;cursor:pointer;overflow-wrap:anywhere}.icon-choices svg{width:34px;height:34px}.icon-choices input:checked+span{border-color:var(--green);background:var(--soft)}.icon-choices input:focus-visible+span{outline:3px solid var(--green);outline-offset:3px}
+
+.picker-toggle{display:inline-flex;margin-left:auto}.picker-toggle svg{width:18px;height:18px;transition:transform .15s}.icon-picker[open]>summary .picker-toggle svg{transform:rotate(90deg)}@media(prefers-reduced-motion:reduce){.picker-toggle svg{transition:none}}

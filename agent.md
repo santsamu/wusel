@@ -23,6 +23,7 @@ There is no frontend framework, Node package installation, transpilation or asse
 | `wusel/server.py` | Production Waitress listener on port 8099, separate IPv4/IPv6 sockets where available |
 | `wusel/weather.py` | Server-side Home Assistant weather adapter, bounded requests, caching and fallback |
 | `wusel/static/app.js` | Rendering, navigation, client state, API requests, task selection, undo controls, feedback and themes |
+| `wusel/static/icons.js` | Original bundled SVG registry and whitelist-based renderer for tasks, badges, weather and UI; no platform emoji, fonts or external icon requests |
 | `wusel/static/i18n.js` | English/German catalogs, locale formatting, timezone-aware greetings and task-time classification |
 | `wusel/static/style.css` | Layout and component styling |
 | `wusel/static/themes.css` | Theme tokens and color overrides |
@@ -152,7 +153,7 @@ Schema migrations live in `Application.__init__` and must retain existing accoun
 - Add frontend strings in both catalogs in `i18n.js`; avoid duplicate keys and preserve interpolation placeholders. Backend errors and audit text need translations too.
 - Use full date/month/day names, browser regional date/time formatting, and whole-number displayed temperatures. A native time input may show AM/PM on an English-configured device.
 - App timezone controls scheduling, greetings and time labels; it is separate from the browser's display locale. Check DST and midnight boundaries.
-- Optional icons are shared backend/frontend IDs, including `medicine`. Text remains present; decorative icons are hidden from assistive technology. Plain icons use the established SVG system rather than changing task semantics.
+- Optional icons are shared backend/frontend IDs, including `medicine`. Text remains present; decorative icons are hidden from assistive technology. Plain icons use the same SVG geometry with neutral color tokens rather than grayscale emoji. The task picker uses labeled radio options with SVG previews, and drafts must preserve the selected radio and picker disclosure when language or theme changes.
 - Theme IDs are `forest`, `ocean`, `berry`, `lavender`, `sunshine`, `petrol`. The visible name for `petrol` is Lagoon / Lagune. Keep backend validation and frontend palettes aligned.
 - Weather uses a configured `weather.*` entity and the fixed Supervisor Core API destination, with hourly forecast and daily fallback. Preserve request timeouts, bounded response sizes, cache/stale labels and nonblocking refresh locking. Never put the Supervisor token in frontend state or accept arbitrary weather request URLs.
 - Keep weather compact; it must not obscure the parent's tasks. Show unavailable/stale states honestly.
@@ -181,6 +182,7 @@ With the virtual environment activated (or replace `python` below with its inter
 
 ```sh
 python -m unittest discover -s tests -q
+node --check wusel/static/icons.js
 node --check wusel/static/app.js
 node --check wusel/static/i18n.js
 ```

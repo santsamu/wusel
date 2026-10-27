@@ -1,7 +1,7 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
 const root=path.join(__dirname,'../wusel/static');
 const sandbox={assert,navigator:{language:'de-CH'},localStorage:{getItem:()=>null}};
-vm.createContext(sandbox);
+vm.createContext(sandbox);vm.runInContext(fs.readFileSync(root+'/icons.js','utf8'),sandbox);
 vm.runInContext(`
 let tick=0,state={user:{id:2,role:'child'},today:'2026-10-27',children:[]};
 let undoTimer,lastCompletion=null;const undoDeadlines=new Map();
