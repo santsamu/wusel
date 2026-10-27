@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.12.6
+
+- Moved the parent account's language and Sign out into the Settings page (next to the color theme), matching the child Settings page, and removed the separate account-name dropdown from the parent header.
+- Replaced the parent header's account dropdown with compact Family and Settings icon buttons, so the main navigation row only carries the child-scoped tabs (and the child picker). This shrinks the navigation bar on small screens.
+
 ## 0.12.5
 
 - Added a Plain task icons setting under Family → Child support settings. When on, task icons show in a single neutral color instead of full color, on the child's home screen, checklist and earlier-steps list.

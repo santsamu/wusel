@@ -30,20 +30,17 @@
 .today-layout+.growth{margin-top:24px}
 
 /* Compact parent navigation and account controls. */
-.parent-header{align-items:center;gap:16px}.parent-account{position:relative;flex-shrink:0;max-width:45%}
-.parent-account>summary{cursor:pointer;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:white;font-size:14px}
-.parent-account>summary>span{display:inline-block;vertical-align:middle;max-width:min(150px,25vw);overflow-wrap:anywhere}
-.parent-account-panel{position:absolute;right:0;top:calc(100% + 8px);width:200px;max-width:calc(100vw - 40px);padding:16px;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px #0002;z-index:15}
-.parent-account-panel .language-picker{margin:0 0 12px}.parent-account-panel .language-picker select{margin:0;width:100%;min-width:0}.parent-account-panel button{width:100%;text-align:left}
+.parent-header{align-items:center;gap:16px}.parent-header-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.parent-account-name{font-size:14px;font-weight:650;max-width:min(150px,25vw);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:6px}
+.icon-button{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:10px;border:0;color:var(--muted);flex-shrink:0;border-radius:12px}.icon-button svg{display:block}
+.icon-button[aria-current="page"]{color:var(--green);background:var(--soft)}
 .parent-navigation{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:12px 0;border-bottom:1px solid var(--line)}
-.parent-navigation .child-tabs,.parent-navigation .family-navigation{display:contents}
+.parent-navigation .child-tabs{display:contents}
 .parent-navigation .child-picker{display:block;margin:0 6px 0 0;width:auto}
 .parent-navigation .child-picker select{width:130px;max-width:100%;margin:0;min-height:44px;padding:8px 12px}
 .parent-navigation .nav-button{font-size:14px;padding:9px 12px;min-height:44px}
-.parent-navigation .family-navigation>.nav-button:first-child{margin-left:auto}
-@media(max-width:680px){.parent-header{align-items:center;flex-wrap:nowrap}.parent-account>summary{padding:8px 10px;font-size:13px}.parent-navigation{gap:4px;padding:12px 0}.parent-navigation .child-picker{margin-right:2px}.parent-navigation .child-picker select{width:108px;font-size:13px;padding:8px}.parent-navigation .nav-button{font-size:12px;padding:8px}.parent-navigation .nav-button span{margin-right:2px}.parent-navigation .family-navigation>.nav-button:first-child{margin-left:0}}
+@media(max-width:680px){.parent-header{align-items:center;flex-wrap:nowrap}.parent-account-name{display:none}.parent-navigation{gap:4px;padding:12px 0}.parent-navigation .child-picker{margin-right:2px}.parent-navigation .child-picker select{width:108px;font-size:13px;padding:8px}.parent-navigation .nav-button{font-size:12px;padding:8px}.parent-navigation .nav-button span{margin-right:2px}}
 
-.child-header .child-settings-button{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:10px;border:0;color:var(--muted);flex-shrink:0}.child-settings-button svg{display:block}
 
 .badge-goal,.earned-badges,.badge-collection{margin-bottom:28px}.badge-goal>h2,.earned-badges>h2,.badge-collection h2{font-size:21px;margin-bottom:16px}
 .next-badge{max-width:420px;text-align:left;display:grid;grid-template-columns:auto 1fr;gap:4px 20px}.next-badge .badge-icon{grid-row:1/5;font-size:48px;margin:0;filter:none;opacity:1}.next-badge h3{font-size:19px}.next-badge p{margin:0}.next-badge progress{width:100%;margin:8px 0 2px}.next-badge .badge-count{font-weight:600;color:var(--ink)}

@@ -1,5 +1,12 @@
 # Validation history
 
+## 0.12.6 validation
+
+- Consolidated the parent account's personal controls (language, color theme, Sign out) into the Settings page, matching the child Settings page, and removed the header's account-name dropdown in favor of compact Family/Settings icon buttons.
+- Python regressions (101 tests via `unittest discover`) passed unchanged, confirming no backend/API behavior was affected by this frontend-only change.
+- Node i18n regressions passed; no new strings were needed since existing Family/Settings/Sign out/Language labels were reused.
+- Chrome with the real WSGI backend verified: header shows Family/Settings icon buttons with active-state highlighting, Settings page now includes language and Sign out, and the parent navigation row at 390 x 844 no longer wraps across 3 rows (child picker + 4 child-scoped tabs only, down from 6 buttons plus a full-width select). Source metadata and the 0.12.6 version/changelog checks passed.
+
 ## 0.12.5 validation
 
 - Added a per-child Plain task icons support setting (default off) that renders task icons in grayscale on the child's home screen, checklist and earlier-steps list, without affecting badges or other colors.
