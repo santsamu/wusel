@@ -1,5 +1,13 @@
 # Validation history
 
+## 0.14.1 validation
+
+- Integrated the explicitly selected first hedgehog artwork as the sign-in, parent and child header mark. The original generated PNG is copied unchanged into the repository; deterministic exports provide a cropped header mark, cream-backed favicons/Apple touch icon and Home Assistant icon/logo files. Brand colors remain fixed across themes and plain task-icon mode.
+- All 121 Python tests passed, including new tests for image MIME types, root/static ICO equivalence, safe path rejection, PNG/touch/Home Assistant dimensions and all six embedded ICO PNG frames. Existing live-update, account, scheduling and reward checks remain green.
+- All Node regressions and JavaScript syntax checks passed. Source metadata and the 0.14.1 archive passed validation with required branding assets included. The optional Sharp export tool is development-only and needs no production/CI dependency.
+- Chrome at phone/tablet sizes verified loaded hedgehog images on sign-in/parent/child screens, successful decoding of every declared PNG/ICO/touch icon, no overflow or JavaScript errors, and unchanged brand colors in all six themes and plain mode. Light/dark contact-sheet previews at native 16/32-pixel favicon sizes and app screenshots were visually inspected. The root favicon fallback passed the real-HTTP smoke test; Chromium synthetic-route testing does not intercept that reserved URL. Only local demo data was used.
+- CI builds and checks AMD64/ARM64 containers, including public branding assets. Actual Home Assistant store rendering and mobile home-screen caches remain installation checks.
+
 ## 0.14.0 validation
 
 - Implemented authenticated 10-second visible-page change checks for both roles. SQLite triggers maintain transactional family/per-account revisions; the lightweight endpoint does no state/weather/pending work. Full state snapshots return their revision under a transaction.

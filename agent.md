@@ -79,6 +79,10 @@ Open `http://127.0.0.1:8099/`. The terminal prints the first-run setup code whil
 
 `options.json` in the data directory supplies Home Assistant options. `timezone` and `weather_entity` override their environment defaults when present; the secure-cookie option or environment flag can enable secure cookies.
 
+## Branding assets
+
+The selected hedgehog is Wusel's fixed brand artwork. `wusel/static/wusel-logo.png` is the unchanged original; header images, favicons, Apple touch icon and Home Assistant `icon.png`/`logo.png` are exports from it. See [BRANDING.md](BRANDING.md) for filenames, regeneration and provenance. Do not silently redesign the hedgehog or replace it with a different generated concept. Functional task/weather/badge icons remain SVG; brand colors are independent of themes and plain task-icon mode. The optional Sharp exporter is development-only; generated assets are committed and require no image-processing dependency in production or CI.
+
 ## Identity, storage and authentication
 
 - Home Assistant slug: `wusel`; local installation ID: `local_wusel`.

@@ -12,6 +12,14 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 from weather import Weather
 
+STATIC_TYPES = {
+    'app.js':'text/javascript; charset=utf-8','icons.js':'text/javascript; charset=utf-8',
+    'i18n.js':'text/javascript; charset=utf-8','style.css':'text/css; charset=utf-8',
+    'themes.css':'text/css; charset=utf-8','favicon.ico':'image/x-icon',
+    **dict.fromkeys(('wusel-logo.png','wusel-mark.png','favicon-16.png','favicon-32.png',
+                     'favicon-192.png','favicon-512.png','apple-touch-icon.png'),'image/png')
+}
+
 TASK_ICONS = ('','tooth','clothes','food','bag','book','bed','wash','water','shoes','play','tidy','quiet','medicine')
 
 BADGES = [('first', 'First step', 1, 'badge-first'), ('five', 'Growing strong', 5, 'badge-five'),
@@ -592,9 +600,9 @@ class Application:
         try:
             if path=='/health' and method=='GET':
                 payload = b'{"ok":true}'
-            elif path in ('/','/static/app.js','/static/icons.js','/static/i18n.js','/static/style.css','/static/themes.css') and method=='GET':
+            elif method=='GET' and (path in ('/','/favicon.ico') or path.startswith('/static/') and path[8:] in STATIC_TYPES):
                 name = 'index.html' if path=='/' else path.rsplit('/',1)[1]
-                ctype = {'index.html':'text/html; charset=utf-8','icons.js':'text/javascript; charset=utf-8','app.js':'text/javascript; charset=utf-8','i18n.js':'text/javascript; charset=utf-8','style.css':'text/css; charset=utf-8','themes.css':'text/css; charset=utf-8'}[name]
+                ctype = 'text/html; charset=utf-8' if path=='/' else STATIC_TYPES[name]
                 payload = (self.static/name).read_bytes()
             elif path.startswith('/api/'):
                 body = {}

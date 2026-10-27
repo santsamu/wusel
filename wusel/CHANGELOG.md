@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.1
+
+- Use the selected petrol, cream and ochre hedgehog artwork as Wusel's brand mark on sign-in, child and parent screens. Preserve the original artwork in the source package.
+- Add cream-backed PNG/ICO favicons, an Apple touch icon and Home Assistant icon/logo assets; serve browser assets through the explicit static allowlist.
+- Keep fixed brand colors independent of themes and plain task-icon mode.
+
 ## 0.14.0
 
 - Automatically check for changes every 10 seconds on visible parent and child screens; fetch full state only after a revision, day or timezone change, or connection recovery.

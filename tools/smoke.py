@@ -24,6 +24,10 @@ def smoke(base, timeout=45):
         with http.open(base+path,timeout=5) as response:
             if response.status!=200 or marker not in response.read().decode('utf-8'):
                 raise RuntimeError('Frontend smoke check failed: '+path)
+    for path,signature in [('/static/wusel-mark.png',b'\x89PNG\r\n\x1a\n'),('/favicon.ico',b'\x00\x00\x01\x00')]:
+        with http.open(base+path,timeout=5) as response:
+            if response.read(len(signature))!=signature:
+                raise RuntimeError('Branding asset smoke check failed: '+path)
     with http.open(base+'/api/state',timeout=5) as response:
         state=json.load(response)
         if state.get('needs_setup') is not True or state.get('user') is not None:

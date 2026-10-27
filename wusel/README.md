@@ -1,6 +1,6 @@
 # Wusel
 
-**von Wild & Weich · Version 0.14.0**
+**von Wild & Weich · Version 0.14.1**
 
 Version 0.12.0 uses the app identity `wusel` (`local_wusel` for local installations). This is a clean-install release with a new `/data/wusel.sqlite3` database, `WUSEL_*` environment variables and new session identifiers. Previous installation identities and data are not migrated. Copy the current inner app folder to `/local_apps/wusel` (or `/addons/wusel`), reload the store and install Wusel fresh. Create the first parent account using the setup code from the app logs.
 
@@ -8,7 +8,7 @@ The task editor suggests brief, concrete steps and offers an optional first smal
 
 Visible parent and child screens check for changes every 10 seconds using lightweight authenticated revision markers. Full state is loaded only when needed. Changes appear without a reload, while form drafts, open help, focus, scroll position and remaining undo time are retained. Background tabs pause polling and recheck on return; connection failures back off without retrying saved actions. Changes meant for tomorrow still wait until tomorrow.
 
-All app icons use original bundled SVG artwork: tasks, badges, weather, navigation, branding and status symbols. Shapes and colors no longer depend on the operating system emoji font, and no external icon service is needed. The task editor has a labeled, keyboard-accessible SVG picker. Plain task icons use identical shapes with a neutral palette; saved task IDs, badges and progress are retained.
+Wusel uses the selected petrol, cream and ochre hedgehog logo, with matching browser favicons, an Apple touch icon and Home Assistant icon/logo files. Functional icons use original bundled SVG artwork for tasks, badges, weather, navigation and status symbols. Shapes and colors no longer depend on the operating system emoji font, and no external icon service is needed. The task editor has a labeled, keyboard-accessible SVG picker. Plain task icons use identical shapes with a neutral palette; saved task IDs, badges and progress are retained.
 
 Tasks can have an optional icon, including a toothbrush, clothes, meal, schoolbag, bed or medicine. Parents choose it when creating or editing a task; No icon is the default. Icons accompany the task text in focus view, checklist and weekly plan. Apply today/From tomorrow also controls icon edits. The medicine icon is a visual reminder, not confirmation that a dose was taken. Under Family → Child support settings, parents can also switch a child's task icons to a single neutral color instead of full color.
 
@@ -78,7 +78,7 @@ From version 0.5.2, Wusel uses the Pi's host network and listens on IPv4 and IPv
 
 After updating, test `http://homeassistant.local:8099/health` and the Pi's IPv4 address, for example `http://YOUR_PI_IP:8099/health`. Both should return `{"ok":true}`. Wusel logs the bound addresses (`0.0.0.0:8099` and `[::]:8099` when IPv6 is enabled), followed by `Wusel ready: HTTP port 8099`.
 
-Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.14.0** before starting it; restarting an older container alone does not switch its network mode. For subsequent updates, keep the app slug set to `wusel`.
+Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.14.1** before starting it; restarting an older container alone does not switch its network mode. For subsequent updates, keep the app slug set to `wusel`.
 
 Host networking shares the Pi's network interfaces with the app. It does not require protection mode to be disabled or router port forwarding to be enabled. The existing family authentication and HTTP/HTTPS guidance still apply.
 
@@ -152,10 +152,10 @@ python -m unittest discover -s tests -v
 node tests/test_i18n.cjs
 node tests/test_badge_view.cjs
 python tools/package.py
-python tools/validate.py --archive dist/wusel-0.14.0.zip
+python tools/validate.py --archive dist/wusel-0.14.1.zip
 ```
 
-The package command writes `wusel-0.14.0.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
+The package command writes `wusel-0.14.1.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
 
 See [VALIDATION.md](../VALIDATION.md) for checks and test boundaries. The production server has been tested over IPv4 and IPv6 locally. The updated container network mode, hostname access, live weather, and backup/restore still need verification after updating the Pi.
 
