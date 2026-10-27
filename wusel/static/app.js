@@ -222,7 +222,7 @@ async function setTheme(value){
 }
 function parentSettings(){return `<section class="panel personal-settings"><h1>${tx('Settings')}</h1>${themePicker()}</section>`;}
 function childSettings(){return `<section class="panel child-settings"><h1>${tx('Settings')}</h1>${languagePicker()}${themePicker()}<button class="text-button" data-action="logout">${tx('Sign out')}</button></section>`;}
-function childViewSettings(){return `<details class="panel child-view-settings"><summary>${tx('Child support settings')}</summary>${state.children.map(c=>`<form class="child-support-form" data-form="child-view" data-child="${c.id}"><input type="hidden" name="child" value="${c.id}"><h3>${esc(c.name)}</h3><label>${tx('Home screen')}<select name="day_view"><option value="focus" ${c.day_view!=='checklist'?'selected':''}>${tx('One task at a time')}</option><option value="checklist" ${c.day_view==='checklist'?'selected':''}>${tx('Full checklist')}</option></select></label><label class="support-toggle"><input type="checkbox" name="show_series" ${c.show_series!==false?'checked':''}><span>${tx('Show series badges')}<small>${tx('When off, series are hidden from the child’s collection and next goal. Earned badges are kept.')}</small></span></label><label class="support-toggle"><input type="checkbox" name="reduced_rewards" ${c.reduced_rewards?'checked':''}><span>${tx('Quiet rewards')}<small>${tx('Keep points and badges; use a simple acknowledgement instead of animations and celebrations.')}</small></span></label><button type="submit">${tx('Save changes')}</button></form>`).join('')}</details>`;}
+function childViewSettings(){return `<details class="panel child-view-settings"><summary>${tx('Child support settings')}</summary>${state.children.map(c=>`<form class="child-support-form" data-form="child-view" data-child="${c.id}"><input type="hidden" name="child" value="${c.id}"><h3>${esc(c.name)}</h3><label>${tx('Home screen')}<select name="day_view"><option value="focus" ${c.day_view!=='checklist'?'selected':''}>${tx('One task at a time')}</option><option value="checklist" ${c.day_view==='checklist'?'selected':''}>${tx('Full checklist')}</option></select></label><label class="support-toggle"><input type="checkbox" name="show_series" ${c.show_series!==false?'checked':''}><span>${tx('Show series badges')}<small>${tx('When off, series are hidden from the child’s collection and next goal. Earned badges are kept.')}</small></span></label><label class="support-toggle"><input type="checkbox" name="reduced_rewards" ${c.reduced_rewards?'checked':''}><span>${tx('Quiet rewards')}<small>${tx('Keep points and badges; use a simple acknowledgement instead of animations and celebrations.')}</small></span></label><label class="support-toggle"><input type="checkbox" name="plain_icons" ${c.plain_icons?'checked':''}><span>${tx('Plain task icons')}<small>${tx('Show task icons in a single neutral color instead of full color.')}</small></span></label><button type="submit">${tx('Save changes')}</button></form>`).join('')}</details>`;}
 function renderChild(c){
  const home=view==='today'||view==='focus';
  const content=view==='settings'?childSettings():view==='badges'?rewards(c):view==='plan'?planner(c):view==='weather'?weatherPanel():view==='daylist'||(view==='today'&&c.day_view==='checklist')?childChecklist(c):childToday(c);
@@ -248,6 +248,7 @@ function render() {
  applyTheme(state.user?.theme||'forest');
  app.classList.toggle('child-app',state.user?.role==='child');
  app.classList.toggle('quiet-rewards',state.user?.role==='child'&&!!current()?.reduced_rewards);
+ app.classList.toggle('plain-icons',state.user?.role==='child'&&!!current()?.plain_icons);
  if (!state.user) { app.innerHTML=auth(); return; }
  const c=current(); if(c)selected=c.id;
  if(!parent()){app.innerHTML=renderChild(c);return;}
@@ -331,7 +332,7 @@ app.addEventListener('submit',async e=>{
  try {
   if(kind==='setup'||kind==='login')await api(kind,d);
   if(kind==='account')await api('users',d);
-  if(kind==='child-view')await api('child-settings',{child:Number(d.child),day_view:d.day_view,show_series:f.elements.show_series.checked,reduced_rewards:f.elements.reduced_rewards.checked});
+  if(kind==='child-view')await api('child-settings',{child:Number(d.child),day_view:d.day_view,show_series:f.elements.show_series.checked,reduced_rewards:f.elements.reduced_rewards.checked,plain_icons:f.elements.plain_icons.checked});
   if(kind==='password')await api('password',{...d,user:Number(d.user)});
   if(kind==='reset-child'){await api('reset-child',{child:Number(d.child),confirmation:d.confirmation,current_password:d.current_password});f.closest('dialog').close();}
   if(kind==='rest-days')await api('rest-days',{child:Number(d.child),start:d.start,end:d.end});

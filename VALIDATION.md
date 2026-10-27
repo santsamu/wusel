@@ -1,5 +1,12 @@
 # Validation history
 
+## 0.12.5 validation
+
+- Added a per-child Plain task icons support setting (default off) that renders task icons in grayscale on the child's home screen, checklist and earlier-steps list, without affecting badges or other colors.
+- Python regressions passed for setting persistence across restart, parent-only/CSRF-protected changes, boolean validation, reset-to-default, and safe migration when upgrading from a database missing the column.
+- Node i18n regressions passed, confirming the new English/German strings and catalog parity.
+- Chrome with the real WSGI backend and demo family data verified the toggle in Family → Child support settings, grayscale icon rendering on reload, and no change when the setting is off. Source metadata and the 0.12.5 version/changelog checks passed.
+
 ## 0.12.4 validation
 
 - Time-aware focus now excludes saved deferrals from automatic selection, including after reload. Explicit Do next remains available. The collapsed list uses For later when it contains deferred current/future tasks.

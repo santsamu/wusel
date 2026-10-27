@@ -96,6 +96,8 @@ class Application:
                 db.execute("ALTER TABLE users ADD COLUMN day_view TEXT NOT NULL DEFAULT 'focus'")
             if 'theme' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
                 db.execute("ALTER TABLE users ADD COLUMN theme TEXT NOT NULL DEFAULT 'forest'")
+            if 'plain_icons' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
+                db.execute("ALTER TABLE users ADD COLUMN plain_icons INTEGER NOT NULL DEFAULT 0")
         code = self.data_dir / 'setup-code'
         if not code.exists():
             code.write_text(secrets.token_urlsafe(18), encoding='utf-8')
@@ -243,11 +245,11 @@ class Application:
         if user is None:
             return result
         result.update(user={k:user[k] for k in ('id','name','username','role','language','theme')},csrf=user['csrf'])
-        children = db.execute("SELECT id,name,username,day_view,show_series,reduced_rewards FROM users WHERE role='child' ORDER BY name").fetchall() if user['role']=='parent' else [user]
+        children = db.execute("SELECT id,name,username,day_view,show_series,reduced_rewards,plain_icons FROM users WHERE role='child' ORDER BY name").fetchall() if user['role']=='parent' else [user]
         profiles = []
         for c in children:
             child = {k:c[k] for k in ('id','name','username','day_view')}
-            child.update(show_series=bool(c['show_series']),reduced_rewards=bool(c['reduced_rewards']))
+            child.update(show_series=bool(c['show_series']),reduced_rewards=bool(c['reduced_rewards']),plain_icons=bool(c['plain_icons']))
             deferred = {row['routine']:row['position'] for row in db.execute('SELECT routine,position FROM deferred_steps WHERE child=? AND day=?',(c['id'],today.isoformat()))}
             routines = []
             for r in db.execute('SELECT * FROM routines WHERE child=? AND archived=0 ORDER BY time,id', (c['id'],)):
@@ -404,7 +406,7 @@ class Application:
             db.execute('DELETE FROM rest_days WHERE child=?',(child,))
             db.execute('DELETE FROM deferred_steps WHERE child=?',(child,))
             db.execute('DELETE FROM sessions WHERE user=?',(child,))
-            db.execute("UPDATE users SET language='',theme='forest',day_view='focus',badge_goal='',show_series=1,reduced_rewards=0 WHERE id=?",(child,))
+            db.execute("UPDATE users SET language='',theme='forest',day_view='focus',badge_goal='',show_series=1,reduced_rewards=0,plain_icons=0 WHERE id=?",(child,))
             self.audit(db,user['id'],'reset',f'Reset child account: {account["username"]}')
             return {'ok':True},None
         if path=='/api/rest-days':
@@ -434,7 +436,7 @@ class Application:
                 if body['day_view'] not in ('focus','checklist'):
                     raise Problem('Choose a valid day view.')
                 changes['day_view'] = body['day_view']
-            for key in ('show_series','reduced_rewards'):
+            for key in ('show_series','reduced_rewards','plain_icons'):
                 if key in body:
                     if type(body[key]) is not bool:
                         raise Problem('Choose a valid support setting.')

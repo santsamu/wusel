@@ -64,7 +64,7 @@
 
 .child-checklist .task-time{max-width:90px}.task-timing{display:block;font-size:12px;font-weight:400;line-height:1.4;margin-top:5px;color:var(--muted)}
 
-.task-icon{display:inline-block;vertical-align:middle;font-size:24px;line-height:1.2;margin-right:10px}.task-icon-small{font-size:18px;margin-right:6px}.focus-title{display:flex;align-items:center;gap:12px}.focus-title h2{min-width:0;flex:1}.focus-title .task-icon{font-size:30px;margin:0;flex-shrink:0}
+.task-icon{display:inline-block;vertical-align:middle;font-size:24px;line-height:1.2;margin-right:10px}.task-icon-small{font-size:18px;margin-right:6px}.plain-icons .task-icon{filter:grayscale(1)}.focus-title{display:flex;align-items:center;gap:12px}.focus-title h2{min-width:0;flex:1}.focus-title .task-icon{font-size:30px;margin:0;flex-shrink:0}
 
 .first-action{margin-top:16px;font-size:16px;line-height:1.6;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}.child-checklist .first-action{font-size:14px;margin-top:8px}
 .task-help{margin-top:16px}.task-help summary{cursor:pointer;color:var(--muted);font-size:14px;min-height:44px;padding:10px 0}.task-help>p{font-size:14px;line-height:1.6;margin:12px 0;white-space:pre-wrap;overflow-wrap:anywhere}.task-help [data-help-response]:empty{display:none}.help-actions{display:flex;flex-wrap:wrap;gap:8px}.help-actions button{flex:1;min-width:130px;font-size:14px;font-weight:500}

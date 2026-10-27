@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.5
+
+- Added a Plain task icons setting under Family → Child support settings. When on, task icons show in a single neutral color instead of full color, on the child's home screen, checklist and earlier-steps list.
+
 ## 0.12.4
 
 - Keep Come back later tasks outside automatic focus after refresh or reload, even when their scheduled time is current. Children can explicitly choose them again from the collapsed list.

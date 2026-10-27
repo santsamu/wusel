@@ -51,16 +51,18 @@ class ChildSupportTests(unittest.TestCase):
         cid=parent_profile['history'][0]['id'];self.parent.call('correct',{'completion':cid})
         code,data=self.defer(first);self.assertEqual(code,403);self.assertEqual(data['error'],'This step is open again. Let’s check it together.')
     def test_support_preferences_are_atomic_parent_only_and_isolated(self):
-        self.assertEqual(self.settings(show_series=False,reduced_rewards=True)[0],200)
-        p=self.profile();self.assertFalse(p['show_series']);self.assertTrue(p['reduced_rewards'])
+        self.assertEqual(self.settings(show_series=False,reduced_rewards=True,plain_icons=True)[0],200)
+        p=self.profile();self.assertFalse(p['show_series']);self.assertTrue(p['reduced_rewards']);self.assertTrue(p['plain_icons'])
         self.assertEqual(self.settings(day_view='checklist')[0],200)
-        self.assertFalse(self.profile()['show_series']);self.assertTrue(self.profile()['reduced_rewards'])
+        self.assertFalse(self.profile()['show_series']);self.assertTrue(self.profile()['reduced_rewards']);self.assertTrue(self.profile()['plain_icons'])
         self.assertEqual(self.settings(show_series=True,reduced_rewards='yes')[0],400)
         self.assertFalse(self.profile()['show_series'])
+        self.assertEqual(self.settings(plain_icons='yes')[0],400)
+        self.assertTrue(self.profile()['plain_icons'])
         self.assertEqual(self.child.call('child-settings',{'child':2,'show_series':True})[0],403)
         self.assertEqual(self.parent.call('child-settings',{'child':2,'show_series':True},{'HTTP_X_CSRF_TOKEN':'bad'})[0],403)
         self.assertEqual(self.settings()[0],400)
-        with self.app.connect() as db:self.assertEqual(tuple(db.execute('SELECT show_series,reduced_rewards FROM users WHERE id=3').fetchone()),(1,0))
+        with self.app.connect() as db:self.assertEqual(tuple(db.execute('SELECT show_series,reduced_rewards,plain_icons FROM users WHERE id=3').fetchone()),(1,0,0))
     def test_hidden_series_retains_earned_badges_and_chooses_nonseries_goal(self):
         with self.app.connect() as db:
             db.execute("INSERT INTO badges VALUES(2,'streak3','2026-10-26',0)")
@@ -72,11 +74,11 @@ class ChildSupportTests(unittest.TestCase):
         self.settings(show_series=True);self.assertTrue(self.profile()['show_series'])
         self.assertTrue(next(b for b in self.profile()['progress']['badges'] if b['id']=='streak3')['earned'])
     def test_settings_persist_and_reset_clears_deferral_but_keeps_guidance(self):
-        self.task();self.task();self.defer(1);self.settings(show_series=False,reduced_rewards=True)
+        self.task();self.task();self.defer(1);self.settings(show_series=False,reduced_rewards=True,plain_icons=True)
         restarted=Application(self.temp.name);restarted.today=self.app.today;client=Client(restarted);client.cookie=self.child.cookie
-        p=self.profile(client);self.assertFalse(p['show_series']);self.assertTrue(p['reduced_rewards'])
+        p=self.profile(client);self.assertFalse(p['show_series']);self.assertTrue(p['reduced_rewards']);self.assertTrue(p['plain_icons'])
         self.parent.call('reset-child',{'child':2,'confirmation':'alex','current_password':'parent-password'})
-        p=self.parent.call('state')[1]['children'][0];self.assertTrue(p['show_series']);self.assertFalse(p['reduced_rewards'])
+        p=self.parent.call('state')[1]['children'][0];self.assertTrue(p['show_series']);self.assertFalse(p['reduced_rewards']);self.assertFalse(p['plain_icons'])
         self.assertEqual(p['routines'][0]['first_action'],'Pick up your toothbrush')
         with self.app.connect() as db:self.assertEqual(db.execute('SELECT COUNT(*) FROM deferred_steps WHERE child=2').fetchone()[0],0)
     def test_legacy_upgrade_preserves_tasks_and_progress(self):
@@ -84,8 +86,9 @@ class ChildSupportTests(unittest.TestCase):
         with self.app.connect() as db:
             db.execute('DROP TABLE deferred_steps');db.execute('ALTER TABLE routines DROP COLUMN first_action')
             db.execute('ALTER TABLE users DROP COLUMN show_series');db.execute('ALTER TABLE users DROP COLUMN reduced_rewards')
+            db.execute('ALTER TABLE users DROP COLUMN plain_icons')
         restarted=Application(self.temp.name);restarted.today=self.app.today;client=Client(restarted);client.cookie=self.child.cookie
         p=self.profile(client);self.assertEqual(p['progress']['xp'],10);self.assertEqual(p['routines'][0]['first_action'],'')
-        self.assertTrue(p['show_series']);self.assertFalse(p['reduced_rewards'])
+        self.assertTrue(p['show_series']);self.assertFalse(p['reduced_rewards']);self.assertFalse(p['plain_icons'])
 
 if __name__=='__main__':unittest.main()
