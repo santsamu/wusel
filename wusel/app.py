@@ -79,6 +79,8 @@ class Application:
         with self.connect() as db:
             db.execute('PRAGMA journal_mode=WAL')
             db.executescript(SCHEMA)
+            if 'undo_until' not in {row[1] for row in db.execute('PRAGMA table_info(completions)')}:
+                db.execute('ALTER TABLE completions ADD COLUMN undo_until REAL NOT NULL DEFAULT 0')
             for column,definition in [('show_series','INTEGER NOT NULL DEFAULT 1'),('reduced_rewards','INTEGER NOT NULL DEFAULT 0')]:
                 if column not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
                     db.execute('ALTER TABLE users ADD COLUMN '+column+' '+definition)
@@ -157,11 +159,13 @@ class Application:
                    (hashlib.sha256(token.encode()).hexdigest(), uid, csrf, self.now()+43200))
         return f'wusel_session={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=43200' + ('; Secure' if self.secure_cookie else '')
     def correct_completion(self, db, user, completion, restore):
-        db.execute('UPDATE completions SET voided=?,locked=? WHERE id=?',
+        db.execute('UPDATE completions SET voided=?,locked=?,undo_until=0 WHERE id=?',
                    (int(not restore),int(not restore),completion['id']))
         if restore:
             self.award(db,completion['child'])
         self.audit(db,user['id'],'correction',f'{"Restored" if restore else "Reversed"} completion {completion["id"]}: {completion["title"]} ({completion["day"]})')
+    def undo_seconds(self, completion):
+        return max(0,completion['undo_until']-self.now()) if completion and not completion['voided'] and not completion['locked'] else 0
     def child(self, db, uid):
         row = db.execute("SELECT id FROM users WHERE id=? AND role='child'", (uid,)).fetchone()
         if not row:
@@ -256,8 +260,8 @@ class Application:
                 item = dict(r)
                 item['days'] = json.loads(item['days'])
                 item['scheduled'] = self.scheduled(r,today)
-                done = db.execute('SELECT voided,locked FROM completions WHERE routine=? AND day=?', (r['id'],today.isoformat())).fetchone()
-                item.update(done=bool(done and not done['voided']),locked=bool(done and done['locked']),defer_order=deferred.get(r['id'],0))
+                done = db.execute('SELECT voided,locked,undo_until FROM completions WHERE routine=? AND day=?', (r['id'],today.isoformat())).fetchone()
+                item.update(done=bool(done and not done['voided']),locked=bool(done and done['locked']),defer_order=deferred.get(r['id'],0),undo_seconds=self.undo_seconds(done) if user['role']=='child' else 0)
                 routines.append(item)
             routines.sort(key=lambda r:(r['defer_order']>0,r['defer_order'],r['time'],r['id']))
             child.update(routines=routines,progress=self.progress(db,c['id']))
@@ -358,15 +362,19 @@ class Application:
             old = db.execute('SELECT * FROM completions WHERE routine=? AND day=?',(rid,today.isoformat())).fetchone()
             if old and user['role']=='parent':
                 self.correct_completion(db,user,old,done)
-                return {'ok':True,'earned_points':0},None
+                return {'ok':True,'earned_points':0,'undo_seconds':0},None
             if old and old['locked']:
                 raise Problem('This step is open again. Let’s check it together.',403)
             if old:
-                db.execute('UPDATE completions SET voided=? WHERE id=?',(int(not done),old['id']))
+                if not done and not old['voided'] and self.undo_seconds(old)<=0:
+                    raise Problem('Undo time has ended. Ask a parent to reopen this step.',403)
+                deadline = self.now()+15 if done and old['voided'] else old['undo_until'] if done else 0
+                db.execute('UPDATE completions SET voided=?,undo_until=? WHERE id=?',(int(not done),deadline,old['id']))
             elif done:
-                db.execute('INSERT INTO completions(routine,child,day,title) VALUES(?,?,?,?)',(rid,r['child'],today.isoformat(),r['title']))
+                db.execute('INSERT INTO completions(routine,child,day,title,undo_until) VALUES(?,?,?,?,?)',(rid,r['child'],today.isoformat(),r['title'],self.now()+15 if user['role']=='child' else 0))
             self.award(db,r['child'])
-            return {'ok':True,'earned_points':10 if done and old is None else 0},None
+            saved = db.execute('SELECT voided,locked,undo_until FROM completions WHERE routine=? AND day=?',(rid,today.isoformat())).fetchone()
+            return {'ok':True,'earned_points':10 if done and old is None else 0,'undo_seconds':self.undo_seconds(saved) if user['role']=='child' else 0},None
         if path=='/api/defer':
             rid = self.integer(body,'routine')
             db.execute('BEGIN IMMEDIATE')

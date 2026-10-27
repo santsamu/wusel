@@ -1,5 +1,8 @@
 const CATALOG = {
   "en": {
+    "Undo time has ended. Ask a parent to reopen this step.": "Undo time has ended. Ask a parent to reopen this step.",
+    "Completed steps can be undone for 15 seconds. Afterward, ask a parent to reopen them.": "Completed steps can be undone for 15 seconds. Afterward, ask a parent to reopen them.",
+    "Completed": "Completed",
     "For later · {count} step": "For later · {count} step",
     "For later · {count} steps": "For later · {count} steps",
 
@@ -419,6 +422,9 @@ const CATALOG = {
     "Opening Wusel…": "Opening Wusel…"
   },
   "de": {
+    "Undo time has ended. Ask a parent to reopen this step.": "Die Zeit zum Rückgängigmachen ist vorbei. Bitte deine Eltern, diesen Schritt wieder zu öffnen.",
+    "Completed steps can be undone for 15 seconds. Afterward, ask a parent to reopen them.": "Erledigte Schritte kannst du 15 Sekunden lang rückgängig machen. Danach können deine Eltern sie wieder öffnen.",
+    "Completed": "Erledigt",
     "For later · {count} step": "Für später · {count} Schritt",
     "For later · {count} steps": "Für später · {count} Schritte",
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.7
+
+- Enforce a shared 15-second child undo window on the server and in both the checklist and quick Undo action. Reloads and duplicate completion requests do not extend the window.
+- Keep completed tasks checked after expiry; parents can still reopen and confirm them. Parent-confirmed and pre-update completions have no child undo window.
+- Restore only the remaining undo time after reload and automatically disable expired checklist controls. The former keyboard-focus extension no longer applies.
+
 ## 0.12.6
 
 - Moved the parent account's language and Sign out into the Settings page (next to the color theme), matching the child Settings page, and removed the separate account-name dropdown from the parent header.

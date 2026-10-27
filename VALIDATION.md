@@ -1,5 +1,13 @@
 # Validation history
 
+## 0.12.7 validation
+
+- Added a persisted undo deadline per completion, with a 15-second server-enforced window for child-created completions. Duplicate checks preserve the deadline, valid undo/recheck does not duplicate points, and parental actions clear child undo eligibility. Migration preserves existing completion and reward data without reopening an undo window.
+- All 108 Python tests passed, including seven new tests for the exact deadline, recheck rewards, duplicate requests, restart/session persistence, expired parent corrections, parent-created completions and migration with retained progress.
+- All JavaScript regressions passed. New checks cover checklist and quick Undo expiry, server-provided remaining time after reload, independent overlapping windows, parent-confirmed tasks, and open tasks remaining completable.
+- Chrome at 390 x 844 with the real WSGI backend passed checklist undo/recheck during the window, reload with only remaining time, strict automatic expiry even with keyboard focus, blocked direct API undo after expiry, reload after expiry, parental reopen/restore, retained points and no overflow or JavaScript errors. Screenshot visually inspected. Only local demo data was used.
+- Source metadata and the 0.12.7 ZIP passed validation; GitHub Actions runs all tests and AMD64/ARM64 container startup checks.
+
 ## 0.12.6 validation
 
 - Consolidated the parent account's personal controls (language, color theme, Sign out) into the Settings page, matching the child Settings page, and removed the header's account-name dropdown in favor of compact Family/Settings icon buttons.

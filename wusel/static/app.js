@@ -7,6 +7,7 @@ const current = () => state.children?.find(c => c.id === selected) || state.chil
 let noticeTimer, focusChoice=null;
 function notify(message,duration=6500) { document.querySelector('#notice').classList.remove('level-up'); clearTimeout(noticeTimer); document.querySelector('#notice').textContent = message; noticeTimer=setTimeout(()=>document.querySelector('#notice').textContent='',duration); }
 let syncKind='idle',syncKey='',syncTimer,undoTimer,lastCompletion=null;
+const undoDeadlines=new Map();
 function paintSyncStatus(){
  let box=document.querySelector('#sync-status');
  if(!box){box=document.createElement('div');box.id='sync-status';box.setAttribute('role','status');box.setAttribute('aria-live','polite');document.body.append(box);}
@@ -18,7 +19,7 @@ function syncStatus(kind,key=''){
  if(kind==='saved')syncTimer=setTimeout(()=>syncStatus('idle'),4000);
 }
 async function api(path,body,track=true){
- const tracked=track&&path!=='weather',writing=body!==undefined;
+ const started=performance.now(),tracked=track&&path!=='weather',writing=body!==undefined;
  if(tracked&&writing)syncStatus('saving','Saving…');
  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
  let response,data;
@@ -33,20 +34,52 @@ async function api(path,body,track=true){
  if(tracked&&writing)syncStatus('saved','Saved.');
  else if(path==='state'&&syncKind==='uncertain')syncStatus('review','Connected again. Please check your last change.');
  else if(path==='state'&&syncKind==='offline')syncStatus('saved','Connected again.');
+ const elapsed=(performance.now()-started)/1000;
+ if(typeof data.undo_seconds==='number')data.undo_seconds=Math.max(0,data.undo_seconds-elapsed);
+ if(path==='state')for(const c of data.children||[])for(const r of c.routines)r.undo_seconds=Math.max(0,(r.undo_seconds||0)-elapsed);
  return data;
 }
-function clearUndo(){clearTimeout(undoTimer);lastCompletion=null;document.querySelector('.completion-feedback')?.remove();}
-function rememberCompletion(r){
- clearUndo();lastCompletion={routine:r.id,title:r.title,child:state.user.id,day:state.today};
- function expire(){const feedback=document.querySelector('.completion-feedback');if(feedback?.contains(document.activeElement)){undoTimer=setTimeout(expire,5000);return;}clearUndo();}
- undoTimer=setTimeout(expire,15000);
+function clearUndo(){lastCompletion=null;document.querySelector('.completion-feedback')?.remove();}
+function canChildUndo(r){return !!r.done&&!r.locked&&(undoDeadlines.get(r.id)||0)>performance.now();}
+function armUndoExpiry(){
+ clearTimeout(undoTimer);
+ const remaining=Array.from(undoDeadlines.values()).map(deadline=>deadline-performance.now()).filter(ms=>ms>0);
+ if(remaining.length)undoTimer=setTimeout(updateUndoControls,Math.ceil(Math.min(...remaining))+1);
+}
+function updateUndoControls(){
+ if(!state?.user||parent())return;
+ const c=current();
+ document.querySelectorAll('.child-checklist [data-action="complete"]').forEach(button=>{
+  const r=c?.routines.find(r=>r.id===Number(button.dataset.id));if(!r)return;
+  button.disabled=r.locked||(r.done&&!canChildUndo(r));
+  button.setAttribute('aria-label',t(r.done?(canChildUndo(r)?'Undo':'Completed'):'Complete')+' '+r.title);
+ });
+ if(lastCompletion&&!canChildUndo(c?.routines.find(r=>r.id===lastCompletion.routine)||{})){
+  const focused=document.querySelector('.completion-feedback')?.contains(document.activeElement);
+  clearUndo();if(focused){const heading=document.querySelector('main h1');if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});}}
+ }
+ armUndoExpiry();
+}
+function syncChildUndo(fresh){
+ clearTimeout(undoTimer);undoDeadlines.clear();
+ if(fresh.user?.role!=='child'){clearUndo();return;}
+ const c=fresh.children[0],now=performance.now();
+ for(const r of c.routines)if(r.done&&!r.locked&&r.undo_seconds>0)undoDeadlines.set(r.id,now+r.undo_seconds*1000);
+ const eligible=c.routines.filter(r=>undoDeadlines.has(r.id)).sort((a,b)=>b.undo_seconds-a.undo_seconds);
+ const last=eligible.find(r=>lastCompletion?.routine===r.id&&lastCompletion.day===fresh.today)||eligible[0];
+ lastCompletion=last?{routine:last.id,title:last.title,child:c.id,day:fresh.today}:null;
+ armUndoExpiry();
+}
+function rememberCompletion(r,seconds){
+ undoDeadlines.set(r.id,performance.now()+seconds*1000);
+ lastCompletion={routine:r.id,title:r.title,child:state.user.id,day:state.today};armUndoExpiry();
 }
 function undoFeedback(){
- if(!lastCompletion||lastCompletion.child!==state.user?.id||lastCompletion.day!==state.today)return '';
+ if(!lastCompletion||lastCompletion.child!==state.user?.id||lastCompletion.day!==state.today||!canChildUndo(current()?.routines.find(r=>r.id===lastCompletion.routine)||{}))return '';
  return `<div class="completion-feedback" role="status"><span>${tx('Completed: {task}',{task:lastCompletion.title})}</span><button data-action="undo-last">${tx('Undo')}</button></div>`;
 }
 function restNote(c){return c.rest_day?`<p class="rest-note">${tx('Today is a rest day. Your series is safe; steps are optional.')}</p>`:'';}
-async function refresh(quiet=false) { const fresh=await api('state'); if(quiet && JSON.stringify(fresh)===JSON.stringify(state)){updateChildGreeting();updateTaskTiming();loadWeather();return;} state=fresh; if(state.user && !state.user.language){try{await api('preferences',{language},false);}catch{}state.user.language=language;} if(state.user?.language) language=state.user.language; if (!state.user) {clearUndo();focusChoice=null;view='today'; selected=null;weatherData=null;weatherFetched=0;} render(); if(state.user)loadWeather(); }
+async function refresh(quiet=false) { const fresh=await api('state'); syncChildUndo(fresh); if(quiet && JSON.stringify(fresh)===JSON.stringify(state)){updateChildGreeting();updateTaskTiming();updateUndoControls();loadWeather();return;} state=fresh; if(state.user && !state.user.language){try{await api('preferences',{language},false);}catch{}state.user.language=language;} if(state.user?.language) language=state.user.language; if (!state.user) {clearUndo();focusChoice=null;view='today'; selected=null;weatherData=null;weatherFetched=0;} render(); if(state.user)loadWeather(); }
 const field = (label,name,type='text',extra='') => `<label>${esc(t(label))}<input name="${name}" type="${type}" ${extra} required></label>`;
 function auth() {
   const setup = state.needs_setup;
@@ -209,7 +242,7 @@ function childToday(c){
 }
 function childChecklist(c){
  const {tasks}=dayCount(c);
- return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}${restNote(c)}${undoFeedback()}<section class="child-checklist">${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''}"><div class="task-time"><time>${esc(timeLabel(r.time))}</time>${!r.done?`<span class="task-timing" data-task-timing data-time="${esc(r.time)}">${tx(c.rest_day?'Optional today':taskTimingKey(r.time,state.timezone))}</span>`:''}</div><div class="task-content"><h2>${taskIcon(r)}${esc(r.title)}</h2>${r.first_action&&!r.done?`<p class="first-action">${esc(r.first_action)}</p>`:''}${r.defer_order&&!r.done?`<p class="small muted">${tx('For later today')}</p>`:''}${r.locked?`<p>${tx('This step is open again. Let’s check it together.')}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t('Undo'):t('Complete')} ${esc(r.title)}" ${r.locked?'disabled':''}>${r.done?'✓':'○'}</button></article>`).join(''):`<p>${tx('Nothing planned today')}</p>`}</section><div class="child-tools"><button data-action="view" data-view="focus">${tx('One task at a time')}</button><button class="text-button" data-action="view" data-view="plan">${tx('Weekly plan')}</button></div>`;
+ return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}${restNote(c)}${undoFeedback()}${tasks.some(r=>r.done)?`<p class="small muted">${tx('Completed steps can be undone for 15 seconds. Afterward, ask a parent to reopen them.')}</p>`:''}<section class="child-checklist">${tasks.length?tasks.map(r=>`<article class="task ${r.done?'done':''}"><div class="task-time"><time>${esc(timeLabel(r.time))}</time>${!r.done?`<span class="task-timing" data-task-timing data-time="${esc(r.time)}">${tx(c.rest_day?'Optional today':taskTimingKey(r.time,state.timezone))}</span>`:''}</div><div class="task-content"><h2>${taskIcon(r)}${esc(r.title)}</h2>${r.first_action&&!r.done?`<p class="first-action">${esc(r.first_action)}</p>`:''}${r.defer_order&&!r.done?`<p class="small muted">${tx('For later today')}</p>`:''}${r.locked?`<p>${tx('This step is open again. Let’s check it together.')}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t(canChildUndo(r)?'Undo':'Completed'):t('Complete')} ${esc(r.title)}" ${r.locked||(r.done&&!canChildUndo(r))?'disabled':''}>${r.done?'✓':'○'}</button></article>`).join(''):`<p>${tx('Nothing planned today')}</p>`}</section><div class="child-tools"><button data-action="view" data-view="focus">${tx('One task at a time')}</button><button class="text-button" data-action="view" data-view="plan">${tx('Weekly plan')}</button></div>`;
 }
 const themes=[['forest','Forest','#246b55'],['ocean','Ocean','#22658b'],['berry','Berry','#954369'],['lavender','Lavender','#6d4b91'],['sunshine','Sunshine','#825518'],['petrol','Lagoon','#146471']];
 function applyTheme(value){const theme=themes.find(([id])=>id===value)||themes[0];document.documentElement.dataset.theme=theme[0];document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme[2]);}
@@ -263,10 +296,11 @@ app.addEventListener('click',async e=>{
  const b=e.target.closest('[data-action]'); if(!b||busy)return;
  const action=b.dataset.action,id=Number(b.dataset.id),c=current();
  if(action==='undo-last'){
-  if(!lastCompletion||lastCompletion.day!==state.today)return;
+  if(!lastCompletion||lastCompletion.day!==state.today||!canChildUndo(c?.routines.find(r=>r.id===lastCompletion.routine)||{})){updateUndoControls();return;}
   const saved=lastCompletion;busy=true;b.disabled=true;
   try{await api('complete',{routine:saved.routine,done:false,day:saved.day});const r=current()?.routines.find(r=>r.id===saved.routine);if(r)r.done=false;clearUndo();await refresh();if(syncKind==='saved')syncStatus('idle');notify(t('Step undone.'),1600);}catch(error){notify(error.message);b.disabled=false;}finally{busy=false;}return;
  }
+ if(action==='complete'&&!parent()){const r=c?.routines.find(r=>r.id===id);if(r?.done&&!canChildUndo(r)){updateUndoControls();notify(t('Undo time has ended. Ask a parent to reopen this step.'));return;}}
  if(action==='do-next'){const r=c?.routines.find(r=>r.id===id&&r.scheduled&&!r.done&&!r.locked);if(!r)return;focusChoice={child:c.id,day:state.today,routine:id};render();document.querySelector('#next-step-title')?.focus({preventScroll:true});window.scrollTo(0,0);return;}
  if(action==='ask-adult'){b.closest('.task-help').querySelector('[data-help-response]').textContent=t('Please ask an adult to join you. You can do this step together.');return;}
  if(action==='theme'){await setTheme(b.dataset.theme);return;}
@@ -299,7 +333,7 @@ app.addEventListener('click',async e=>{
    const r=c.routines.find(r=>r.id===id);const result=await api('complete',{routine:id,done:!r.done,day:state.today});earnedPoints=result.earned_points||0;
    if(focusChoice?.routine===id)focusChoice=null;
    childCompleted=!parent()&&!r.done;
-   if(childCompleted)rememberCompletion(r);
+   if(childCompleted)rememberCompletion(r,result.undo_seconds||0);
    r.done=!r.done;
    const feedback=document.querySelector('#step-feedback');
    if(childCompleted&&earnedPoints>0&&!c.reduced_rewards){showPoints(earnedPoints);if(feedback)feedback.textContent=t('Well done!');await new Promise(resolve=>setTimeout(resolve,750));}

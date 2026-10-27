@@ -1,0 +1,42 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
+const root=path.join(__dirname,'../wusel/static');
+const sandbox={assert,navigator:{language:'de-CH'},localStorage:{getItem:()=>null}};
+vm.createContext(sandbox);
+vm.runInContext(`
+let tick=0,state={user:{id:2,role:'child'},today:'2026-10-27',children:[]};
+let undoTimer,lastCompletion=null;const undoDeadlines=new Map();
+const performance={now:()=>tick};const setTimeout=()=>1,clearTimeout=()=>{};
+const current=()=>state.children[0],parent=()=>state.user.role==='parent';
+const button={dataset:{id:'1'},disabled:false,setAttribute(key,value){this[key]=value;}};
+const document={querySelector:()=>null,querySelectorAll:()=>[button]};
+const esc=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const childHeading=()=>'',restNote=()=>'',taskIcon=()=>'';
+const dayCount=c=>({tasks:c.routines.filter(r=>r.scheduled)});
+`,sandbox);
+vm.runInContext(fs.readFileSync(root+'/i18n.js','utf8'),sandbox);
+const source=fs.readFileSync(root+'/app.js','utf8');
+vm.runInContext(source.slice(source.indexOf('function clearUndo('),source.indexOf('function restNote(')),sandbox);
+vm.runInContext(source.slice(source.indexOf('function childChecklist('),source.indexOf('const themes=')),sandbox);
+vm.runInContext(`
+const step={id:1,title:'Teeth',time:'07:00',scheduled:true,done:true,locked:false,undo_seconds:15};
+state.children=[{id:2,name:'Alex',routines:[step]}];
+syncChildUndo(state);
+assert(canChildUndo(step));assert(undoFeedback().includes('data-action="undo-last"'));
+let html=childChecklist(current());assert(!html.match(/aria-pressed="true"[^>]*disabled/));
+tick=14999;updateUndoControls();assert(!button.disabled);assert(canChildUndo(step));
+tick=15000;updateUndoControls();assert(button.disabled);assert(!canChildUndo(step));assert.equal(undoFeedback(),'');
+html=childChecklist(current());assert(html.match(/aria-pressed="true"[^>]*disabled/));
+assert(html.includes('15 Sekunden'));
+// A new page uses only the remaining server-provided window, not another 15 seconds.
+undoDeadlines.clear();step.undo_seconds=3;tick=20000;syncChildUndo(state);
+tick=22999;assert(canChildUndo(step));tick=23000;assert(!canChildUndo(step));
+step.undo_seconds=0;syncChildUndo(state);assert(!canChildUndo(step));
+step.done=false;html=childChecklist(current());assert(!html.match(/aria-pressed="false"[^>]*disabled/));
+step.done=true;step.locked=true;step.undo_seconds=15;syncChildUndo(state);assert(!canChildUndo(step));
+step.locked=false;step.undo_seconds=2;tick=30000;
+const second={...step,id:2,title:'Breakfast',undo_seconds:10};state.children[0].routines=[step,second];
+syncChildUndo(state);tick=32000;updateUndoControls();assert(!canChildUndo(step));assert(canChildUndo(second));
+assert(undoFeedback().includes('Breakfast'));
+state.user={id:1,role:'parent'};syncChildUndo(state);assert.equal(undoDeadlines.size,0);
+`,sandbox);
+console.log('Strict checklist/quick undo expiry, reload remaining time, open tasks and parent-confirmed tasks passed.');
