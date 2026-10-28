@@ -21,7 +21,7 @@ profile wusel flags=(attach_disconnected,mediate_deleted) {
   /data/** rwk,
 
   # libc name resolution and OpenSSL initialization (also imported by urllib).
-  /etc/{hosts,hostname,resolv.conf,nsswitch.conf,gai.conf} r,
+  /etc/{hosts,hostname,host.conf,resolv.conf,nsswitch.conf,gai.conf} r,
   /etc/ssl/ r,
   /etc/ssl/** r,
 
