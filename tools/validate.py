@@ -48,6 +48,13 @@ def validate(root=ROOT):
     require(config.get('host_network') is True,'Host networking is required for the current listener')
     validate_webui(config.get('webui'))
     require(config.get('backup')=='cold','SQLite backups must stop the app')
+    require(config.get('apparmor') is True,'AppArmor confinement must remain enabled')
+    profile=(app/'apparmor.txt').read_text(encoding='utf-8')
+    require(len(re.findall(r'^profile ',profile,re.MULTILINE))==1 and
+            re.search(r'^profile wusel flags=\(attach_disconnected,mediate_deleted\) \{',profile,re.MULTILINE),
+            'AppArmor must define one enforcing wusel profile')
+    require(not re.search(r'^\s*(file|network|capability)\s*,',profile,re.MULTILINE),
+            'AppArmor must not grant unrestricted file/network/capability access')
     require(set(config['options'])==set(config['schema']),'Options must match the Home Assistant schema')
     ZoneInfo(config['options']['timezone'])
     docker = (app/'Dockerfile').read_text(encoding='utf-8')
@@ -89,6 +96,9 @@ def validate_archive(path, version):
             require(entry.suffix.lower() not in {'.sqlite3','.db','.pyc'},'Database or bytecode in archive')
         required=('wusel/agent.md','wusel/AGENTS.md','wusel/wusel/config.yaml','wusel/wusel/Dockerfile','wusel/wusel/icon.png','wusel/wusel/logo.png','wusel/wusel/static/wusel-logo.png','wusel/wusel/static/wusel-mark.png','wusel/wusel/static/favicon.ico','wusel/wusel/static/favicon-16.png','wusel/wusel/static/favicon-32.png','wusel/wusel/static/favicon-192.png','wusel/wusel/static/favicon-512.png','wusel/wusel/static/apple-touch-icon.png','wusel/wusel/static/icons.js','wusel/wusel/static/app.js','wusel/wusel/static/i18n.js','wusel/wusel/static/index.html','wusel/wusel/static/manifest.webmanifest','wusel/wusel/static/style.css','wusel/wusel/static/themes.css','wusel/wusel/weather.py','wusel/wusel/server.py','wusel/wusel/requirements.txt','wusel/tools/validate.py','wusel/requirements-dev.txt')
         require(all(name in names for name in required),'Required source file missing from archive')
+        require('wusel/wusel/apparmor.txt' in names,'AppArmor profile missing from archive')
+        require(archive.read('wusel/wusel/apparmor.txt')==(ROOT/'wusel/apparmor.txt').read_bytes(),
+                'Packaged AppArmor profile differs from source')
         require(load_yaml(archive.read('wusel/wusel/config.yaml'))['version']==version,'Packaged version differs from source')
         require(f'ARG BUILD_VERSION={version}' in archive.read('wusel/wusel/Dockerfile').decode('utf-8'),'Packaged Docker version differs')
 

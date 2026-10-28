@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+- Add an enforcing custom AppArmor profile for the Python/Waitress runtime, private data and required TCP/DNS access, retaining host networking and the existing account model.
+- Add Linux CI coverage for actual confinement, normal API/SQLite/weather/restart behavior and denied file access, shell execution and raw sockets; require the profile in source archives.
+- Keep the stable release stage. Copy apparmor.txt alongside config.yaml during updates; Home Assistant loads it outside the app image.
+
 ## 1.0.0
 
 - Set the Home Assistant release stage to stable, replacing the experimental label.

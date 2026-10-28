@@ -107,6 +107,14 @@ jobs:
             BUILD_ARCH=${{ matrix.arch }}
           cache-from: type=gha,scope=wusel-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=wusel-${{ matrix.arch }}
+      - name: Install AppArmor policy tools
+        if: matrix.arch == 'amd64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends apparmor-utils
+      - name: Test enforced AppArmor allow and deny behavior
+        if: matrix.arch == 'amd64'
+        run: sudo python3 tools/check_apparmor.py --image wusel-ci:amd64
       - name: Start the image with disposable data
         run: docker run --detach --name wusel-ci --platform ${{ matrix.platform }} --publish 127.0.0.1:8099:8099 --tmpfs /data wusel-ci:${{ matrix.arch }}
       - name: Check health, frontend assets and API

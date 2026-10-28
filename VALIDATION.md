@@ -1,5 +1,12 @@
 # Validation history
 
+## 1.0.1 validation
+
+- Added a least-privilege AppArmor profile and an explicit enabled manifest setting. The profile grants read-only application/runtime access, private /data writes and locks, Docker init/Python execution, and TCP/DNS sockets. It excludes shell execution, application-code writes, unrelated data directories and raw networking. Host networking and the existing Core API proxy permission remain unchanged; socket rules do not restrict destination hosts.
+- Added a Linux-only enforcing integration check to native amd64 container CI. It verifies the kernel label is local_wusel (enforce), uses disposable data and a local Supervisor weather fixture, exercises setup/authentication/preferences/routines/completion/undo/correction/reset/SQLite locks/IPv4/IPv6/restart, inspects positive-flow audit denials, and probes forbidden files/execution/raw sockets. It refuses unsupported Docker hosts and existing test container/profile names and cleans up after itself. ARM64 image smoke is separate from native enforcement.
+- Docker Desktop was available locally but reported no AppArmor security option, so local runtime enforcement is unavailable. The profile compiled successfully with AppArmor parser 4.1.0 in a disposable Debian container (-Q, no kernel load). All seven metadata/package/HTTP-smoke tests passed, including rejection of an archive missing apparmor.txt. Source validation passed.
+- Linux enforcement CI is pending; no Home Assistant OS/physical Pi audit review or deployment has been performed. The release is not yet presented as target-device verified.
+
 ## 1.0.0 validation
 
 - Corrected the Home Assistant lifecycle metadata from `stage: experimental` to explicit `stage: stable` for 1.0.0, as supported by the official app configuration reference. Updated the bilingual release descriptions, changelog and guide, and rebuilt the 1.0.0 ZIP. All seven manifest/packaging/HTTP-smoke regressions and source/archive validation passed after this metadata-only correction; no runtime behavior changed or Home Assistant deployment was performed.
