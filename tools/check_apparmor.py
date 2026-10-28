@@ -29,6 +29,20 @@ def run(*args, check=True):
     return subprocess.run(args, check=check, capture_output=True, text=True, timeout=60)
 
 
+def profile_denials(log, profile, since):
+    """Use kernel boot timestamps, independent of wall-clock/journal setup."""
+    result = []
+    for line in log.splitlines():
+        if 'apparmor="DENIED"' not in line or f'profile="{profile}"' not in line:
+            continue
+        stamp = re.search(r'\[\s*(\d+(?:\.\d+)?)\]', line)
+        if not stamp:
+            raise ValueError('AppArmor audit entry lacks a kernel timestamp')
+        if float(stamp.group(1)) >= since:
+            result.append(line)
+    return result
+
+
 class WeatherFixture(BaseHTTPRequestHandler):
     def log_message(self, *_):
         pass
@@ -115,7 +129,7 @@ def check(image):
             run('apparmor_parser', '-Q', '-T', str(ROOT / 'wusel/apparmor.txt'))
             run('apparmor_parser', '-r', '-T', str(profile))
             loaded = True
-            since = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+            since = float(Path('/proc/uptime').read_text().split()[0])
             run('docker', 'run', '--detach', '--name', name, '--init', '--network', 'host',
                 '--security-opt', 'apparmor=' + profile_name, '--add-host', 'supervisor:127.0.0.2',
                 '--mount', f'type=bind,src={data},dst=/data',
@@ -174,8 +188,9 @@ def check(image):
                     time.sleep(1)
             parent.call('reset-child', {'child': 2, 'confirmation': 'child', 'current_password': 'demo-password'})
             assert parent.call('state')['children'][0]['progress']['xp'] == 0
-            audit = run('journalctl', '--kernel', '--since', since, '--no-pager', '--output=cat').stdout
-            denials = [line for line in audit.splitlines() if 'apparmor="DENIED"' in line and 'profile="local_wusel"' in line]
+            audit = run('dmesg', '--time-format', 'raw', check=False)
+            assert audit.returncode == 0, 'Cannot read kernel audit log: ' + audit.stderr
+            denials = profile_denials(audit.stdout, profile_name, since)
             assert not denials, '\n'.join(denials)
             print('Enforced positive flows passed, with no AppArmor audit denials.')
 
