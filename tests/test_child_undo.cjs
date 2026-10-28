@@ -10,7 +10,7 @@ const current=()=>state.children[0],parent=()=>state.user.role==='parent';
 const button={dataset:{id:'1'},disabled:false,setAttribute(key,value){this[key]=value;}};
 const document={querySelector:()=>null,querySelectorAll:()=>[button]};
 const esc=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const childHeading=()=>'',restNote=()=>'',taskIcon=()=>'';
+const childHeading=()=>'',restNote=()=>'',taskIcon=()=>'',isWeatherEvening=()=>false,weatherSummary=()=>'';
 const dayCount=c=>({tasks:c.routines.filter(r=>r.scheduled)});
 `,sandbox);
 vm.runInContext(fs.readFileSync(root+'/i18n.js','utf8'),sandbox);

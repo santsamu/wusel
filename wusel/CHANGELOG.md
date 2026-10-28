@@ -1,5 +1,39 @@
 # Changelog
 
+## 1.0.0
+
+- Set the Home Assistant release stage to stable, replacing the experimental label.
+
+- Replace the parent account name in the header with the same current-time clock used on child screens, retaining Family and Settings controls.
+- Share timezone-aware regional formatting, minute-boundary updates and immediate visibility recovery across both roles, with compact phone layouts.
+- Package the 1.0.0 release with the existing task icons, responsive weekly plans, aligned Settings and evening preparation forecasts.
+
+## 0.16.1
+
+- Replace the snack-box artwork with the selected open lunchbox, sandwich and apple while preserving saved task IDs and plain-mode support.
+- Match parent Settings heading spacing and language-row alignment to the child Settings layout.
+- Make weekly plan columns adapt to actual content width, preventing squeezed child day columns and split weekday/date labels.
+
+## 0.16.0
+
+- Add tomorrow’s Home Assistant forecast, with local-day separation, morning/daytime clothing hints and labeled daily fallback.
+- From 18:00 show Prepare for tomorrow alongside today’s weather on child focus/checklist screens. Add Today/Tomorrow choices to child and parent forecast details.
+- Update evening/midnight views independently of network polling, preserve forecast selection/focus, and clearly mark missing or stale forecasts.
+
+## 0.15.2
+
+- Show the first small action under each task title in parent Overview, matching the child’s main task card instead of displaying the additional help text. Child guidance remains available under I need help.
+
+## 0.15.1
+
+- Show a quiet hours/minutes clock beside Settings on every child screen, using the configured Wusel timezone and device regional format.
+- Update at minute boundaries and immediately on return to the app, independently of network requests or open forms.
+
+## 0.15.0
+
+- Add eight original SVG task icons: piano, guitar, snack box, homework, hairbrush, toilet, jacket and exercise, bringing the picker to 21 icons plus No icon.
+- Include English/German labels and the existing neutral palette for plain task icons.
+
 ## 0.14.2
 
 - Add a public web app manifest requesting fullscreen with existing hedgehog icons, plus Apple Home Screen metadata. Preserve direct local HTTP access.

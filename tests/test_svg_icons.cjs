@@ -12,7 +12,7 @@ assert.equal(taskIcon({icon:'<script>'}),'');
 assert(svgIcon('<img src=x onerror=alert(1)>').includes('data-icon="help"'));assert(!svgIcon('<script>').includes('<script>'));
 for(const id of Object.values(weatherIcons))assert(Object.hasOwn(WUSEL_ICONS,id));
 assert(weatherIcon('not-a-condition').includes('data-icon="thermometer"'));
-for(const lang of ['en','de']){language=lang;const picker=taskIconPicker({icon:'medicine'});assert.equal((picker.match(/type="radio"/g)||[]).length,14);assert(picker.includes('value="medicine" checked'));assert(picker.includes(t('Medicine')));assert(picker.includes(t('No icon')));assert(picker.includes('<svg'));}
+for(const lang of ['en','de'])for(const [id,,label] of taskIcons){language=lang;const picker=taskIconPicker({icon:id});assert.equal((picker.match(/type="radio"/g)||[]).length,22);assert(picker.includes('value="'+id+'" checked'));assert(picker.includes(t(label)));assert(picker.includes(t('No icon')));assert(picker.includes('<svg'));}
 `,sandbox);
 assert(!/[\p{Extended_Pictographic}]/u.test(source),'UI must render vectors, not OS emoji');
 console.log('SVG task/badge registry, safe fallback, all weather mappings and accessible bilingual picker passed.');

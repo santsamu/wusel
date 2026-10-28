@@ -43,6 +43,49 @@ class WeatherTests(unittest.TestCase):
         self.assertIsNone(result['hourly'][0]['rain_probability'])
         self.assertEqual(call.call_args_list[1].args,('services/weather/get_forecasts?return_response',{'entity_id':ENTITY,'type':'hourly'}))
         self.assertNotIn('server-secret',json.dumps(result))
+    def test_tomorrow_hourly_uses_local_date_and_preserves_daytime(self):
+        rows=[{'datetime':'2026-10-25T10:00:00Z','temperature':13,'condition':'cloudy'},
+              {'datetime':'2026-10-25T23:00:00Z','temperature':-2,'condition':'clear-night'},
+              {'datetime':'2026-10-26T05:00:00Z','temperature':8,'condition':'cloudy'},
+              {'datetime':'2026-10-26T15:00:00Z','temperature':14,'condition':'rainy'},
+              {'datetime':'2026-10-26T23:00:00Z','temperature':99,'condition':'sunny'}]
+        with patch.object(self.weather,'request',side_effect=lambda path,body=None:state() if body is None else forecast(rows)) as req:
+            result=self.weather.get(ZONE,NOW)
+        self.assertEqual(result['date'],'2026-10-25')
+        self.assertEqual(len(result['hourly']),1)
+        self.assertEqual(result['tomorrow']['date'],'2026-10-26')
+        self.assertEqual([r['temperature'] for r in result['tomorrow']['hourly']],[-2,8,14])
+        self.assertEqual(result['tomorrow']['forecast_status'],'hourly')
+        self.assertEqual(req.call_count,2)
+
+    def test_tomorrow_daily_fallback_is_separate_from_today(self):
+        def provider(path,body=None):
+            if body is None:return state()
+            if body['type']=='hourly':return fixtures(path,body)
+            return forecast([{'datetime':'2026-10-26T00:00:00Z','temperature':18,'templow':4,'condition':'rainy','precipitation_probability':65}])
+        with patch.object(self.weather,'request',side_effect=provider):result=self.weather.get(ZONE,NOW)
+        self.assertEqual(result['forecast_status'],'hourly')
+        self.assertIsNone(result['daily'])
+        self.assertEqual(result['tomorrow']['forecast_status'],'daily')
+        self.assertEqual(result['tomorrow']['daily']['high'],18)
+        self.assertEqual(result['tomorrow']['daily']['rain_probability'],65)
+
+    def test_tomorrow_dst_repeated_hours_are_sorted_as_instants(self):
+        now=datetime(2026,10,24,16,tzinfo=timezone.utc)
+        rows=[{'datetime':at,'temperature':12,'condition':'cloudy'} for at in
+              ['2026-10-25T02:30:00+01:00','2026-10-25T02:30:00+02:00','2026-10-25T07:00:00+01:00','2026-10-25T17:00:00+01:00']]
+        with patch.object(self.weather,'request',side_effect=lambda path,body=None:state() if body is None else forecast(rows)):
+            result=self.weather.get(ZONE,now)
+        tomorrow=result['tomorrow'];self.assertEqual(tomorrow['date'],'2026-10-25')
+        self.assertEqual(tomorrow['hourly'][0]['datetime'],'2026-10-25T02:30:00+02:00')
+        self.assertEqual(tomorrow['hourly'][1]['datetime'],'2026-10-25T02:30:00+01:00')
+
+    def test_missing_tomorrow_is_explicit_without_reusing_current_conditions(self):
+        with patch.object(self.weather,'request',side_effect=fixtures):result=self.weather.get(ZONE,NOW)
+        self.assertEqual(result['tomorrow']['forecast_status'],'unavailable')
+        self.assertIsNone(result['tomorrow']['daily'])
+        self.assertNotIn('current',result['tomorrow'])
+
     def test_current_weather_survives_missing_forecast(self):
         def provider(path,body=None):
             if path.startswith('states/'):return state()
@@ -61,7 +104,7 @@ class WeatherTests(unittest.TestCase):
         with patch('weather.time.monotonic',return_value=1000),patch.object(self.weather,'request',side_effect=fixtures) as req:
             first=self.weather.get(ZONE,NOW)
             second=self.weather.get(ZONE,NOW)
-            self.assertEqual(req.call_count,2);self.assertEqual(first,second)
+            self.assertEqual(req.call_count,3);self.assertEqual(first,second)
         with patch('weather.time.monotonic',return_value=1700),patch.object(self.weather,'request',side_effect=OSError('offline')):
             stale=self.weather.get(ZONE,NOW)
         self.assertTrue(stale['stale']);self.assertEqual(stale['fetched_at'],first['fetched_at'])

@@ -61,37 +61,56 @@ class Weather:
         unit = unit if unit in ('°C','°F') else ''
         current = {'condition':condition(state.get('state')),'temperature':number(attrs.get('temperature')),
                    'apparent_temperature':number(attrs.get('apparent_temperature'))}
-        hourly = []
+        today = now.astimezone(zone).date()
+        tomorrow = today + timedelta(days=1)
+        hourly, tomorrow_hourly = [], []
         try:
             for row in self.forecasts('hourly'):
                 at = stamp(row.get('datetime')) if isinstance(row,dict) else None
-                if at and at.astimezone(zone).date()==now.astimezone(zone).date() and at>=now-timedelta(minutes=30):
-                    chance = number(row.get('precipitation_probability'))
-                    hourly.append({'datetime':at.isoformat(),'condition':condition(row.get('condition')),
-                                   'temperature':number(row.get('temperature')),
-                                   'rain_probability':chance if chance is not None and 0<=chance<=100 else None})
+                if not at:
+                    continue
+                day = at.astimezone(zone).date()
+                if day not in (today,tomorrow) or (day == today and at < now-timedelta(minutes=30)):
+                    continue
+                chance = number(row.get('precipitation_probability'))
+                entry = {'datetime':at.isoformat(),'condition':condition(row.get('condition')),
+                         'temperature':number(row.get('temperature')),
+                         'rain_probability':chance if chance is not None and 0<=chance<=100 else None}
+                (hourly if day == today else tomorrow_hourly).append(entry)
         except Exception:
             pass
-        hourly.sort(key=lambda r:r['datetime'])
-        # Sort instants, including offsets across the autumn DST transition.
-        hourly.sort(key=lambda r:stamp(r['datetime']).timestamp())
-        daily = None
-        if not hourly:
+        for rows in (hourly,tomorrow_hourly):
+            rows.sort(key=lambda r:stamp(r['datetime']).timestamp())
+        daytime = [r for r in tomorrow_hourly if 6 <= stamp(r['datetime']).astimezone(zone).hour < 19]
+        # Prefer hourly clothing advice when both morning and afternoon are covered.
+        covered = bool(daytime and stamp(daytime[0]['datetime']).astimezone(zone).hour <= 8
+                       and stamp(daytime[-1]['datetime']).astimezone(zone).hour >= 16)
+        daily, tomorrow_daily = None, None
+        if not hourly or not covered:
             try:
                 for row in self.forecasts('daily'):
                     at = stamp(row.get('datetime')) if isinstance(row,dict) else None
-                    if at and at.astimezone(zone).date()==now.astimezone(zone).date():
-                        chance = number(row.get('precipitation_probability'))
-                        daily = {'condition':condition(row.get('condition')),'high':number(row.get('temperature')),
-                                 'low':number(row.get('templow')),
-                                 'rain_probability':chance if chance is not None and 0<=chance<=100 else None}
-                        break
+                    if not at or at.astimezone(zone).date() not in (today,tomorrow):
+                        continue
+                    chance = number(row.get('precipitation_probability'))
+                    entry = {'condition':condition(row.get('condition')),'high':number(row.get('temperature')),
+                             'low':number(row.get('templow')),
+                             'rain_probability':chance if chance is not None and 0<=chance<=100 else None}
+                    if at.astimezone(zone).date() == today and daily is None:
+                        daily = entry
+                    elif at.astimezone(zone).date() == tomorrow and tomorrow_daily is None:
+                        tomorrow_daily = entry
             except Exception:
                 pass
+        # Keep today's existing hourly-first contract.
+        if hourly:
+            daily = None
         observed = stamp(state.get('last_reported') or state.get('last_updated'))
         old = bool(observed and now-observed>timedelta(hours=3))
         return {'status':'ok','entity':self.entity,'location':str(attrs.get('friendly_name') or self.entity)[:100],
-                'unit':unit,'current':current,'hourly':hourly[:24],'daily':daily,
+                'unit':unit,'date':today.isoformat(),'current':current,'hourly':hourly[:25],'daily':daily,
+                'tomorrow':{'date':tomorrow.isoformat(),'hourly':tomorrow_hourly[:25],'daily':tomorrow_daily,
+                            'forecast_status':'hourly' if covered else ('daily' if tomorrow_daily else ('hourly' if daytime else 'unavailable'))},
                 'forecast_status':'hourly' if hourly else ('daily' if daily else 'unavailable'),
                 'fetched_at':now.isoformat(),'observed_at':observed.isoformat() if observed else None,
                 'stale':old}

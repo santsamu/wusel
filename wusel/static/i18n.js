@@ -384,6 +384,14 @@ const CATALOG = {
     "Tidying": "Tidying",
     "Quiet time": "Quiet time",
     "Medicine": "Medicine",
+    "Piano": "Piano",
+    "Guitar": "Guitar",
+    "Snack box": "Snack box",
+    "Homework": "Homework",
+    "Hairbrush": "Hairbrush",
+    "Toilet": "Toilet",
+    "Jacket": "Jacket",
+    "Exercise": "Exercise",
     "This step is open again. Let’s check it together.": "This step is open again. Let’s check it together.",
     "This step is already completed.": "This step is already completed.",
     "There are no other steps to switch to.": "There are no other steps to switch to.",
@@ -420,6 +428,20 @@ const CATALOG = {
     "My account": "My account",
     "Wusel · Wild & Weich": "Wusel · Wild & Weich",
     "Could not open Wusel": "Could not open Wusel",
+    "Current time": "Current time",
+    "Tomorrow": "Tomorrow",
+    "Today": "Today",
+    "Prepare for tomorrow": "Prepare for tomorrow",
+    "Tomorrow’s forecast is unavailable.": "Tomorrow’s forecast is unavailable.",
+    "Choose tomorrow’s clothes with a parent.": "Choose tomorrow’s clothes with a parent.",
+    "Have your raincoat ready.": "Have your raincoat ready.",
+    "Lay out a warm layer.": "Lay out a warm layer.",
+    "Have your water bottle ready.": "Have your water bottle ready.",
+    "Have your sun hat ready.": "Have your sun hat ready.",
+    "Forecast needs checking with a parent.": "Forecast needs checking with a parent.",
+    "Forecast day": "Forecast day",
+    "Morning and daytime": "Morning and daytime",
+    "The daily low can include overnight temperatures.": "The daily low can include overnight temperatures.",
     "Opening Wusel…": "Opening Wusel…"
   },
   "de": {
@@ -807,6 +829,14 @@ const CATALOG = {
     "Tidying": "Aufräumen",
     "Quiet time": "Ruhezeit",
     "Medicine": "Medikament",
+    "Piano": "Klavier",
+    "Guitar": "Gitarre",
+    "Snack box": "Brotdose",
+    "Homework": "Hausaufgaben",
+    "Hairbrush": "Haarbürste",
+    "Toilet": "Toilette",
+    "Jacket": "Jacke",
+    "Exercise": "Bewegung",
     "This step is open again. Let’s check it together.": "Dieser Schritt ist wieder offen. Lass ihn uns gemeinsam anschauen.",
     "This step is already completed.": "Dieser Schritt ist bereits erledigt.",
     "There are no other steps to switch to.": "Es gibt keine anderen Schritte, zu denen du wechseln kannst.",
@@ -843,6 +873,20 @@ const CATALOG = {
     "My account": "Mein Konto",
     "Wusel · Wild & Weich": "Wusel · Wild & Weich",
     "Could not open Wusel": "Wusel konnte nicht geöffnet werden",
+    "Current time": "Aktuelle Uhrzeit",
+    "Tomorrow": "Morgen",
+    "Today": "Heute",
+    "Prepare for tomorrow": "Für morgen vorbereiten",
+    "Tomorrow’s forecast is unavailable.": "Die Vorhersage für morgen ist nicht verfügbar.",
+    "Choose tomorrow’s clothes with a parent.": "Wähle mit einem Elternteil die Kleidung für morgen aus.",
+    "Have your raincoat ready.": "Lege deine Regenjacke bereit.",
+    "Lay out a warm layer.": "Lege etwas Warmes zum Anziehen bereit.",
+    "Have your water bottle ready.": "Stelle deine Trinkflasche bereit.",
+    "Have your sun hat ready.": "Lege deinen Sonnenhut bereit.",
+    "Forecast needs checking with a parent.": "Prüfe die Vorhersage mit einem Elternteil.",
+    "Forecast day": "Tag der Vorhersage",
+    "Morning and daytime": "Morgens und tagsüber",
+    "The daily low can include overnight temperatures.": "Die Tiefsttemperatur des Tages kann auch die Nacht betreffen.",
     "Opening Wusel…": "Wusel wird geöffnet…"
   }
 };
@@ -854,6 +898,7 @@ function dayNames(){return Array.from({length:7},(_,i)=>new Intl.DateTimeFormat(
 function dateLabel(value){return new Intl.DateTimeFormat(locale(),{weekday:'long',year:'numeric',month:'long',day:'numeric',timeZone:'UTC'}).format(new Date(value+'T12:00:00Z'));}
 // Routine times are wall-clock values: keep their hours unchanged across time zones.
 function timeLabel(value){const [hour,minute]=value.split(':').map(Number);return new Intl.DateTimeFormat(locale(),{hour:'numeric',minute:'2-digit',timeZone:'UTC'}).format(new Date(Date.UTC(2000,0,1,hour,minute)));}
+function currentTimeLabel(timeZone,now=new Date()){return new Intl.DateTimeFormat(locale(),{hour:'numeric',minute:'2-digit',timeZone}).format(now);}
 function dateTimeLabel(value,timeZone){return new Intl.DateTimeFormat(locale(),{dateStyle:'long',timeStyle:'short',timeZone}).format(new Date(value));}
 function temperatureLabel(value,unit){return typeof value==='number'&&Number.isFinite(value)?new Intl.NumberFormat(locale(),{maximumFractionDigits:0}).format(Math.abs(value)<0.5?0:value)+unit:'—';}
 function t(key,params={}) {const text=CATALOG[language]?.[key]??CATALOG.en[key]??key;return text.replace(/\{(\w+)\}/g,(_,k)=>String(params[k]??''));}

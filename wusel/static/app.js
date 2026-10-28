@@ -24,7 +24,7 @@ async function api(path,body,track=true){
  const started=performance.now(),tracked=track&&path!=='weather',writing=body!==undefined;
  if(writing){mutationEpoch++;activeWrites++;}
  if(tracked&&writing)syncStatus('saving','Saving…');
- const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
+ const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),path==='weather'?16000:12000);
  let response,data;
  try{
   response=await fetch('api/'+path,{...(writing?{method:'POST',headers:{'Content-Type':'application/json','X-Wusel-Request':'1','X-CSRF-Token':state?.csrf||''},body:JSON.stringify(body)}:{cache:'no-store'}),signal:controller.signal});
@@ -93,7 +93,7 @@ function refresh(quiet=false){
   state=fresh;
   if(state.user&&!state.user.language){try{await api('preferences',{language},false);}catch{}state.user.language=language;}
   if(state.user?.language)language=state.user.language;
-  if(!state.user){clearUndo();focusChoice=null;view='today';selected=null;weatherData=null;weatherFetched=0;}
+  if(!state.user){clearUndo();focusChoice=null;view='today';selected=null;weatherData=null;weatherFetched=0;weatherSelection=null;}
   render(quiet);if(state.user)loadWeather();
  };
  const task=refreshChain.then(run,run).finally(()=>{refreshRequests--;if(!liveInFlight)scheduleLive();});
@@ -214,7 +214,7 @@ function today(c) {
   return `<div class="heading"><div><p class="eyebrow">${esc(dateLabel(state.today))}</p><h1>${tx(parent()?"{name}’s day":"Hello, {name}",{name:c.name})}</h1><p>${tx("One thing at a time. You’ve got this.")}</p></div><div class="daily-count"><strong>${done}<span> / ${tasks.length}</span></strong><span>${tx("steps completed")}</span></div></div>
   ${restNote(c)}${parentWeather()}<p class="small muted">${tx("Reopening a step removes its points and waits for your confirmation. Confirm done after checking it together.")}</p>
   <section class="today-layout"><div><div class="section-heading"><h2>${tx("Today’s little steps")}</h2><span class="muted small">${tx("10 points per step")}</span></div>
-  ${tasks.length?tasks.map(r=>`<article data-task="${r.id}" class="task ${r.done?'done':''} ${next?.id===r.id?'next':''}"><div class="task-time">${esc(timeLabel(r.time))}${next?.id===r.id?`<span class="next-label">${tx("UP NEXT")}</span>`:''}</div><div class="task-content"><h3>${taskIcon(r)}${esc(r.title)}</h3>${r.description?`<p>${esc(r.description)}</p>`:''}${r.locked?`<p class="small">${tx("This step is open again. Let’s check it together.")}</p>`:''}</div>${parentStepControl(r)}</article>`).join(''):`<div class="panel empty"><span aria-hidden="true">${svgIcon('cloud')}</span><h3>${tx("A little breathing room")}</h3><p>${parent()?t("Add a routine in Weekly plan to get started."):t("No steps planned for today. Enjoy your day!")}</p></div>`}
+  ${tasks.length?tasks.map(r=>`<article data-task="${r.id}" class="task ${r.done?'done':''} ${next?.id===r.id?'next':''}"><div class="task-time">${esc(timeLabel(r.time))}${next?.id===r.id?`<span class="next-label">${tx("UP NEXT")}</span>`:''}</div><div class="task-content"><h3>${taskIcon(r)}${esc(r.title)}</h3>${r.first_action?`<p>${esc(r.first_action)}</p>`:''}${r.locked?`<p class="small">${tx("This step is open again. Let’s check it together.")}</p>`:''}</div>${parentStepControl(r)}</article>`).join(''):`<div class="panel empty"><span aria-hidden="true">${svgIcon('cloud')}</span><h3>${tx("A little breathing room")}</h3><p>${parent()?t("Add a routine in Weekly plan to get started."):t("No steps planned for today. Enjoy your day!")}</p></div>`}
   ${tasks.length&&done===tasks.length?`<div class="celebrate" role="status">${tx("All your steps are done. Look at you grow!")}</div>`:''}</div>
   </section>${progress(c)}`;
 }
@@ -222,7 +222,7 @@ function scheduleLabel(r) {return r.specific_date?dateLabel(r.specific_date):r.d
 function changeTiming(defaultValue='tomorrow'){
  return `<label>${tx('Apply changes')}<select name="apply_from" required><option value="today" ${defaultValue==='today'?'selected':''}>${tx('Apply today')}</option><option value="tomorrow" ${defaultValue==='tomorrow'?'selected':''}>${tx('From tomorrow')}</option></select></label><p class="small muted">${tx('Applying today also changes today’s full-day target. Previously earned badges are kept.')}</p>`;
 }
-const taskIcons=[["tooth", "tooth", "Teeth"], ["clothes", "clothes", "Clothes"], ["food", "food", "Meal"], ["bag", "bag", "Schoolbag"], ["book", "book", "Reading"], ["bed", "bed", "Bedtime"], ["wash", "wash", "Washing"], ["water", "water", "Water"], ["shoes", "shoes", "Shoes"], ["play", "play", "Play"], ["tidy", "tidy", "Tidying"], ["quiet", "quiet", "Quiet time"], ["medicine", "medicine", "Medicine"]];
+const taskIcons=[["tooth", "tooth", "Teeth"], ["clothes", "clothes", "Clothes"], ["food", "food", "Meal"], ["bag", "bag", "Schoolbag"], ["book", "book", "Reading"], ["bed", "bed", "Bedtime"], ["wash", "wash", "Washing"], ["water", "water", "Water"], ["shoes", "shoes", "Shoes"], ["play", "play", "Play"], ["tidy", "tidy", "Tidying"], ["quiet", "quiet", "Quiet time"], ["medicine", "medicine", "Medicine"], ["piano", "piano", "Piano"], ["guitar", "guitar", "Guitar"], ["snack-box", "snack-box", "Snack box"], ["homework", "homework", "Homework"], ["hairbrush", "hairbrush", "Hairbrush"], ["toilet", "toilet", "Toilet"], ["jacket", "jacket", "Jacket"], ["exercise", "exercise", "Exercise"]];
 function taskIcon(r,small=false){const icon=taskIcons.find(([id])=>id===r.icon);return icon?`<span class="task-icon ${small?'task-icon-small':''}" aria-hidden="true">${svgIcon(icon[0])}</span>`:'';}
 function taskIconPicker(r){
  const choices=[['','', 'No icon'],...taskIcons],selected=choices.find(([id])=>id===r.icon)||choices[0];
@@ -298,6 +298,20 @@ function celebrateLevel(level,badge){
  notify(message,2400);document.querySelector('#notice').classList.add('level-up');
  const levelBar=document.querySelector('.child-level');if(levelBar){levelBar.classList.add('level-celebrating');setTimeout(()=>levelBar.classList.remove('level-celebrating'),1200);}
 }
+let headerClockTimer;
+function headerClock(now=new Date()){
+ return `<span class="header-clock"><span class="sr-only">${tx('Current time')} </span><time data-header-clock datetime="${now.toISOString()}">${esc(currentTimeLabel(state.timezone,now))}</time></span>`;
+}
+function updateHeaderClock(now=new Date()){
+ const clock=document.querySelector('[data-header-clock]');if(!clock)return;
+ clock.textContent=currentTimeLabel(state.timezone,now);clock.dateTime=now.toISOString();
+}
+function scheduleHeaderClock(){
+ clearTimeout(headerClockTimer);
+ if(document.hidden||!state?.user)return;
+ updateHeaderClock();
+ headerClockTimer=setTimeout(scheduleHeaderClock,60000-Date.now()%60000);
+}
 function updateChildGreeting(now=new Date()){
  const heading=document.querySelector('[data-child-greeting]');
  if(heading&&current())heading.textContent=t(greetingKey(state.timezone,now),{name:current().name});
@@ -360,7 +374,7 @@ function childToday(c){
 }
 function childChecklist(c){
  const {tasks}=dayCount(c);
- return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}${restNote(c)}${undoFeedback()}${tasks.some(r=>r.done)?`<p class="small muted">${tx('Completed steps can be undone for 15 seconds. Afterward, ask a parent to reopen them.')}</p>`:''}<section class="child-checklist">${tasks.length?tasks.map(r=>`<article data-task="${r.id}" class="task ${r.done?'done':''}"><div class="task-time"><time>${esc(timeLabel(r.time))}</time>${!r.done?`<span class="task-timing" data-task-timing data-time="${esc(r.time)}">${tx(c.rest_day?'Optional today':taskTimingKey(r.time,state.timezone))}</span>`:''}</div><div class="task-content"><h2>${taskIcon(r)}${esc(r.title)}</h2>${r.first_action&&!r.done?`<p class="first-action">${esc(r.first_action)}</p>`:''}${r.defer_order&&!r.done?`<p class="small muted">${tx('For later today')}</p>`:''}${r.locked?`<p>${tx('This step is open again. Let’s check it together.')}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t(canChildUndo(r)?'Undo':'Completed'):t('Complete')} ${esc(r.title)}" ${r.locked||(r.done&&!canChildUndo(r))?'disabled':''}>${svgIcon(r.done?'check':'circle')}</button></article>`).join(''):`<p>${tx('Nothing planned today')}</p>`}</section><div class="child-tools"><button data-action="view" data-view="focus">${tx('One task at a time')}</button><button class="text-button" data-action="view" data-view="plan">${tx('Weekly plan')}</button></div>`;
+ return `${childHeading(c,tx(greetingKey(state.timezone),{name:c.name}),true)}${restNote(c)}${undoFeedback()}${tasks.some(r=>r.done)?`<p class="small muted">${tx('Completed steps can be undone for 15 seconds. Afterward, ask a parent to reopen them.')}</p>`:''}<section class="child-checklist">${tasks.length?tasks.map(r=>`<article data-task="${r.id}" class="task ${r.done?'done':''}"><div class="task-time"><time>${esc(timeLabel(r.time))}</time>${!r.done?`<span class="task-timing" data-task-timing data-time="${esc(r.time)}">${tx(c.rest_day?'Optional today':taskTimingKey(r.time,state.timezone))}</span>`:''}</div><div class="task-content"><h2>${taskIcon(r)}${esc(r.title)}</h2>${r.first_action&&!r.done?`<p class="first-action">${esc(r.first_action)}</p>`:''}${r.defer_order&&!r.done?`<p class="small muted">${tx('For later today')}</p>`:''}${r.locked?`<p>${tx('This step is open again. Let’s check it together.')}</p>`:''}</div><button class="check" data-action="complete" data-id="${r.id}" aria-pressed="${r.done}" aria-label="${r.done?t(canChildUndo(r)?'Undo':'Completed'):t('Complete')} ${esc(r.title)}" ${r.locked||(r.done&&!canChildUndo(r))?'disabled':''}>${svgIcon(r.done?'check':'circle')}</button></article>`).join(''):`<p>${tx('Nothing planned today')}</p>`}</section>${isWeatherEvening()?weatherSummary():''}<div class="child-tools"><button data-action="view" data-view="focus">${tx('One task at a time')}</button><button class="text-button" data-action="view" data-view="plan">${tx('Weekly plan')}</button></div>`;
 }
 const themes=[['forest','Forest','#246b55'],['ocean','Ocean','#22658b'],['berry','Berry','#954369'],['lavender','Lavender','#6d4b91'],['sunshine','Sunshine','#825518'],['petrol','Lagoon','#146471']];
 function applyTheme(value){const theme=themes.find(([id])=>id===value)||themes[0];document.documentElement.dataset.theme=theme[0];document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme[2]);}
@@ -377,23 +391,24 @@ function childViewSettings(){return `<details class="panel child-view-settings">
 function renderChild(c){
  const home=view==='today'||view==='focus';
  const content=view==='settings'?childSettings():view==='badges'?rewards(c):view==='plan'?planner(c):view==='weather'?weatherPanel():view==='daylist'||(view==='today'&&c.day_view==='checklist')?childChecklist(c):childToday(c);
- return `<header class="child-header"><div class="child-header-inner"><a class="brand" href="./"><span class="brand-icon" aria-hidden="true">${brandMark()}</span><span class="brand-name">Wusel<small>${tx('by Wild & Weich')}</small></span></a><button class="text-button icon-button child-settings-button" data-action="view" data-view="settings" aria-label="${tx('Settings')}" title="${tx('Settings')}" ${view==='settings'?'aria-current="page"':''}>${svgIcon('settings')}</button></div></header><div class="child-shell">${!home?`<button class="text-button child-back" data-action="view" data-view="today">${svgIcon('arrow-left')} ${tx('My day')}</button>`:''}<main>${content}</main></div>`;
+ return `<header class="child-header"><div class="child-header-inner"><a class="brand" href="./"><span class="brand-icon" aria-hidden="true">${brandMark()}</span><span class="brand-name">Wusel<small>${tx('by Wild & Weich')}</small></span></a><div class="child-header-tools">${headerClock()}<button class="text-button icon-button child-settings-button" data-action="view" data-view="settings" aria-label="${tx('Settings')}" title="${tx('Settings')}" ${view==='settings'?'aria-current="page"':''}>${svgIcon('settings')}</button></div></div></header><div class="child-shell">${!home?`<button class="text-button child-back" data-action="view" data-view="today">${svgIcon('arrow-left')} ${tx('My day')}</button>`:''}<main>${content}</main></div>`;
 }
 function compactWeatherAdvice(w){
  const hints=[['Pack a raincoat or umbrella.','Take your raincoat.'],['A warm layer could feel good today.','Take a warm layer.'],['It may get warm. Take your water bottle.','Take your water bottle.'],['A sun hat could be useful today.','Take your sun hat.'],['Ask a parent before going outside.','Ask a parent before going outside.'],['Check with a parent what to wear today.','Choose clothes with a parent.']];
  const hint=weatherAdvice(w)[0];return t(hints.find(([long])=>t(long)===hint)?.[1]||'Choose clothes with a parent.');
 }
-function weatherSummary(){
- const w=weatherData;
+function weatherSummary(now=new Date()){
+ const w=weatherForNow(now);
  let icon=svgIcon('cloud'),message=t('Checking the weather…');
  if(w?.status==='ok'){
    icon=weatherIcon(w.current.condition);
    message=w.stale?t('Weather needs checking with a parent.'):temp(w.current.temperature)+' · '+compactWeatherAdvice(w);
  }else if(w)message=t('Ask a parent about today’s weather.');
- return `<div id="weather-panel" class="weather-summary"><button data-action="view" data-view="weather" aria-label="${tx('Weather for your day')}"><span aria-hidden="true">${icon}</span><span>${esc(message)}</span><span aria-hidden="true">${svgIcon('arrow-right')}</span></button>${w?.demo?`<p class="preview-caption">${tx('Example weather for preview only')}</p>`:''}</div>`;
+ return `<div id="weather-panel" class="weather-summary"><button data-action="view" data-view="weather" aria-label="${tx('Weather for your day')}"><span aria-hidden="true">${icon}</span><span><span>${isWeatherEvening(now)?tx('Today')+' · ':''}${esc(message)}</span>${isWeatherEvening(now)?tomorrowPreview(now):''}</span><span aria-hidden="true">${svgIcon('arrow-right')}</span></button>${w?.demo?`<p class="preview-caption">${tx('Example weather for preview only')}</p>`:''}</div>`;
 }
 
 function render(quiet=false) {
+ clearTimeout(headerClockTimer);scheduleWeatherDisplay();
  paintSyncStatus();
  document.documentElement.lang=language;
  applyTheme(state.user?.theme||'forest');
@@ -402,17 +417,19 @@ function render(quiet=false) {
  app.classList.toggle('plain-icons',state.user?.role==='child'&&!!current()?.plain_icons);
  if (!state.user) { paintApp(auth(),quiet); return; }
  const c=current(); if(c)selected=c.id;
- if(!parent()){paintApp(renderChild(c),quiet);return;}
+ if(!parent()){paintApp(renderChild(c),quiet);scheduleHeaderClock();return;}
  const tabs=[['today','sun',t('Overview')],['plan','calendar',t('Weekly plan')],['badges','star',t('Badges')],['review','check',t('Review')]];
  const navButton=([id,icon,label])=>`<button data-action="view" data-view="${id}" class="nav-button ${view===id?'active':''}" ${view===id?'aria-current="page"':''}><span aria-hidden="true">${svgIcon(icon)}</span> ${esc(label)}</button>`;
- paintApp(`<header><div class="header-inner parent-header"><a class="brand" href="./"><span class="brand-icon">${brandMark()}</span> <span class="brand-name">Wusel<small>${tx('by Wild & Weich')}</small></span></a><div class="parent-header-actions"><span class="parent-account-name">${esc(state.user.name)}</span><button data-action="view" data-view="family" class="text-button icon-button" aria-label="${tx('Family')}" title="${tx('Family')}" ${view==='family'?'aria-current="page"':''}><span aria-hidden="true">${svgIcon('family')}</span></button><button data-action="view" data-view="settings" class="text-button icon-button" aria-label="${tx('Settings')}" title="${tx('Settings')}" ${view==='settings'?'aria-current="page"':''}>${svgIcon('settings')}</button></div></div></header>
+ paintApp(`<header><div class="header-inner parent-header"><a class="brand" href="./"><span class="brand-icon">${brandMark()}</span> <span class="brand-name">Wusel<small>${tx('by Wild & Weich')}</small></span></a><div class="parent-header-actions">${headerClock()}<button data-action="view" data-view="family" class="text-button icon-button" aria-label="${tx('Family')}" title="${tx('Family')}" ${view==='family'?'aria-current="page"':''}><span aria-hidden="true">${svgIcon('family')}</span></button><button data-action="view" data-view="settings" class="text-button icon-button" aria-label="${tx('Settings')}" title="${tx('Settings')}" ${view==='settings'?'aria-current="page"':''}>${svgIcon('settings')}</button></div></div></header>
  <div class="shell">${c?`<nav class="parent-navigation" aria-label="${tx('Main')}"><label class="child-picker"><select id="child-picker" aria-label="${tx('Child')}">${state.children.map(c=>`<option value="${c.id}" ${c.id===selected?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label><div class="child-tabs" role="group" aria-label="${tx('For {name}',{name:c.name})}">${tabs.map(navButton).join('')}</div></nav>`:''}
  <main>${view==='settings'?parentSettings():view==='family'?family():!c?`<section class="panel empty"><span aria-hidden="true">${brandMark()}</span><h1>${tx("Let’s plant the first seed")}</h1><p>${tx("Add a child account to start planning their day.")}</p><button class="primary" data-action="view" data-view="family">${tx("Add your family")}</button></section>`:({today,plan:planner,badges:rewards,review}[view]||today)(c)}</main><footer>${tx("A little more rhythm. A little more room to grow.")} <span>${tx("Wusel · Wild & Weich")} · ${esc(state.timezone)}</span></footer></div>`,quiet);
+ scheduleHeaderClock();
 }
 app.addEventListener('change', async e=>{if(e.target.name==='icon'){updateIconPicker();return;}if(e.target.id==='language-picker'){await setLanguage(e.target.value);return;}if(e.target.id==='child-picker'){selected=Number(e.target.value);editing=null;render();}});
 app.addEventListener('click',async e=>{
  const b=e.target.closest('[data-action]'); if(!b||busy)return;
  const action=b.dataset.action,id=Number(b.dataset.id),c=current();
+ if(action==='weather-day'){weatherSelection={date:weatherLocalDate(),day:b.dataset.day==='tomorrow'?'tomorrow':'today'};updateWeatherDisplay();return;}
  if(action==='undo-last'){
   if(!lastCompletion||lastCompletion.day!==state.today||!canChildUndo(c?.routines.find(r=>r.id===lastCompletion.routine)||{})){updateUndoControls();return;}
   const saved=lastCompletion;busy=true;b.disabled=true;
@@ -521,13 +538,79 @@ function weatherAdvice(w){
  if(conditions.includes('sunny'))hints.push(t('A sun hat could be useful today.'));
  return (hints.length?hints:[t('Check with a parent what to wear today.')]).slice(0,2);
 }
-function parentWeather(open=false){
- const w=weatherData;
- const summary=!w?t('Checking the weather…'):w.status!=='ok'?t('Weather is unavailable right now.'):temp(w.current.temperature)+' · '+weatherName(w.current.condition);
- return `<details id="weather-panel" class="parent-weather" ${open?'open':''}><summary><span aria-hidden="true">${w?.status==='ok'?weatherIcon(w.current.condition):svgIcon('cloud')}</span><span><strong>${tx('Weather for your day')}</strong><span class="small muted">${esc(summary)}${w?.stale?' · '+tx('Last known weather — check with a parent before heading out.'):''}</span></span></summary>${weatherPanel(true)}</details>`;
+let weatherSelection=null,weatherClockTimer;
+function weatherForNow(now=new Date()){return weatherData?.date&&weatherData.date!==weatherLocalDate(now)?{status:'unavailable'}:weatherData;}
+function weatherLocalDate(now=new Date()){
+ const parts=new Intl.DateTimeFormat('en-GB',{timeZone:state.timezone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);
+ return ['year','month','day'].map(key=>parts.find(p=>p.type===key).value).join('-');
 }
-function weatherPanel(embedded=false){
- const w=weatherData;
+function nextWeatherDate(now=new Date()){const date=new Date(weatherLocalDate(now)+'T12:00:00Z');date.setUTCDate(date.getUTCDate()+1);return date.toISOString().slice(0,10);}
+function weatherHour(now=new Date()){return Number(new Intl.DateTimeFormat('en-GB',{timeZone:state.timezone,hour:'numeric',hourCycle:'h23'}).format(now));}
+function isWeatherEvening(now=new Date()){return weatherHour(now)>=18;}
+function selectedWeatherDay(now=new Date()){
+ return weatherSelection?.date===weatherLocalDate(now)?weatherSelection.day:(!parent()&&isWeatherEvening(now)?'tomorrow':'today');
+}
+function tomorrowInfo(w,now=new Date()){
+ const forecast=w?.tomorrow;
+ if(w?.status!=='ok'||!forecast||forecast.date!==nextWeatherDate(now))return null;
+ const slots=(forecast.hourly||[]).filter(row=>{const hour=weatherHour(new Date(row.datetime));return hour>=6&&hour<19;});
+ const dailyOnly=forecast.forecast_status==='daily'&&!!forecast.daily;
+ const entries=dailyOnly?[forecast.daily]:slots;
+ if(!entries.length)return null;
+ const values=entries.flatMap(row=>[row.temperature,row.low,row.high]).filter(value=>typeof value==='number'&&Number.isFinite(value));
+ const low=values.length?Math.min(...values):null,high=values.length?Math.max(...values):null;
+ const conditions=entries.map(row=>row.condition),rain=conditions.some(c=>['rainy','pouring','snowy-rainy'].includes(c))||entries.some(row=>row.rain_probability>=40);
+ const serious=conditions.some(c=>['exceptional','lightning','lightning-rainy','hail'].includes(c));
+ const condition=serious?'exceptional':rain?'rainy':conditions.includes('snowy')?'snowy':conditions.includes('windy')?'windy':conditions.includes('sunny')?'sunny':conditions.find(c=>c!=='unknown')||'unknown';
+ const hints=[];
+ if(serious)hints.push(t('Choose tomorrow’s clothes with a parent.'));
+ else{
+  if(rain)hints.push(t('Have your raincoat ready.'));
+  // A daily low may describe the night; use the high for daily-only cold advice.
+  const cold=dailyOnly?high:low,toC=value=>w.unit==='°F'?(value-32)*5/9:value;
+  if(['°C','°F'].includes(w.unit)&&cold!==null&&toC(cold)<=12)hints.push(t('Lay out a warm layer.'));
+  if(['°C','°F'].includes(w.unit)&&high!==null&&toC(high)>=26)hints.push(t('Have your water bottle ready.'));
+  if(conditions.includes('sunny'))hints.push(t('Have your sun hat ready.'));
+ }
+ if(!hints.length)hints.push(t('Choose tomorrow’s clothes with a parent.'));
+ return {date:forecast.date,slots:dailyOnly?[]:slots,dailyOnly,low,high,condition,hints:hints.slice(0,2)};
+}
+function tomorrowSummary(now=new Date()){
+ const info=tomorrowInfo(weatherData,now);
+ if(!info)return tx('Tomorrow’s forecast is unavailable.');
+ const range=info.low===null?'':` · ${esc(temperatureLabel(info.low,weatherData.unit))}–${esc(temperatureLabel(info.high,weatherData.unit))}`;
+ return `${esc(weatherName(info.condition))}${range}`;
+}
+function tomorrowPreview(now=new Date()){
+ const w=weatherData,info=tomorrowInfo(w,now);
+ return `<span class="tomorrow-preview"><strong>${tx('Prepare for tomorrow')}</strong><span>${info?tx('Tomorrow')+' · ':''}${tomorrowSummary(now)}</span>${w?.stale?`<span>${tx('Forecast needs checking with a parent.')}</span>`:info?`<span>${esc(info.hints.join(' '))}</span>`:''}</span>`;
+}
+function updateWeatherDisplay(now=new Date()){
+ let panel=document.querySelector('#weather-panel');
+ const checklist=!parent()&&(view==='daylist'||view==='today'&&current()?.day_view==='checklist');
+ if(checklist&&!isWeatherEvening(now)){panel?.remove();panel=null;}
+ else if(checklist&&!panel&&isWeatherEvening(now)){
+  document.querySelector('.child-shell main>.child-tools')?.insertAdjacentHTML('beforebegin',weatherSummary(now));
+ }else if(panel){
+  const template=document.createElement('template');
+  template.innerHTML=parent()?parentWeather(panel.open,now):view==='weather'?weatherPanel(false,now):weatherSummary(now);
+  patchRegion(panel,template.content.firstElementChild.innerHTML);
+ }
+ if(weatherData?.date&&weatherData.date!==weatherLocalDate(now))loadWeather();
+}
+function scheduleWeatherDisplay(){
+ clearTimeout(weatherClockTimer);if(!state?.user||document.hidden)return;
+ weatherClockTimer=setTimeout(()=>{updateWeatherDisplay();scheduleWeatherDisplay();},60000-Date.now()%60000);
+}
+function parentWeather(open=false,now=new Date()){
+ const w=weatherForNow(now);
+ const summary=!w?t('Checking the weather…'):w.status!=='ok'?t('Weather is unavailable right now.'):temp(w.current.temperature)+' · '+weatherName(w.current.condition);
+ return `<details id="weather-panel" class="parent-weather" ${open?'open':''}><summary><span aria-hidden="true">${w?.status==='ok'?weatherIcon(w.current.condition):svgIcon('cloud')}</span><span><strong>${tx('Weather for your day')}</strong><span class="small muted">${esc(summary)}${w?.stale?' · '+tx('Last known weather — check with a parent before heading out.'):''}</span></span></summary>${weatherPanel(true,now)}</details>`;
+}
+function weatherPanel(embedded=false,now=new Date()){
+ const w=weatherForNow(now),day=selectedWeatherDay(now);
+ const choices=`<div class="weather-days" role="group" aria-label="${tx('Forecast day')}">${['today','tomorrow'].map(value=>`<button type="button" id="weather-day-${value}" data-action="weather-day" data-day="${value}" aria-pressed="${day===value}">${tx(value==='today'?'Today':'Tomorrow')}</button>`).join('')}</div>`;
+ if(day==='tomorrow')return `<section ${embedded?'':'id="weather-panel"'} class="panel weather" aria-label="${tx('Weather for your day')}"><h2>${tx('Weather for your day')}</h2>${choices}${tomorrowWeatherPanel(now)}</section>`;
  let content;
  if(!w)content=`<p class="muted">${tx('Checking the weather…')}</p>`;
  else if(w.status!=='ok')content=`<p>${tx(w.status==='not_configured'?'Ask a parent to set up the weather.':'Weather is unavailable right now.')}</p><p class="small muted">${tx(parent()?'Select a weather entity in the Home Assistant app configuration.':'Your routines are ready. Ask a parent to check the weather with you.')}</p>`;
@@ -537,21 +620,30 @@ function weatherPanel(embedded=false){
   ${w.stale?`<p class="weather-warning">${tx('Last known weather — check with a parent before heading out.')}</p>`:`<div class="weather-advice"><strong>${tx('GET READY FOR YOUR DAY')}</strong>${weatherAdvice(w).map(h=>`<span>${esc(h)}</span>`).join('')}</div>`}
   ${slots.length?`<h3 class="forecast-title">${tx('Later today')}</h3><ol class="forecast-slots">${slots.map((h,i)=>`<li class="${[0,Math.floor(slots.length/2),slots.length-1].includes(i)?'mobile-summary':''}"><time datetime="${esc(h.datetime)}">${esc(weatherTime(h.datetime))}</time><span class="forecast-icon" aria-hidden="true">${weatherIcon(h.condition)}</span><strong>${esc(temp(h.temperature))}</strong><span>${esc(weatherName(h.condition))}</span><span class="rain-chance">${tx('Rain chance')}: ${h.rain_probability===null?'—':esc(h.rain_probability)+'%'}</span></li>`).join('')}</ol>`:w.daily?`<h3 class="forecast-title">${tx('Today’s forecast')}</h3><p>${esc(weatherName(w.daily.condition))} · ${tx('Low')}: ${esc(temp(w.daily.low))} · ${tx('High')}: ${esc(temp(w.daily.high))}${w.daily.rain_probability!==null?' · '+tx('Rain chance')+': '+esc(w.daily.rain_probability)+'%':''}</p><p class="small muted">${tx('Daily forecast only; hourly details are not available.')}</p>`:`<p class="small muted">${tx('The forecast is unavailable; only current conditions are shown.')}</p>`}`;
  }
- return `<section ${embedded?'':'id="weather-panel"'} class="panel weather" aria-label="${tx('Weather for your day')}"><h2>${tx('Weather for your day')}</h2>${content}</section>`;
+ return `<section ${embedded?'':'id="weather-panel"'} class="panel weather" aria-label="${tx('Weather for your day')}"><h2>${tx('Weather for your day')}</h2>${choices}${content}</section>`;
+}
+function tomorrowWeatherPanel(now=new Date()){
+ const w=weatherData,info=tomorrowInfo(w,now);
+ if(!info)return `<h3 class="forecast-title">${tx('Tomorrow')}</h3><p>${tx('Tomorrow’s forecast is unavailable.')}</p>`;
+ const slots=info.slots.filter((_,i)=>i%3===0);
+ return `<h3 class="forecast-title">${tx('Tomorrow')} · ${esc(dateLabel(info.date))}</h3><p class="tomorrow-overview">${weatherIcon(info.condition)}<span>${tomorrowSummary(now)}</span></p>
+ ${w.stale?`<p class="weather-warning">${tx('Forecast needs checking with a parent.')}</p>`:`<div class="weather-advice"><strong>${tx('Prepare for tomorrow')}</strong>${info.hints.map(hint=>`<span>${esc(hint)}</span>`).join('')}</div>`}
+ ${info.dailyOnly?`<p class="small muted">${tx('Daily forecast only; hourly details are not available.')} ${tx('The daily low can include overnight temperatures.')}</p>`:`<h3 class="forecast-title">${tx('Morning and daytime')}</h3><ol class="forecast-slots">${slots.map((row,i)=>`<li class="${[0,Math.floor(slots.length/2),slots.length-1].includes(i)?'mobile-summary':''}"><time datetime="${esc(row.datetime)}">${esc(weatherTime(row.datetime))}</time><span class="forecast-icon" aria-hidden="true">${weatherIcon(row.condition)}</span><strong>${esc(temp(row.temperature))}</strong><span>${esc(weatherName(row.condition))}</span><span class="rain-chance">${tx('Rain chance')}: ${row.rain_probability==null?'—':esc(row.rain_probability)+'%'}</span></li>`).join('')}</ol>`}
+ <p class="weather-update small muted">${tx('From Home Assistant')} · ${tx('Updated {time}',{time:weatherTime(w.fetched_at)})}</p>`;
 }
 function weatherSetup(){return `<section class="panel weather-setup"><h2>${tx('Weather setup')}</h2><p>${tx('Weather comes from your selected Home Assistant weather entity.')}</p><p class="small muted">${tx('Select a weather entity in the Home Assistant app configuration.')} <code>weather_entity</code></p></section>`;}
 async function loadWeather(){
- if(!state?.user||weatherBusy||Date.now()-weatherFetched<60000)return;
+ if(!state?.user||weatherBusy||(Date.now()-weatherFetched<60000&&(!weatherData?.date||weatherData.date===weatherLocalDate())))return;
  const uid=state.user.id;weatherBusy=true;
  try{const data=await api('weather');if(state?.user?.id!==uid)return;weatherData=data;weatherFetched=Date.now();}
  catch{if(state?.user?.id===uid)weatherData={status:'unavailable'};}
- finally{weatherBusy=false;if(state?.user?.id===uid){const panel=document.querySelector('#weather-panel');if(panel)panel.outerHTML=parent()?parentWeather(panel.open):view!=='weather'?weatherSummary():weatherPanel();}}
+ finally{weatherBusy=false;if(state?.user?.id===uid){updateWeatherDisplay();}}
 }
 
 refresh().catch(err=>{app.innerHTML=`<main class="panel"><h1>${tx("Could not open Wusel")}</h1><p>${tx("Reload the page to try again.")}</p></main>`;notify(err.message);});
 // Refresh the date after midnight and progress when returning to the app.
 setInterval(()=>{if(state?.user&&!busy&&!document.querySelector('form'))refresh(true).catch(()=>{});},60000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state?.user&&!busy&&!document.querySelector('form'))refresh(true).catch(()=>{});});
+document.addEventListener('visibilitychange',()=>{scheduleHeaderClock();scheduleWeatherDisplay();if(!document.hidden&&state?.user)updateWeatherDisplay();if(!document.hidden&&state?.user&&!busy&&!document.querySelector('form'))refresh(true).catch(()=>{});});
 
 // Localized validation messages for required fields and browser constraints.
 app.addEventListener('invalid',event=>{event.target.setCustomValidity(t(event.target.validity.valueMissing?'Please complete this field.':'Please check the value in this field.'));},true);

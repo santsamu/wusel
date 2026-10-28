@@ -6,7 +6,9 @@
 
 [![Build, test and validate](https://github.com/santsamu/wusel/actions/workflows/ci.yml/badge.svg)](https://github.com/santsamu/wusel/actions/workflows/ci.yml)
 
-**von Wild & Weich · Version 0.14.2**
+**von Wild & Weich · Version 1.0.0**
+
+Home Assistant marks this release as stable.
 
 Version 0.12.0 uses the app identity `wusel` (`local_wusel` for local installations). This is a clean-install release with a new `/data/wusel.sqlite3` database, `WUSEL_*` environment variables and new session identifiers. Previous installation identities and data are not migrated. Copy the current inner app folder to `/local_apps/wusel` (or `/addons/wusel`), reload the store and install Wusel fresh. Create the first parent account using the setup code from the app logs.
 
@@ -16,7 +18,15 @@ Visible parent and child screens check for changes every 10 seconds using lightw
 
 Wusel uses the selected petrol, cream and ochre hedgehog logo, with matching browser favicons, an Apple touch icon and Home Assistant icon/logo files. Functional icons use original bundled SVG artwork for tasks, badges, weather, navigation and status symbols. Shapes and colors no longer depend on the operating system emoji font, and no external icon service is needed. The task editor has a labeled, keyboard-accessible SVG picker. Plain task icons use identical shapes with a neutral palette; saved task IDs, badges and progress are retained.
 
-Tasks can have an optional icon, including a toothbrush, clothes, meal, schoolbag, bed or medicine. Parents choose it when creating or editing a task; No icon is the default. Icons accompany the task text in focus view, checklist and weekly plan. Apply today/From tomorrow also controls icon edits. The medicine icon is a visual reminder, not confirmation that a dose was taken. Under Family → Child support settings, parents can also switch a child's task icons to a single neutral color instead of full color.
+The parent Overview shows the same first small action beneath the task title as the child’s main task card. Additional guidance remains available to the child under I need help.
+
+From 18:00 in Wusel’s timezone, the child’s weather card also shows Prepare for tomorrow with a forecast and short clothing-preparation hints. The detail view offers Today/Tomorrow; parents can open tomorrow’s forecast at any time. Tomorrow’s hints use only morning/daytime conditions (06:00–18:59), separately from today’s weather. Incomplete hourly coverage falls back to a labeled daily forecast where available; its overnight low alone does not trigger warm-clothing advice. Missing and stale forecasts are shown clearly. The view updates at evening and midnight while open; no routines are created automatically.
+
+The current time appears in the header on every parent and child screen. On parent screens, it replaces the account name beside the Family and Settings controls. It uses Wusel’s timezone and the device’s regional time format, updates each minute, and refreshes immediately when returning to the app.
+
+The snack-box icon shows an open lunchbox with a sandwich and apple. Parent Settings uses the same heading spacing and language-row alignment as child Settings. Weekly plan columns adapt to the available content width, keeping full weekday names and date numbers together.
+
+Parents can choose from 21 optional task icons, including toothbrush, clothes, meal, schoolbag, bed, medicine, piano, guitar, snack box, homework, hairbrush, toilet, jacket and exercise. Parents choose it when creating or editing a task; No icon is the default. Icons accompany the task text in focus view, checklist and weekly plan. Apply today/From tomorrow also controls icon edits. The medicine icon is a visual reminder, not confirmation that a dose was taken. Under Family → Child support settings, parents can also switch a child's task icons to a single neutral color instead of full color.
 
 Child screens use Later today before a scheduled time, Now for the following 30 minutes, and Still open afterward. The home screen prioritizes current steps, then upcoming ones. Older unfinished steps stay in a collapsed From earlier section; Do next brings one into focus without completing it. This explicit choice lasts for the current page session and child/day until completion or deferral. Time labels and selection update during the regular refresh, without reloading. Come back later also keeps the step out of automatic focus after reload; Do next can bring it back. When the collapsed list contains deferred current/future tasks, it is called For later. No task is automatically skipped or completed. Children can undo their own completions for exactly 15 seconds, using either the quick Undo action or the checklist. The server enforces the same deadline after reloads or across devices. Afterward only parents can reopen a completed step. Parent-confirmed completions and older completions from before this update cannot be undone by children. Unfinished steps can still be completed normally. Save/connection status is visible; uncertain saves are checked without automatic resubmission. The next badge goal stays stable until earned, with readable award dates available on demand. Parent confirmations name the child and effective timing. Weekly plan → Manage rest days lets parents plan or remove today/future date ranges. Rest days neither increase nor break a series; steps remain optional and completing them still earns points. Past rest days cannot be changed.
 
@@ -94,7 +104,7 @@ From version 0.5.2, Wusel uses the Pi's host network and listens on IPv4 and IPv
 
 After updating, test `http://homeassistant.local:8099/health` and the Pi's IPv4 address, for example `http://YOUR_PI_IP:8099/health`. Both should return `{"ok":true}`. Wusel logs the bound addresses (`0.0.0.0:8099` and `[::]:8099` when IPv6 is enabled), followed by `Wusel ready: HTTP port 8099`.
 
-Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **0.14.2** before starting it; restarting an older container alone does not switch its network mode. For subsequent updates, keep the app slug set to `wusel`.
+Copy all updated app files, including `server.py`, `Dockerfile`, and `config.yaml`. Update/rebuild the installed app and confirm version **1.0.0** before starting it; restarting an older container alone does not switch its network mode. For subsequent updates, keep the app slug set to `wusel`.
 
 Host networking shares the Pi's network interfaces with the app. It does not require protection mode to be disabled or router port forwarding to be enabled. The existing family authentication and HTTP/HTTPS guidance still apply.
 
@@ -168,10 +178,10 @@ python -m unittest discover -s tests -v
 node tests/test_i18n.cjs
 node tests/test_badge_view.cjs
 python tools/package.py
-python tools/validate.py --archive dist/wusel-0.14.2.zip
+python tools/validate.py --archive dist/wusel-1.0.0.zip
 ```
 
-The package command writes `wusel-0.14.2.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
+The package command writes `wusel-1.0.0.zip` inside the project’s `dist` folder, with `wusel/wusel/config.yaml` inside the ZIP. It excludes local data, virtual environments, and bytecode.
 
 See [VALIDATION.md](VALIDATION.md) for checks and test boundaries. The production server has been tested over IPv4 and IPv6 locally. The updated container network mode, hostname access, live weather, and backup/restore still need verification after updating the Pi.
 

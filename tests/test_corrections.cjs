@@ -9,11 +9,12 @@ let focusChoice=null;
 const state={today:'2026-10-26',timezone:'Europe/Zurich'};
 const dayCount=c=>({tasks:c.routines.filter(r=>r.scheduled),done:c.routines.filter(r=>r.scheduled&&r.done).length});
 const childHeading=()=>'',restNote=()=>'',undoFeedback=()=>'',weatherSummary=()=>'',childTools=()=>'',taskHelp=()=>'';
+const parent=()=>true,parentWeather=()=>'',progress=()=>'';
 const taskIcon=r=>r.icon==='medicine'?'<span aria-hidden="true">medicine</span>':'';
 `,sandbox);
 const source=fs.readFileSync(root+'/app.js','utf8');
 vm.runInContext(source.slice(source.indexOf('function pendingReview('),source.indexOf('function childChecklist(')),sandbox);
-vm.runInContext(source.slice(source.indexOf('function parentStepControl('),source.indexOf('function today(')),sandbox);
+vm.runInContext(source.slice(source.indexOf('function parentStepControl('),source.indexOf('function scheduleLabel(')),sandbox);
 vm.runInContext(`
 const step={id:1,title:'Medicine <daily>',description:'Take with water <please>',first_action:'Get a glass',time:'07:00',icon:'medicine',locked:true,done:false,scheduled:true};
 const child={name:'Alex',routines:[step]};
@@ -39,6 +40,9 @@ for(const lang of ['en','de']){
  assert(parentStepControl({...step,locked:false}).includes(t('Mark done')));
  child.routines=[{...step,done:true,locked:false}];
  html=childToday(child);assert(!html.includes('review-pending'));
+ child.routines=[{...step,first_action:'Get a glass <first>'}];
+ html=today(child);assert(html.includes('Get a glass &lt;first&gt;'));assert(!html.includes('Take with water'));
+ child.routines=[{...step,first_action:''}];html=today(child);assert(!html.includes('Take with water'));assert(!html.includes('<p></p>'));
  child.routines=[step];
 }
 `,sandbox);

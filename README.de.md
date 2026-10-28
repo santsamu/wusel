@@ -6,7 +6,9 @@
 
 [![Build, test and validate](https://github.com/santsamu/wusel/actions/workflows/ci.yml/badge.svg)](https://github.com/santsamu/wusel/actions/workflows/ci.yml)
 
-**von Wild & Weich · Version 0.14.2**
+**von Wild & Weich · Version 1.0.0**
+
+Diese Version ist in Home Assistant als stabil gekennzeichnet.
 
 Ab Version 0.12.0 lautet die Installationskennung `wusel` (lokal: `local_wusel`). Diese Version ist eine saubere Neuinstallation mit neuer Datenbank `/data/wusel.sqlite3`, `WUSEL_*`-Umgebungsvariablen und neuen Sitzungskennungen. Frühere Installationskennungen und Daten werden nicht übernommen. Kopiere die aktuelle innere App-Struktur nach `/local_apps/wusel` (beziehungsweise `/addons/wusel`), lade den Store neu und installiere Wusel neu. Richte danach das erste Elternkonto mit dem Einrichtungscode aus den Logs ein.
 
@@ -16,7 +18,15 @@ Sichtbare Eltern- und Kinderansichten prüfen alle 10 Sekunden mit einer kleinen
 
 Wusel verwendet das gewählte Igel-Logo in Petrol, Creme und Ocker. Dazu gehören passende Browser-Favicons, ein Apple-Touch-Symbol sowie Symbol- und Logo-Dateien für Home Assistant. Die funktionalen Symbole für Aufgaben, Abzeichen, Wetter, Navigation und Status verwenden eigene, mitgelieferte SVG-Grafiken. Formen und Farben hängen nicht mehr von der Emoji-Schrift des Betriebssystems ab. Ein externer Symboldienst ist nicht erforderlich. Der Aufgabeneditor bietet eine beschriftete, per Tastatur bedienbare SVG-Auswahl. Schlichte Aufgabensymbole verwenden dieselben Formen mit neutralen Farben. Gespeicherte Aufgabenkennungen, Abzeichen und Fortschritte bleiben erhalten.
 
-Aufgaben können ein optionales Symbol erhalten, etwa Zahnbürste, Kleidung, Essen, Schulranzen, Bett oder Medikament. Eltern wählen das Symbol beim Erstellen oder Bearbeiten einer Aufgabe; „Kein Symbol“ ist der Standard. Das Symbol erscheint zusätzlich zum Aufgabentext in Fokusansicht, Tagesliste und Wochenplan. Die bestehende Auswahl „Ab heute/ab morgen“ gilt auch für Symboländerungen. Das Medikamentensymbol ist eine visuelle Merkhilfe und bestätigt keine tatsächliche Einnahme. Unter Familie → Unterstützung für Kinder können Eltern die Aufgabensymbole eines Kindes zudem auf eine einzelne neutrale Farbe statt Vollfarbe umstellen.
+In der Elternübersicht steht unter dem Aufgabentitel dieselbe erste kleine Aktion wie auf der Hauptkarte des Kindes. Die zusätzliche Anleitung bleibt für das Kind unter „Ich brauche Hilfe“ verfügbar.
+
+Ab 18:00 Uhr in der Wusel-Zeitzone zeigt die Wetterkarte des Kindes zusätzlich „Für morgen vorbereiten“ mit der Vorhersage und kurzen Hinweisen zum Bereitlegen der Kleidung. Die Detailansicht bietet Heute/Morgen; Eltern können die Vorhersage für morgen jederzeit öffnen. Hinweise für morgen verwenden nur die morgendlichen und tagsüber erwarteten Bedingungen (06:00–18:59), getrennt vom heutigen Wetter. Bei unvollständiger Stundenabdeckung wird nach Möglichkeit die Tagesvorhersage verwendet und entsprechend gekennzeichnet; ihre nächtliche Tiefsttemperatur löst allein keinen Hinweis auf warme Kleidung aus. Fehlende und veraltete Vorhersagen werden klar angezeigt. Die Anzeige wechselt auch bei geöffneter App am Abend und um Mitternacht; Routinen werden nicht automatisch angelegt.
+
+Die aktuelle Uhrzeit steht auf allen Eltern- und Kinderseiten in der Kopfzeile. Bei Eltern ersetzt sie den Kontonamen neben den Schaltflächen für Familie und Einstellungen. Sie verwendet die Wusel-Zeitzone und das regionale Zeitformat des Geräts, aktualisiert sich jede Minute und sofort bei der Rückkehr zur App.
+
+Das Brotdosen-Symbol zeigt eine offene Dose mit Sandwich und Apfel. Die Einstellungen für Eltern verwenden dieselben Abstände und dieselbe Ausrichtung der Sprachauswahl wie bei Kindern. Der Wochenplan passt seine Spalten an die tatsächlich verfügbare Breite an; Wochentage und Datumszahlen bleiben ungeteilt.
+
+Für Aufgaben stehen 21 optionale Symbole zur Wahl, darunter Zahnbürste, Kleidung, Essen, Schulranzen, Bett, Medikament, Klavier, Gitarre, Brotdose, Hausaufgaben, Haarbürste, Toilette, Jacke und Bewegung. Eltern wählen das Symbol beim Erstellen oder Bearbeiten einer Aufgabe; „Kein Symbol“ ist der Standard. Das Symbol erscheint zusätzlich zum Aufgabentext in Fokusansicht, Tagesliste und Wochenplan. Die bestehende Auswahl „Ab heute/ab morgen“ gilt auch für Symboländerungen. Das Medikamentensymbol ist eine visuelle Merkhilfe und bestätigt keine tatsächliche Einnahme. Unter Familie → Unterstützung für Kinder können Eltern die Aufgabensymbole eines Kindes zudem auf eine einzelne neutrale Farbe statt Vollfarbe umstellen.
 
 Die Kinderansicht zeigt vor der geplanten Uhrzeit „Später heute“, bis 30 Minuten danach „Jetzt dran“ und anschließend „Noch offen“. Aktuelle Schritte haben Vorrang vor späteren. Ältere offene Schritte bleiben unter „Von vorhin“ eingeklappt erreichbar. „Als Nächstes machen“ holt einen davon in die Fokusansicht, ohne ihn abzuhaken. Diese Auswahl gilt in der aktuellen Seitensitzung für dieses Kind und diesen Tag bis zur Erledigung oder Zurückstellung. Uhrzeitabhängige Anzeigen aktualisieren sich beim regelmäßigen Abgleich ohne Neuladen. Zurückgestellte Schritte bleiben auch nach einem Neuladen außerhalb der automatischen Fokusauswahl. Sie lassen sich mit „Als Nächstes machen“ wieder auswählen. Enthält die Liste aktuelle oder zukünftige zurückgestellte Aufgaben, heißt sie „Für später“. Schritte werden weder automatisch übersprungen noch erledigt. Kinder können eigene Erledigungen genau 15 Sekunden lang rückgängig machen, über die direkte Aktion oder die Checkliste. Der Server setzt dieselbe Frist auch nach Neuladen oder auf anderen Geräten durch. Danach können nur Eltern einen erledigten Schritt wieder öffnen. Elternbestätigungen und Erledigungen vor diesem Update sind für Kinder nicht rückgängig zu machen. Offene Schritte können weiterhin normal erledigt werden. Speicher- und Verbindungsstatus sind sichtbar. Bei unklarer Speicherung wird nur der Stand abgefragt, nicht automatisch erneut gespeichert. Das nächste Abzeichenziel bleibt bis zum Erreichen stabil; vollständige Verleihungsdaten sind aufklappbar und lesbar. Eltern-Rückmeldungen nennen Kind und Gültigkeitszeitpunkt. Unter Wochenplan → Pausentage verwalten lassen sich heute und zukünftige Zeiträume planen oder entfernen. Pausentage erhöhen und unterbrechen eine Serie nicht; Aufgaben sind freiwillig, ihre Erledigung gibt weiterhin Punkte. Vergangene Pausentage bleiben unverändert.
 
@@ -94,7 +104,7 @@ Ab Version 0.5.2 nutzt Wusel direkt das Netzwerk des Pi und lauscht über IPv4 u
 
 Prüfe nach dem Update `http://homeassistant.local:8099/health` und die IPv4-Adresse des Pi, zum Beispiel `http://YOUR_PI_IP:8099/health`. Beide sollen `{"ok":true}` liefern. Im Protokoll erscheinen die Listener-Adressen (`0.0.0.0:8099` sowie `[::]:8099` bei aktiviertem IPv6) und anschließend `Wusel ready: HTTP port 8099`.
 
-Übernimm alle neuen App-Dateien, einschließlich `server.py`, `Dockerfile` und `config.yaml`. Aktualisiere beziehungsweise baue die installierte App neu und prüfe Version **0.14.2**. Ein bloßer Neustart des alten Containers ändert den Netzwerkmodus noch nicht. Bei späteren Updates bleibt der Slug `wusel` unverändert.
+Übernimm alle neuen App-Dateien, einschließlich `server.py`, `Dockerfile` und `config.yaml`. Aktualisiere beziehungsweise baue die installierte App neu und prüfe Version **1.0.0**. Ein bloßer Neustart des alten Containers ändert den Netzwerkmodus noch nicht. Bei späteren Updates bleibt der Slug `wusel` unverändert.
 
 Wusel teilt damit die Netzwerkschnittstellen des Pi. Dafür sind weder das Abschalten des Schutzmodus noch eine Portfreigabe am Router nötig. Die vorhandene Anmeldung und die Hinweise zu HTTP/HTTPS gelten weiterhin.
 
@@ -168,10 +178,10 @@ python -m unittest discover -s tests -v
 node tests/test_i18n.cjs
 node tests/test_badge_view.cjs
 python tools/package.py
-python tools/validate.py --archive dist/wusel-0.14.2.zip
+python tools/validate.py --archive dist/wusel-1.0.0.zip
 ```
 
-Das Paketwerkzeug schreibt `wusel-0.14.2.zip` in den Unterordner `dist` des Projekts. Im ZIP liegt die App-Konfiguration unter `wusel/wusel/config.yaml`. Lokale Daten, virtuelle Umgebungen und Bytecode werden nicht eingepackt.
+Das Paketwerkzeug schreibt `wusel-1.0.0.zip` in den Unterordner `dist` des Projekts. Im ZIP liegt die App-Konfiguration unter `wusel/wusel/config.yaml`. Lokale Daten, virtuelle Umgebungen und Bytecode werden nicht eingepackt.
 
 Prüfungen und Grenzen stehen in [VALIDATION.md](VALIDATION.md). Der Produktionsserver wurde lokal über IPv4 und IPv6 geprüft. Der neue Container-Netzwerkmodus, der Zugriff über den Hostnamen, Live-Wetter und Backup/Wiederherstellung müssen nach dem Update auf dem Pi überprüft werden.
 

@@ -21,7 +21,7 @@ STATIC_TYPES = {
                      'favicon-192.png','favicon-512.png','apple-touch-icon.png'),'image/png')
 }
 
-TASK_ICONS = ('','tooth','clothes','food','bag','book','bed','wash','water','shoes','play','tidy','quiet','medicine')
+TASK_ICONS = ('','tooth','clothes','food','bag','book','bed','wash','water','shoes','play','tidy','quiet','medicine','piano','guitar','snack-box','homework','hairbrush','toilet','jacket','exercise')
 
 BADGES = [('first', 'First step', 1, 'badge-first'), ('five', 'Growing strong', 5, 'badge-five'),
           ('twenty', 'Routine explorer', 20, 'badge-twenty'), ('fifty', 'Shining star', 50, 'badge-fifty'),

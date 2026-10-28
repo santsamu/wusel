@@ -1,5 +1,5 @@
 name: Wusel
-version: "0.14.2"
+version: "1.0.0"
 slug: wusel
 description: Calm daily routines, family accounts, and little rewards.
 arch:
@@ -8,7 +8,7 @@ arch:
 startup: application
 boot: auto
 init: true
-stage: experimental
+stage: stable
 host_network: true
 webui: "http://[HOST]:[PORT:8099]/"
 options:

@@ -8,6 +8,7 @@ Wusel is a daily-routine app by **Wild & Weich**, designed for children who bene
 
 - Multiple parent and child accounts belong to one local family installation. Every parent can manage every child; there is no separate family/tenant ownership model.
 - Parents create routines, manage accounts and support preferences, review completions and correct badges. Children see only their own routines and progress.
+- Show the current time in both parent and child headers (replacing the parent account name, with Family and Settings controls retained), using Wusel’s timezone and the device’s regional hours/minutes format. Update at minute boundaries and immediately on return from a hidden tab, independently of network requests, open forms and task actions. Do not announce clock ticks as live-region updates.
 - Keep the child interface quiet: one main task, progressive help, optional icons, compact weather and level feedback, and settings behind a gear icon.
 - Use neutral wording for missed steps and corrections. Never infer deliberate misbehavior from an inaccurate checkmark. Do not introduce shame, red overdue warnings, forced catch-up, automatic completion or loss of earned badges.
 - Keep English and German complete. Use accessible names for icon controls, visible focus, readable wrapping and text accompanying decorative task icons.
@@ -118,6 +119,7 @@ Schema migrations live in `Application.__init__` and must retain existing accoun
 
 ### Routines and scheduling
 
+- Weekly plan columns use the available container width (minimum 160px per card, or one card on narrower screens), not viewport-only 7/4/2 breakpoints. Keep full weekday names and date numbers on one line, and normal task titles wrapping at word boundaries. Parent/child Settings share heading and language-picker spacing/alignment.
 - Weekdays use Python's Monday-first numbering: Monday 0 through Sunday 6. All weekly views and editors start on Monday.
 - Routines can repeat on selected weekdays or use a specific date. Keep backend validation and frontend choices aligned.
 - New routines default to today. Edits and archives offer Apply today or From tomorrow; tomorrow is the default for edits.
@@ -133,6 +135,7 @@ Schema migrations live in `Application.__init__` and must retain existing accoun
 - Prefer an available current task, then an upcoming one. Older unfinished tasks stay in a collapsed From earlier / Von vorhin list.
 - Saved deferrals do not enter automatic focus again after reload. If the collapsed list contains current/future deferred tasks, label it For later / Für später.
 - Do next explicitly selects a task for the current child/day and page session. Completion or another deferral ends that choice; no points or completion change merely from selecting it.
+- Parent Overview shows `first_action` under task titles, matching the child’s main card; do not substitute `description` when no first action is set.
 - I need help reveals existing task instructions. Ask an adult tells the child to seek a nearby adult; it does not send a message.
 - Come back later persists the deferral for today, switches to another available step, and changes neither points nor completion. Disable it with an explanation when no other available step exists.
 - Keep corrected-task title, optional icon, time, first action and description visible on the child's first page, including when other tasks remain.
@@ -162,9 +165,11 @@ Schema migrations live in `Application.__init__` and must retain existing accoun
 - Add frontend strings in both catalogs in `i18n.js`; avoid duplicate keys and preserve interpolation placeholders. Backend errors and audit text need translations too.
 - Use full date/month/day names, browser regional date/time formatting, and whole-number displayed temperatures. A native time input may show AM/PM on an English-configured device.
 - App timezone controls scheduling, greetings and time labels; it is separate from the browser's display locale. Check DST and midnight boundaries.
-- Optional icons are shared backend/frontend IDs, including `medicine`. Text remains present; decorative icons are hidden from assistive technology. Plain icons use the same SVG geometry with neutral color tokens rather than grayscale emoji. The task picker uses labeled radio options with SVG previews, and drafts must preserve the selected radio and picker disclosure when language or theme changes.
+- Optional icons are shared backend/frontend IDs, including `medicine`, `piano`, `guitar`, `snack-box`, `homework`, `hairbrush`, `toilet`, `jacket` and `exercise` (21 task icons). The `snack-box` artwork is the selected open lunchbox with a sandwich and apple; retain its ID when changing artwork. Text remains present; decorative icons are hidden from assistive technology. Plain icons use the same SVG geometry with neutral color tokens rather than grayscale emoji. The task picker uses labeled radio options with SVG previews, and drafts must preserve the selected radio and picker disclosure when language or theme changes.
 - Theme IDs are `forest`, `ocean`, `berry`, `lavender`, `sunshine`, `petrol`. The visible name for `petrol` is Lagoon / Lagune. Keep backend validation and frontend palettes aligned.
 - Weather uses a configured `weather.*` entity and the fixed Supervisor Core API destination, with hourly forecast and daily fallback. Preserve request timeouts, bounded response sizes, cache/stale labels and nonblocking refresh locking. Never put the Supervisor token in frontend state or accept arbitrary weather request URLs.
+- Keep today and tomorrow forecast data separate, date-stamped in Wusel’s timezone. Fetch hourly once for both days, with one daily fallback request when today lacks hours or tomorrow lacks morning/afternoon coverage. Bound each day to 25 hours for DST. Server request bounds, nonblocking cache refresh and token isolation remain unchanged; the browser allows 16 seconds for the weather-only request (other requests stay at 12 seconds).
+- From 18:00, child focus/checklist weather shows Prepare for tomorrow, retaining today’s summary. Detail views offer Today/Tomorrow; parents can inspect tomorrow all day. Local minute/visibility updates preserve forecast selection and focus; midnight invalidates yesterday’s forecast dates and refreshes weather independently. Tomorrow advice uses only 06:00–18:59 hours, falling back to a labeled daily forecast. Do not use the daily overnight low alone for cold-clothing hints, blend today’s observations into tomorrow advice, invent missing values or show clothing hints for stale forecasts. No routines are generated automatically.
 - Keep weather compact; it must not obscure the parent's tasks. Show unavailable/stale states honestly.
 
 ## API map
@@ -248,6 +253,7 @@ CI runs on main pushes, pull requests and manual dispatch. The quality job valid
 
 - Install the **inner `wusel` app folder**, whose immediate contents include `config.yaml`, `Dockerfile`, `app.py`, `server.py`, `weather.py`, `requirements.txt` and `static/`.
 - With the default source archive, that app manifest is at `wusel/wusel/config.yaml` inside the ZIP. Copy the app contents to `/local_apps/wusel` (or `/addons/wusel` on installations using that mount name).
+- The 1.0.0 manifest explicitly uses `stage: stable`; version numbers and Home Assistant lifecycle labels are separate metadata. Keep the stage aligned with the intended release status.
 - Preserve `slug: wusel` on updates. Do not uninstall to perform an ordinary update; its persistent data belongs to the installed app.
 - The manifest uses `host_network: true`, `init: true` and exactly `webui: "http://[HOST]:[PORT:8099]/"`. A literal port in the webui template is rejected by Supervisor, even though host networking is enabled. Keep this regression covered.
 - No ingress is configured. The web interface is reached directly on the Pi's port 8099, for example `http://homeassistant.local:8099/` or the Pi's numeric IP.
