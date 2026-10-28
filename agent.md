@@ -30,6 +30,8 @@ There is no frontend framework, Node package installation, transpilation or asse
 | `wusel/static/themes.css` | Theme tokens and color overrides |
 | `wusel/static/index.html` | Frontend entry point |
 | `wusel/translations/*.json` | Home Assistant app option translations; separate from frontend translations |
+| `wusel/apparmor.txt` | Enforcing Home Assistant AppArmor profile: read-only app/runtime, private data writes/locks, TCP/DNS, no shell or unrelated data access |
+| `tools/check_apparmor.py` | Linux-only enforcing integration/negative checks, using disposable Docker data, init/host networking and a local Supervisor weather fixture |
 | `wusel/config.yaml` | Home Assistant manifest, slug, architectures, network and options |
 | `wusel/Dockerfile` | Python slim container, dependencies, runtime files and version label |
 | `tests/test_*.py` | Standard-library unittest backend, migration, security, HTTP, weather and packaging regressions |
@@ -253,6 +255,8 @@ CI runs on main pushes, pull requests and manual dispatch. The quality job valid
 
 - Install the **inner `wusel` app folder**, whose immediate contents include `config.yaml`, `Dockerfile`, `app.py`, `server.py`, `weather.py`, `requirements.txt` and `static/`.
 - With the default source archive, that app manifest is at `wusel/wusel/config.yaml` inside the ZIP. Copy the app contents to `/local_apps/wusel` (or `/addons/wusel` on installations using that mount name).
+- The manifest uses `apparmor: true` and ships one top-level `profile wusel` in `apparmor.txt`; Supervisor renames/loads it. Copy the profile beside config.yaml, not merely into the image. Preserve required Python/init, /data SQLite locking, TCP IPv4/IPv6 and DNS access; do not add broad `file,`, `network,`, `capability,`, shell execution or complain mode to silence failures. This policy is not an outbound destination firewall and does not narrow the existing Core API token permissions.
+- Linux amd64 CI runs `sudo python3 tools/check_apparmor.py --image wusel-ci:amd64` with actual kernel enforcement, --init and host networking. It refuses unsupported hosts and existing test containers/profiles, checks normal operations and audit logs before negative probes, then removes its container/profile/data. ARM64 image smoke remains separate; real HA OS/ARM64 enforcement and audit review remain target-device validation. Docker Desktop without AppArmor can compile syntax but cannot establish confinement.
 - The 1.0.0 manifest explicitly uses `stage: stable`; version numbers and Home Assistant lifecycle labels are separate metadata. Keep the stage aligned with the intended release status.
 - Preserve `slug: wusel` on updates. Do not uninstall to perform an ordinary update; its persistent data belongs to the installed app.
 - The manifest uses `host_network: true`, `init: true` and exactly `webui: "http://[HOST]:[PORT:8099]/"`. A literal port in the webui template is rejected by Supervisor, even though host networking is enabled. Keep this regression covered.

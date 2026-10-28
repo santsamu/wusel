@@ -1,0 +1,40 @@
+# Wusel: Python/Waitress only; loaded and renamed by Home Assistant Supervisor.
+# No complain flag: missing access must fail rather than silently pass.
+#include <tunables/global>
+
+profile wusel flags=(attach_disconnected,mediate_deleted) {
+  # Dynamic loader, entropy, locale, timezones and standard device descriptors.
+  #include <abstractions/base>
+
+  # Docker's init forwards shutdown signals; Python inherits this confinement.
+  /sbin/docker-init rix,
+  /usr/local/bin/python{,3,3.12} rix,
+  /usr/local/lib/ r,
+  /usr/local/lib/** mr,
+
+  # Shipped application code/assets are readable, never writable or executable.
+  /app/ r,
+  /app/** r,
+
+  # The app's private data: setup code, options, SQLite database/WAL and locks.
+  /data/ rw,
+  /data/** rwk,
+
+  # libc name resolution and OpenSSL initialization (also imported by urllib).
+  /etc/{hosts,hostname,host.conf,resolv.conf,nsswitch.conf,gai.conf} r,
+  /etc/ssl/ r,
+  /etc/ssl/** r,
+
+  # Dual-stack HTTP listener and outbound Supervisor weather requests; DNS UDP.
+  # AppArmor socket rules do not restrict destination hosts or TCP ports.
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+
+  # Allow checking the active profile, including after Supervisor renames it.
+  /proc/*/attr/current r,
+
+  # Do not inherit the base abstraction's encrypted-home exceptions.
+  deny /{root,home,share,config,media,ssl}/** rwklx,
+}
