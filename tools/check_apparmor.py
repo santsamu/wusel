@@ -188,7 +188,9 @@ def check(image):
                     time.sleep(1)
             parent.call('reset-child', {'child': 2, 'confirmation': 'child', 'current_password': 'demo-password'})
             assert parent.call('state')['children'][0]['progress']['xp'] == 0
-            audit = run('dmesg', '--time-format', 'raw', check=False)
+            # --raw retains boot timestamps on Ubuntu 24.04's util-linux too;
+            # --time-format raw only exists in newer util-linux releases.
+            audit = run('dmesg', '--raw', check=False)
             assert audit.returncode == 0, 'Cannot read kernel audit log: ' + audit.stderr
             denials = profile_denials(audit.stdout, profile_name, since)
             assert not denials, '\n'.join(denials)
